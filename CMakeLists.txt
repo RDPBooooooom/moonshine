@@ -101,3 +101,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif ()
 
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${VULKAN_LIB_LIST})
+
+# Compiling Shaders to spir-v
+if(WIN32)
+    message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+    message(STATUS "Compiling shaders")
+    add_custom_target(CompileShaders ALL
+            COMMAND ${CMAKE_COMMAND} -E echo "Running compile.bat"
+            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR} cmd.exe /C compile.bat resources/shaders/ resources/shaders/
+            COMMENT "Compiling shaders with compile.bat"
+            )
+    add_dependencies(${PROJECT_NAME} CompileShaders)
+endif()
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders
+        ${CMAKE_CURRENT_BINARY_DIR}/resources/shaders
+        COMMENT "Copying shaders to build directory"
+)
+add_dependencies(${PROJECT_NAME} CompileShaders)

@@ -151,3 +151,6 @@ fabric.properties
 .idea/**/azureSettings.xml
 
 # End of https://www.toptal.com/developers/gitignore/api/clion
+
+# Ignore compiled shaders
+*.spv
