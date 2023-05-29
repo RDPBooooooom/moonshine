@@ -8,7 +8,6 @@ namespace moonshine {
     
     
     void MoonshineApp::run() {
-        m_window = new Window(APP_NAME, WIDTH, HEIGHT);
         initVulkan();
         mainLoop();
         cleanup();

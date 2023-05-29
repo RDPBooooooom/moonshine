@@ -35,7 +35,7 @@ namespace moonshine {
 
         bool m_framebufferResized = false;
     private:
-        Window* m_window;
+        Window m_window = Window(APP_NAME, WIDTH, HEIGHT);;
         
         VkInstance m_vkInstance;
         VkDebugUtilsMessengerEXT m_debugMessenger;
@@ -65,7 +65,7 @@ namespace moonshine {
         void initVulkan() {
             createInstance();
             setupDebugMessenger();
-            m_window->createSurface(m_vkInstance, &m_vkSurface);
+            m_window.createSurface(m_vkInstance, &m_vkSurface);
             pickPhysicalDevice();
             createLogicalDevice();
             createSwapChain();
@@ -302,8 +302,8 @@ namespace moonshine {
                 return capabilities.currentExtent;
             } else {
                 int width, height;
-                width = m_window->width;
-                height = m_window->height;
+                width = m_window.width;
+                height = m_window.height;
 
                 VkExtent2D actualExtent = {
                         static_cast<uint32_t>(width),
@@ -857,12 +857,12 @@ namespace moonshine {
 
         void recreateSwapChain() {
             int width = 0, height = 0;
-            width = m_window->width;
-            height = m_window->height;
+            width = m_window.width;
+            height = m_window.height;
 
             while(width == 0 || height == 0){
-                width = m_window->width;
-                height = m_window->height;
+                width = m_window.width;
+                height = m_window.height;
                 glfwWaitEvents();
             }
 
@@ -906,7 +906,7 @@ namespace moonshine {
         }
 
         void mainLoop() {
-            while (!m_window->shouldClose()) {
+            while (!m_window.shouldClose()) {
                 glfwPollEvents();
                 drawFrame();
             }
