@@ -15,6 +15,7 @@
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
+const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char *> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
@@ -83,10 +84,11 @@ private:
     VkPipeline m_vkGraphicsPipeline;
     std::vector<VkFramebuffer> m_swapChainFramebuffers;
     VkCommandPool m_vkCommandPool;
-    VkCommandBuffer m_vkCommandBuffer;
-    VkSemaphore m_vkImageAvailableSemaphore;
-    VkSemaphore m_vkRenderFinishedSemaphore;
-    VkFence m_vkInFlightFence;
+    std::vector<VkCommandBuffer> m_vkCommandBuffers;
+    std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
+    std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
+    std::vector<VkFence> m_vkInFlightFences;
+    uint32_t m_currentFrame = 0;
 
 public:
     void run() {
@@ -692,18 +694,24 @@ private:
     }
 
     void createCommandBuffer() {
+        m_vkCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.commandPool = m_vkCommandPool;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandBufferCount = 1;
+        allocInfo.commandBufferCount = (uint32_t) m_vkCommandBuffers.size();
 
-        if (vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &m_vkCommandBuffer) != VK_SUCCESS) {
+        if (vkAllocateCommandBuffers(m_vkDevice, &allocInfo, m_vkCommandBuffers.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate command buffers!");
         }
     }
 
     void createSyncObjects() {
+        m_vkImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_vkRenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_vkInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -711,10 +719,15 @@ private:
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        if (vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr, &m_vkImageAvailableSemaphore) != VK_SUCCESS ||
-            vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr, &m_vkRenderFinishedSemaphore) != VK_SUCCESS ||
-            vkCreateFence(m_vkDevice, &fenceInfo, nullptr, &m_vkInFlightFence) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create semaphores!");
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            if (vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr, &m_vkImageAvailableSemaphores[i]) !=
+                VK_SUCCESS ||
+                vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr, &m_vkRenderFinishedSemaphores[i]) !=
+                VK_SUCCESS ||
+                vkCreateFence(m_vkDevice, &fenceInfo, nullptr, &m_vkInFlightFences[i]) != VK_SUCCESS) {
+
+                throw std::runtime_error("failed to create synchronization objects for a frame!");
+            }
         }
     }
 
@@ -733,7 +746,8 @@ private:
         createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity =
-                VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         createInfo.messageType =
                 VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
@@ -866,7 +880,8 @@ private:
 
         for (int i = 0; i < extensionCount; ++i) {
             const char *currentExtension = glfwExtensions[i];
-            if (std::find_if(availableExtensions.begin(), availableExtensions.end(), compare(currentExtension)) ==
+            if (std::find_if(availableExtensions.begin(), availableExtensions.end(),
+                             compare(currentExtension)) ==
                 availableExtensions.end()) {
                 std::cout << "required extensions not supported: " << currentExtension << '\n';
                 return false;
@@ -884,7 +899,8 @@ private:
             void *pUserData) {
 
         if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            std::cerr << "validation layer (" << SeverityToString(messageSeverity) << "): " << pCallbackData->pMessage
+            std::cerr << "validation layer (" << SeverityToString(messageSeverity) << "): "
+                      << pCallbackData->pMessage
                       << std::endl;
         }
 
@@ -905,7 +921,7 @@ private:
                 return "Unknown";
         }
     }
-    
+
     void mainLoop() {
         while (!glfwWindowShouldClose(m_window)) {
             glfwPollEvents();
@@ -916,32 +932,33 @@ private:
     }
 
     void drawFrame() {
-        vkWaitForFences(m_vkDevice, 1, &m_vkInFlightFence, VK_TRUE, UINT64_MAX);
-        vkResetFences(m_vkDevice, 1, &m_vkInFlightFence);
+        vkWaitForFences(m_vkDevice, 1, &m_vkInFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+        vkResetFences(m_vkDevice, 1, &m_vkInFlightFences[m_currentFrame]);
 
         uint32_t imageIndex;
-        vkAcquireNextImageKHR(m_vkDevice, m_vkSwapChain, UINT64_MAX, m_vkImageAvailableSemaphore, VK_NULL_HANDLE,
+        vkAcquireNextImageKHR(m_vkDevice, m_vkSwapChain, UINT64_MAX, m_vkImageAvailableSemaphores[m_currentFrame],
+                              VK_NULL_HANDLE,
                               &imageIndex);
 
-        vkResetCommandBuffer(m_vkCommandBuffer, 0);
-        recordCommandBuffer(m_vkCommandBuffer, imageIndex);
+        vkResetCommandBuffer(m_vkCommandBuffers[m_currentFrame], 0);
+        recordCommandBuffer(m_vkCommandBuffers[m_currentFrame], imageIndex);
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        VkSemaphore waitSemaphores[] = {m_vkImageAvailableSemaphore};
+        VkSemaphore waitSemaphores[] = {m_vkImageAvailableSemaphores[m_currentFrame]};
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphores;
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &m_vkCommandBuffer;
+        submitInfo.pCommandBuffers = &m_vkCommandBuffers[m_currentFrame];
 
-        VkSemaphore signalSemaphores[] = {m_vkRenderFinishedSemaphore};
+        VkSemaphore signalSemaphores[] = {m_vkRenderFinishedSemaphores[m_currentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        if (vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, m_vkInFlightFence) != VK_SUCCESS) {
+        if (vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, m_vkInFlightFences[m_currentFrame]) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
 
@@ -958,6 +975,8 @@ private:
         presentInfo.pResults = nullptr; // Optional
 
         vkQueuePresentKHR(m_vkPresentQueue, &presentInfo);
+        
+        m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -1007,9 +1026,11 @@ private:
     }
 
     void cleanup() {
-        vkDestroySemaphore(m_vkDevice, m_vkImageAvailableSemaphore, nullptr);
-        vkDestroySemaphore(m_vkDevice, m_vkRenderFinishedSemaphore, nullptr);
-        vkDestroyFence(m_vkDevice, m_vkInFlightFence, nullptr);
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroySemaphore(m_vkDevice, m_vkRenderFinishedSemaphores[i], nullptr);
+            vkDestroySemaphore(m_vkDevice, m_vkImageAvailableSemaphores[i], nullptr);
+            vkDestroyFence(m_vkDevice, m_vkInFlightFences[i], nullptr);
+        }
 
         vkDestroyCommandPool(m_vkDevice, m_vkCommandPool, nullptr);
 
