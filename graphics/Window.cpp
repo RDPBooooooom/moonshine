@@ -10,13 +10,13 @@
 
 namespace moonshine {
     
-    Window::Window(std::string name, int w, int h) : width{w}, height{h} {
+    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h} {
         
         m_name = std::move(name);
         
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        m_window = glfwCreateWindow(width, height, m_name.c_str(), nullptr, nullptr);
+        m_window = glfwCreateWindow(m_width, m_height, m_name.c_str(), nullptr, nullptr);
 
         glfwSetWindowUserPointer(m_window, this);
         glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
@@ -31,8 +31,8 @@ namespace moonshine {
     void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
         auto moonWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
         moonWindow->m_framebufferResized = true;
-        moonWindow->width = width;
-        moonWindow->height = height;
+        moonWindow->m_width = width;
+        moonWindow->m_height = height;
     }
 
     void Window::createSurface(VkInstance instance, VkSurfaceKHR *surface) {

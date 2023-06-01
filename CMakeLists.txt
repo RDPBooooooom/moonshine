@@ -3,7 +3,7 @@ project(moonshine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h)
+add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)

@@ -19,16 +19,14 @@ namespace moonshine {
         std::string m_name;
 
     public:
-        int width;
-        int height;
+        int m_width;
+        int m_height;
         bool m_framebufferResized;
         
     public:
         Window(std::string name, int w, int h);
 
         ~Window();
-
-        Window(const Window &) = delete;
 
         Window &operator=(const Window &) = delete;
 
