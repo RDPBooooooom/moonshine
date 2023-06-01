@@ -7,6 +7,7 @@
 
 #include <vulkan/vulkan_core.h>
 #include <vector>
+#include <optional>
 
 namespace moonshine {
     const std::vector<const char *> validationLayers = {
@@ -55,6 +56,7 @@ namespace moonshine {
         }
     };
 
+    
     static QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
         QueueFamilyIndices indices;
         // Logic to find queue family indices to populate struct with
