@@ -4,12 +4,14 @@
 
 #ifndef MOONSHINE_VKUTILS_H
 #define MOONSHINE_VKUTILS_H
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 
 #include <vulkan/vulkan_core.h>
 #include <vector>
 #include <optional>
 #include "vec3.hpp"
 #include "vec2.hpp"
+#include "glm.hpp"
 
 namespace moonshine {
     const std::vector<const char *> validationLayers = {
@@ -118,6 +120,12 @@ namespace moonshine {
             attributeDescriptions[1].offset = offsetof(Vertex, color);
             return attributeDescriptions;
         }
+    };
+
+    struct UniformBufferObject {
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
     };
     
 }

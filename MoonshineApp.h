@@ -5,6 +5,7 @@
 #ifndef MOONSHINE_MOONSHINEAPP_H
 #define MOONSHINE_MOONSHINEAPP_H
 #define GLFW_INCLUDE_VULKAN
+#define GLM_FORCE_RADIANS
 
 #include <vulkan/vulkan_core.h>
 #include <vector>
@@ -17,6 +18,7 @@
 #include <iostream>
 #include <GLFW/glfw3.h>
 #include <memory>
+#include <chrono>
 #include "utils/Constants.h"
 #include "utils/VkValidationLayerUtils.h"
 #include "utils/VkUtils.h"
@@ -24,6 +26,8 @@
 #include "graphics/Window.h"
 #include "graphics/Device.h"
 #include "graphics/Pipeline.h"
+#include "ext/matrix_transform.hpp"
+#include "ext/matrix_clip_space.hpp"
 
 namespace moonshine {
 
@@ -57,6 +61,14 @@ namespace moonshine {
         VkDeviceMemory m_vertexBufferMemory;
         VkBuffer m_indexBuffer;
         VkDeviceMemory m_indexBufferMemory;
+
+        std::vector<VkBuffer> m_uniformBuffers;
+        std::vector<VkDeviceMemory> m_uniformBuffersMemory;
+        std::vector<void *> m_uniformBuffersMapped;
+
+        VkDescriptorPool m_descriptorPool;
+        std::vector<VkDescriptorSet> m_descriptorSets;
+
         std::vector<VkCommandBuffer> m_vkCommandBuffers;
         std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
         std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
@@ -69,6 +81,9 @@ namespace moonshine {
             createCommandPool();
             createVertexBuffer();
             createIndexBuffer();
+            createUniformBuffers();
+            createDescriptorPool();
+            createDescriptorSets();
             createCommandBuffer();
             createSyncObjects();
         }
@@ -165,6 +180,75 @@ namespace moonshine {
 
             vkDestroyBuffer(m_device.getVkDevice(), stagingBuffer, nullptr);
             vkFreeMemory(m_device.getVkDevice(), stagingBufferMemory, nullptr);
+        }
+
+        void createUniformBuffers() {
+            VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+            m_uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+            m_uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+            m_uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
+
+            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                             m_uniformBuffers[i], m_uniformBuffersMemory[i]);
+
+                vkMapMemory(m_device.getVkDevice(), m_uniformBuffersMemory[i], 0, bufferSize, 0,
+                            &m_uniformBuffersMapped[i]);
+            }
+        }
+
+        void createDescriptorPool() {
+            VkDescriptorPoolSize poolSize{};
+            poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            VkDescriptorPoolCreateInfo poolInfo{};
+            poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            poolInfo.poolSizeCount = 1;
+            poolInfo.pPoolSizes = &poolSize;
+            poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+            if (vkCreateDescriptorPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create descriptor pool!");
+            }
+        }
+
+        void createDescriptorSets() {
+            std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, m_pipeline.getDiscriptorSetLayout());
+            VkDescriptorSetAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            allocInfo.descriptorPool = m_descriptorPool;
+            allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            allocInfo.pSetLayouts = layouts.data();
+
+            m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+            if (vkAllocateDescriptorSets(m_device.getVkDevice(), &allocInfo, m_descriptorSets.data()) != VK_SUCCESS) {
+                throw std::runtime_error("failed to allocate descriptor sets!");
+            }
+
+            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = m_uniformBuffers[i];
+                bufferInfo.offset = 0;
+                bufferInfo.range = sizeof(UniformBufferObject);
+
+                VkWriteDescriptorSet descriptorWrite{};
+                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrite.dstSet = m_descriptorSets[i];
+                descriptorWrite.dstBinding = 0;
+                descriptorWrite.dstArrayElement = 0;
+
+                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrite.descriptorCount = 1;
+
+                descriptorWrite.pBufferInfo = &bufferInfo;
+                descriptorWrite.pImageInfo = nullptr; // Optional
+                descriptorWrite.pTexelBufferView = nullptr; // Optional
+
+                vkUpdateDescriptorSets(m_device.getVkDevice(), 1, &descriptorWrite, 0, nullptr);
+            }
         }
 
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
@@ -268,6 +352,8 @@ namespace moonshine {
         void drawFrame() {
             vkWaitForFences(m_device.getVkDevice(), 1, &m_vkInFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
+            updateUniformBuffer(m_currentFrame);
+
             uint32_t imageIndex;
             VkResult result = vkAcquireNextImageKHR(m_device.getVkDevice(), m_pipeline.getSwapChain(), UINT64_MAX,
                                                     m_vkImageAvailableSemaphores[m_currentFrame],
@@ -330,6 +416,29 @@ namespace moonshine {
             m_currentFrame = (m_currentFrame + 1) % moonshine::MAX_FRAMES_IN_FLIGHT;
         }
 
+        void updateUniformBuffer(uint32_t currentImage) {
+            static auto startTime = std::chrono::high_resolution_clock::now();
+
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+            UniformBufferObject ubo{};
+            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                                   glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.proj = glm::perspective(glm::radians(45.0f), m_pipeline.getSwapChainExtent().width /
+                                                             (float) m_pipeline.getSwapChainExtent().height, 0.1f,
+                                        10.0f);
+
+            /*
+             * GLM was originally designed for OpenGL, where the Y coordinate of the clip coordinates is inverted.
+             * The easiest way to compensate for that is to flip the sign on the scaling factor of the Y axis 
+             * in the projection matrix. If you don't do this, then the image will be rendered upside down.
+             */
+            ubo.proj[1][1] *= -1;
+            memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+        }
+
         void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
             VkCommandBufferBeginInfo beginInfo{};
             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -374,6 +483,10 @@ namespace moonshine {
 
             vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.getPipelineLayout(), 0,
+                                    1, &m_descriptorSets[m_currentFrame], 0, nullptr);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
             vkCmdEndRenderPass(commandBuffer);
 
@@ -384,11 +497,18 @@ namespace moonshine {
 
         void cleanup() {
 
+            vkDestroyDescriptorPool(m_device.getVkDevice(), m_descriptorPool, nullptr);
+
             vkDestroyBuffer(m_device.getVkDevice(), m_indexBuffer, nullptr);
             vkFreeMemory(m_device.getVkDevice(), m_indexBufferMemory, nullptr);
 
             vkDestroyBuffer(m_device.getVkDevice(), m_vertexBuffer, nullptr);
             vkFreeMemory(m_device.getVkDevice(), m_vertexBufferMemory, nullptr);
+
+            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                vkDestroyBuffer(m_device.getVkDevice(), m_uniformBuffers[i], nullptr);
+                vkFreeMemory(m_device.getVkDevice(), m_uniformBuffersMemory[i], nullptr);
+            }
 
             for (size_t i = 0; i < moonshine::MAX_FRAMES_IN_FLIGHT; i++) {
                 vkDestroySemaphore(m_device.getVkDevice(), m_vkRenderFinishedSemaphores[i], nullptr);

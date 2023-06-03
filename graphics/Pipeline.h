@@ -23,6 +23,8 @@ namespace moonshine {
         VkExtent2D m_swapChainExtent;
         VkRenderPass m_vkRenderPass;
 
+        VkDescriptorSetLayout m_descriptorSetLayout;
+
         VkPipelineLayout m_vkPipelineLayout;
         VkPipeline m_vkGraphicsPipeline;
 
@@ -40,6 +42,8 @@ namespace moonshine {
         void createImageViews();
 
         void createRenderPass();
+
+        void createDescriptorSetLayout();
 
         void createGraphicsPipeline();
 
@@ -63,6 +67,10 @@ namespace moonshine {
         VkRenderPass getRenderPass() { return m_vkRenderPass; }
 
         VkPipeline getGraphicsPipeline() { return m_vkGraphicsPipeline; }
+
+        VkPipelineLayout getPipelineLayout() { return m_vkPipelineLayout; }
+
+        VkDescriptorSetLayout getDiscriptorSetLayout() { return m_descriptorSetLayout; }
 
         std::vector<VkFramebuffer> getFramebuffers() { return m_swapChainFramebuffers; }
     };
