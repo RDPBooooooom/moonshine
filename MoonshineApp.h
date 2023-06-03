@@ -28,9 +28,14 @@
 namespace moonshine {
 
     const std::vector<Vertex> vertices = {
-            {{0.0f,  -0.5f}, {1.0f, 1.0f, 1.0f}},
-            {{0.5f,  0.5f},  {0.0f, 1.0f, 0.0f}},
-            {{-0.5f, 0.5f},  {0.0f, 0.0f, 1.0f}}
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+            {{0.5f,  -0.5f}, {0.0f, 1.0f, 0.0f}},
+            {{0.5f,  0.5f},  {0.0f, 0.0f, 1.0f}},
+            {{-0.5f, 0.5f},  {1.0f, 1.0f, 1.0f}}
+    };
+
+    const std::vector<uint16_t> indices = {
+            0, 1, 2, 2, 3, 0
     };
 
     class MoonshineApp {
@@ -50,6 +55,8 @@ namespace moonshine {
         VkCommandPool m_vkCommandPool;
         VkBuffer m_vertexBuffer;
         VkDeviceMemory m_vertexBufferMemory;
+        VkBuffer m_indexBuffer;
+        VkDeviceMemory m_indexBufferMemory;
         std::vector<VkCommandBuffer> m_vkCommandBuffers;
         std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
         std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
@@ -61,6 +68,7 @@ namespace moonshine {
         void initVulkan() {
             createCommandPool();
             createVertexBuffer();
+            createIndexBuffer();
             createCommandBuffer();
             createSyncObjects();
         }
@@ -101,7 +109,8 @@ namespace moonshine {
             allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
             /*
-             * TODO: vkAllocate should not me called because of maxMemoryAllocationCount
+             * TODO: vkAllocate should not me called because of maxMemoryAllocationCount. 
+             * If you do this for every single buffer it might be exceeded
              * You need to handles this either by yourself or use something like
              * https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
             */
@@ -130,6 +139,29 @@ namespace moonshine {
                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vertexBuffer, m_vertexBufferMemory);
 
             copyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
+
+            vkDestroyBuffer(m_device.getVkDevice(), stagingBuffer, nullptr);
+            vkFreeMemory(m_device.getVkDevice(), stagingBufferMemory, nullptr);
+        }
+
+        void createIndexBuffer() {
+            VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingBufferMemory;
+            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
+                         stagingBufferMemory);
+
+            void *data;
+            vkMapMemory(m_device.getVkDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+            memcpy(data, indices.data(), (size_t) bufferSize);
+            vkUnmapMemory(m_device.getVkDevice(), stagingBufferMemory);
+
+            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_indexBuffer, m_indexBufferMemory);
+
+            copyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
 
             vkDestroyBuffer(m_device.getVkDevice(), stagingBuffer, nullptr);
             vkFreeMemory(m_device.getVkDevice(), stagingBufferMemory, nullptr);
@@ -340,7 +372,9 @@ namespace moonshine {
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-            vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+            vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
             vkCmdEndRenderPass(commandBuffer);
 
             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -349,6 +383,9 @@ namespace moonshine {
         }
 
         void cleanup() {
+
+            vkDestroyBuffer(m_device.getVkDevice(), m_indexBuffer, nullptr);
+            vkFreeMemory(m_device.getVkDevice(), m_indexBufferMemory, nullptr);
 
             vkDestroyBuffer(m_device.getVkDevice(), m_vertexBuffer, nullptr);
             vkFreeMemory(m_device.getVkDevice(), m_vertexBufferMemory, nullptr);
