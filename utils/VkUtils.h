@@ -12,6 +12,7 @@
 #include "vec3.hpp"
 #include "vec2.hpp"
 #include "glm.hpp"
+#include "array"
 
 namespace moonshine {
     const std::vector<const char *> validationLayers = {

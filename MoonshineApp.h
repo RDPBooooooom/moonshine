@@ -28,17 +28,19 @@
 #include "graphics/Pipeline.h"
 #include "ext/matrix_transform.hpp"
 #include "ext/matrix_clip_space.hpp"
+#include "graphics/GpuBuffer.h"
+#include "utils/BufferUtils.h"
 
 namespace moonshine {
 
-    const std::vector<Vertex> vertices = {
+    inline std::vector<Vertex> vertices = {
             {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
             {{0.5f,  -0.5f}, {0.0f, 1.0f, 0.0f}},
             {{0.5f,  0.5f},  {0.0f, 0.0f, 1.0f}},
             {{-0.5f, 0.5f},  {1.0f, 1.0f, 1.0f}}
     };
 
-    const std::vector<uint16_t> indices = {
+    inline std::vector<uint16_t> indices = {
             0, 1, 2, 2, 3, 0
     };
 
@@ -53,14 +55,12 @@ namespace moonshine {
 
         void run();
 
-        bool m_framebufferResized = false;
     private:
 
         VkCommandPool m_vkCommandPool;
-        VkBuffer m_vertexBuffer;
-        VkDeviceMemory m_vertexBufferMemory;
-        VkBuffer m_indexBuffer;
-        VkDeviceMemory m_indexBufferMemory;
+
+        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
+        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
 
         std::vector<VkBuffer> m_uniformBuffers;
         std::vector<VkDeviceMemory> m_uniformBuffersMemory;
@@ -79,29 +79,17 @@ namespace moonshine {
 
         void initVulkan() {
             createCommandPool();
-            createVertexBuffer();
-            createIndexBuffer();
+            
+            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(vertices, m_device, m_vkCommandPool);
+            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(indices, m_device, m_vkCommandPool);
+            
             createUniformBuffers();
             createDescriptorPool();
             createDescriptorSets();
             createCommandBuffer();
             createSyncObjects();
         }
-
-        void createCommandPool() {
-            QueueFamilyIndices queueFamilyIndices = findQueueFamilies(m_device.getVkPhysicalDevice(),
-                                                                      m_device.getVkSurface());
-
-            VkCommandPoolCreateInfo poolInfo{};
-            poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-            poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-            poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-            if (vkCreateCommandPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_vkCommandPool) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create command pool!");
-            }
-        }
-
+        
         void
         createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
                      VkDeviceMemory &bufferMemory) {
@@ -121,7 +109,7 @@ namespace moonshine {
             VkMemoryAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, m_device);
 
             /*
              * TODO: vkAllocate should not me called because of maxMemoryAllocationCount. 
@@ -136,50 +124,53 @@ namespace moonshine {
             vkBindBufferMemory(m_device.getVkDevice(), buffer, bufferMemory, 0);
         }
 
-        void createVertexBuffer() {
-            VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+            VkCommandBufferAllocateInfo allocInfo{};
+            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            allocInfo.commandPool = m_vkCommandPool;
+            allocInfo.commandBufferCount = 1;
 
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingBufferMemory;
-            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                         stagingBufferMemory);
+            VkCommandBuffer commandBuffer;
+            vkAllocateCommandBuffers(m_device.getVkDevice(), &allocInfo, &commandBuffer);
 
-            void *data;
-            vkMapMemory(m_device.getVkDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, vertices.data(), (size_t) bufferSize);
-            vkUnmapMemory(m_device.getVkDevice(), stagingBufferMemory);
+            VkCommandBufferBeginInfo beginInfo{};
+            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vertexBuffer, m_vertexBufferMemory);
+            vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-            copyBuffer(stagingBuffer, m_vertexBuffer, bufferSize);
+            VkBufferCopy copyRegion{};
+            copyRegion.srcOffset = 0; // Optional
+            copyRegion.dstOffset = 0; // Optional
+            copyRegion.size = size;
+            vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 
-            vkDestroyBuffer(m_device.getVkDevice(), stagingBuffer, nullptr);
-            vkFreeMemory(m_device.getVkDevice(), stagingBufferMemory, nullptr);
+            vkEndCommandBuffer(commandBuffer);
+
+            VkSubmitInfo submitInfo{};
+            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+            submitInfo.commandBufferCount = 1;
+            submitInfo.pCommandBuffers = &commandBuffer;
+
+            vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+            vkQueueWaitIdle(m_device.getGraphicsQueue());
+
+            vkFreeCommandBuffers(m_device.getVkDevice(), m_vkCommandPool, 1, &commandBuffer);
         }
+        
+        void createCommandPool() {
+            QueueFamilyIndices queueFamilyIndices = findQueueFamilies(m_device.getVkPhysicalDevice(),
+                                                                      m_device.getVkSurface());
 
-        void createIndexBuffer() {
-            VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+            VkCommandPoolCreateInfo poolInfo{};
+            poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+            poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingBufferMemory;
-            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                         stagingBufferMemory);
-
-            void *data;
-            vkMapMemory(m_device.getVkDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, indices.data(), (size_t) bufferSize);
-            vkUnmapMemory(m_device.getVkDevice(), stagingBufferMemory);
-
-            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_indexBuffer, m_indexBufferMemory);
-
-            copyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
-
-            vkDestroyBuffer(m_device.getVkDevice(), stagingBuffer, nullptr);
-            vkFreeMemory(m_device.getVkDevice(), stagingBufferMemory, nullptr);
+            if (vkCreateCommandPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_vkCommandPool) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create command pool!");
+            }
         }
 
         void createUniformBuffers() {
@@ -249,55 +240,6 @@ namespace moonshine {
 
                 vkUpdateDescriptorSets(m_device.getVkDevice(), 1, &descriptorWrite, 0, nullptr);
             }
-        }
-
-        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-            VkCommandBufferAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = m_vkCommandPool;
-            allocInfo.commandBufferCount = 1;
-
-            VkCommandBuffer commandBuffer;
-            vkAllocateCommandBuffers(m_device.getVkDevice(), &allocInfo, &commandBuffer);
-
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-            vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-            VkBufferCopy copyRegion{};
-            copyRegion.srcOffset = 0; // Optional
-            copyRegion.dstOffset = 0; // Optional
-            copyRegion.size = size;
-            vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-            vkEndCommandBuffer(commandBuffer);
-
-            VkSubmitInfo submitInfo{};
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
-
-            vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(m_device.getGraphicsQueue());
-
-            vkFreeCommandBuffers(m_device.getVkDevice(), m_vkCommandPool, 1, &commandBuffer);
-        }
-
-        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
-            VkPhysicalDeviceMemoryProperties memProperties;
-            vkGetPhysicalDeviceMemoryProperties(m_device.getVkPhysicalDevice(), &memProperties);
-
-            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-                if ((typeFilter & (1 << i)) &&
-                    (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                    return i;
-                }
-            }
-
-            throw std::runtime_error("failed to find suitable memory type!");
         }
 
         void createCommandBuffer() {
@@ -407,7 +349,7 @@ namespace moonshine {
 
             result = vkQueuePresentKHR(m_device.getPresentQueue(), &presentInfo);
 
-            if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_framebufferResized) {
+            if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.m_framebufferResized) {
                 m_pipeline.recreateSwapChain();
             } else if (result != VK_SUCCESS) {
                 throw std::runtime_error("failed to present swap chain image");
@@ -477,11 +419,11 @@ namespace moonshine {
             scissor.extent = m_pipeline.getSwapChainExtent();
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-            VkBuffer vertexBuffers[] = {m_vertexBuffer};
+            VkBuffer vertexBuffers[] = {m_vertexBuffer->getBuffer()};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-            vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+            vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.getPipelineLayout(), 0,
                                     1, &m_descriptorSets[m_currentFrame], 0, nullptr);
@@ -498,12 +440,6 @@ namespace moonshine {
         void cleanup() {
 
             vkDestroyDescriptorPool(m_device.getVkDevice(), m_descriptorPool, nullptr);
-
-            vkDestroyBuffer(m_device.getVkDevice(), m_indexBuffer, nullptr);
-            vkFreeMemory(m_device.getVkDevice(), m_indexBufferMemory, nullptr);
-
-            vkDestroyBuffer(m_device.getVkDevice(), m_vertexBuffer, nullptr);
-            vkFreeMemory(m_device.getVkDevice(), m_vertexBufferMemory, nullptr);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
                 vkDestroyBuffer(m_device.getVkDevice(), m_uniformBuffers[i], nullptr);

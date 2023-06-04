@@ -397,6 +397,7 @@ namespace moonshine {
         int width = 0, height = 0;
         width = m_window.m_width;
         height = m_window.m_height;
+        m_window.m_framebufferResized = false;
 
         while (width == 0 || height == 0) {
             width = m_window.m_width;
