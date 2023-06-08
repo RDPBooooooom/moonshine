@@ -46,21 +46,22 @@ namespace moonshine {
 
     class MoonshineApp {
     private:
+        
         // Members
         Window m_window = Window(APP_NAME, WIDTH, HEIGHT);
         Device m_device = Device(m_window);
-        Pipeline m_pipeline = Pipeline(m_window, m_device);;
+        Pipeline m_pipeline = Pipeline(m_window, m_device);
+
+        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
+        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
+        
+        VkCommandPool m_vkCommandPool;
 
     public:
 
         void run();
 
     private:
-
-        VkCommandPool m_vkCommandPool;
-
-        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
-        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
 
         std::vector<VkBuffer> m_uniformBuffers;
         std::vector<VkDeviceMemory> m_uniformBuffersMemory;
@@ -80,8 +81,8 @@ namespace moonshine {
         void initVulkan() {
             createCommandPool();
             
-            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(vertices, m_device, m_vkCommandPool);
-            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(indices, m_device, m_vkCommandPool);
+            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(vertices, m_device, m_vkCommandPool, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(indices, m_device, m_vkCommandPool, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
             
             createUniformBuffers();
             createDescriptorPool();
@@ -438,7 +439,6 @@ namespace moonshine {
         }
 
         void cleanup() {
-
             vkDestroyDescriptorPool(m_device.getVkDevice(), m_descriptorPool, nullptr);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -453,6 +453,9 @@ namespace moonshine {
             }
 
             vkDestroyCommandPool(m_device.getVkDevice(), m_vkCommandPool, nullptr);
+            
+            m_vertexBuffer = nullptr;
+            m_indexBuffer = nullptr;
         }
     };
 

@@ -10,7 +10,7 @@
 
 namespace moonshine {
 
-    Pipeline::Pipeline(Window &window, Device &device) : m_window{window}, m_device{device} {
+    Pipeline::Pipeline(Window &window, Device &device) : m_window{&window}, m_device{&device} {
         createSwapChain();
         createImageViews();
         createRenderPass();
@@ -22,15 +22,15 @@ namespace moonshine {
     Pipeline::~Pipeline() {
         cleanupSwapChain();
 
-        vkDestroyDescriptorSetLayout(m_device.getVkDevice(), m_descriptorSetLayout, nullptr);
-        vkDestroyPipeline(m_device.getVkDevice(), m_vkGraphicsPipeline, nullptr);
-        vkDestroyPipelineLayout(m_device.getVkDevice(), m_vkPipelineLayout, nullptr);
-        vkDestroyRenderPass(m_device.getVkDevice(), m_vkRenderPass, nullptr);
+        vkDestroyDescriptorSetLayout(m_device->getVkDevice(), m_descriptorSetLayout, nullptr);
+        vkDestroyPipeline(m_device->getVkDevice(), m_vkGraphicsPipeline, nullptr);
+        vkDestroyPipelineLayout(m_device->getVkDevice(), m_vkPipelineLayout, nullptr);
+        vkDestroyRenderPass(m_device->getVkDevice(), m_vkRenderPass, nullptr);
     }
 
     void Pipeline::createSwapChain() {
-        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(m_device.getVkPhysicalDevice(),
-                                                                         m_device.getVkSurface());
+        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(m_device->getVkPhysicalDevice(),
+                                                                         m_device->getVkSurface());
 
         VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
         VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -44,7 +44,7 @@ namespace moonshine {
 
         VkSwapchainCreateInfoKHR createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        createInfo.surface = m_device.getVkSurface();
+        createInfo.surface = m_device->getVkSurface();
 
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
@@ -53,7 +53,7 @@ namespace moonshine {
         createInfo.imageArrayLayers = 1;
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-        QueueFamilyIndices indices = findQueueFamilies(m_device.getVkPhysicalDevice(), m_device.getVkSurface());
+        QueueFamilyIndices indices = findQueueFamilies(m_device->getVkPhysicalDevice(), m_device->getVkSurface());
         uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
         if (indices.graphicsFamily != indices.presentFamily) {
@@ -72,13 +72,13 @@ namespace moonshine {
         createInfo.clipped = VK_TRUE;
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-        if (vkCreateSwapchainKHR(m_device.getVkDevice(), &createInfo, nullptr, &m_vkSwapChain) != VK_SUCCESS) {
+        if (vkCreateSwapchainKHR(m_device->getVkDevice(), &createInfo, nullptr, &m_vkSwapChain) != VK_SUCCESS) {
             throw std::runtime_error("failed to create swap chain!");
         }
 
-        vkGetSwapchainImagesKHR(m_device.getVkDevice(), m_vkSwapChain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(m_device->getVkDevice(), m_vkSwapChain, &imageCount, nullptr);
         m_swapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(m_device.getVkDevice(), m_vkSwapChain, &imageCount, m_swapChainImages.data());
+        vkGetSwapchainImagesKHR(m_device->getVkDevice(), m_vkSwapChain, &imageCount, m_swapChainImages.data());
 
         m_swapChainImageFormat = surfaceFormat.format;
         m_swapChainExtent = extent;
@@ -111,8 +111,8 @@ namespace moonshine {
             return capabilities.currentExtent;
         } else {
             int width, height;
-            width = m_window.m_width;
-            height = m_window.m_height;
+            width = m_window->m_width;
+            height = m_window->m_height;
 
             VkExtent2D actualExtent = {
                     static_cast<uint32_t>(width),
@@ -151,7 +151,7 @@ namespace moonshine {
             createInfo.subresourceRange.layerCount = 1;
 
 
-            if (vkCreateImageView(m_device.getVkDevice(), &createInfo, nullptr, &m_swapChainImageViews[i]) !=
+            if (vkCreateImageView(m_device->getVkDevice(), &createInfo, nullptr, &m_swapChainImageViews[i]) !=
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to create image views!");
             }
@@ -188,7 +188,7 @@ namespace moonshine {
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &subpass;
 
-        if (vkCreateRenderPass(m_device.getVkDevice(), &renderPassInfo, nullptr, &m_vkRenderPass) != VK_SUCCESS) {
+        if (vkCreateRenderPass(m_device->getVkDevice(), &renderPassInfo, nullptr, &m_vkRenderPass) != VK_SUCCESS) {
             throw std::runtime_error("failed to create render pass!");
         }
 
@@ -319,7 +319,7 @@ namespace moonshine {
         pipelineLayoutInfo.setLayoutCount = 1;
         pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
-        if (vkCreatePipelineLayout(m_device.getVkDevice(), &pipelineLayoutInfo, nullptr, &m_vkPipelineLayout) !=
+        if (vkCreatePipelineLayout(m_device->getVkDevice(), &pipelineLayoutInfo, nullptr, &m_vkPipelineLayout) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
         }
@@ -344,14 +344,14 @@ namespace moonshine {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
         pipelineInfo.basePipelineIndex = -1; // Optional
 
-        if (vkCreateGraphicsPipelines(m_device.getVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
+        if (vkCreateGraphicsPipelines(m_device->getVkDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
                                       &m_vkGraphicsPipeline) !=
             VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics pipeline!");
         }
 
-        vkDestroyShaderModule(m_device.getVkDevice(), fragShaderModule, nullptr);
-        vkDestroyShaderModule(m_device.getVkDevice(), vertShaderModule, nullptr);
+        vkDestroyShaderModule(m_device->getVkDevice(), fragShaderModule, nullptr);
+        vkDestroyShaderModule(m_device->getVkDevice(), vertShaderModule, nullptr);
     }
 
     VkShaderModule Pipeline::createShaderModule(const std::vector<char> &code) {
@@ -361,7 +361,7 @@ namespace moonshine {
         createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
         VkShaderModule shaderModule;
-        if (vkCreateShaderModule(m_device.getVkDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        if (vkCreateShaderModule(m_device->getVkDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
             throw std::runtime_error("failed to create shader module!");
         }
 
@@ -385,7 +385,7 @@ namespace moonshine {
             framebufferInfo.height = m_swapChainExtent.height;
             framebufferInfo.layers = 1;
 
-            if (vkCreateFramebuffer(m_device.getVkDevice(), &framebufferInfo, nullptr,
+            if (vkCreateFramebuffer(m_device->getVkDevice(), &framebufferInfo, nullptr,
                                     &m_swapChainFramebuffers[i]) !=
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebuffer!");
@@ -395,17 +395,17 @@ namespace moonshine {
 
     void Pipeline::recreateSwapChain() {
         int width = 0, height = 0;
-        width = m_window.m_width;
-        height = m_window.m_height;
-        m_window.m_framebufferResized = false;
+        width = m_window->m_width;
+        height = m_window->m_height;
+        m_window->m_framebufferResized = false;
 
         while (width == 0 || height == 0) {
-            width = m_window.m_width;
-            height = m_window.m_height;
+            width = m_window->m_width;
+            height = m_window->m_height;
             glfwWaitEvents();
         }
 
-        vkDeviceWaitIdle(m_device.getVkDevice());
+        vkDeviceWaitIdle(m_device->getVkDevice());
 
         cleanupSwapChain();
 
@@ -416,14 +416,14 @@ namespace moonshine {
 
     void Pipeline::cleanupSwapChain() {
         for (auto &m_swapChainFramebuffer: m_swapChainFramebuffers) {
-            vkDestroyFramebuffer(m_device.getVkDevice(), m_swapChainFramebuffer, nullptr);
+            vkDestroyFramebuffer(m_device->getVkDevice(), m_swapChainFramebuffer, nullptr);
         }
 
         for (auto &m_swapChainImageView: m_swapChainImageViews) {
-            vkDestroyImageView(m_device.getVkDevice(), m_swapChainImageView, nullptr);
+            vkDestroyImageView(m_device->getVkDevice(), m_swapChainImageView, nullptr);
         }
 
-        vkDestroySwapchainKHR(m_device.getVkDevice(), m_vkSwapChain, nullptr);
+        vkDestroySwapchainKHR(m_device->getVkDevice(), m_vkSwapChain, nullptr);
     }
 
     void Pipeline::createDescriptorSetLayout() {
@@ -439,7 +439,7 @@ namespace moonshine {
         layoutInfo.bindingCount = 1;
         layoutInfo.pBindings = &uboLayoutBinding;
 
-        if (vkCreateDescriptorSetLayout(m_device.getVkDevice(), &layoutInfo, nullptr, &m_descriptorSetLayout) != VK_SUCCESS) {
+        if (vkCreateDescriptorSetLayout(m_device->getVkDevice(), &layoutInfo, nullptr, &m_descriptorSetLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
     }

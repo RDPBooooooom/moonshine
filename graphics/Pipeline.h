@@ -13,8 +13,8 @@ namespace moonshine {
     class Pipeline {
 
     private:
-        Window m_window;
-        Device m_device;
+        Window* m_window;
+        Device* m_device;
 
         VkSwapchainKHR m_vkSwapChain;
         std::vector<VkImage> m_swapChainImages;
