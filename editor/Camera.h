@@ -6,7 +6,9 @@
 #define MOONSHINE_CAMERA_H
 
 #include "Transform.h"
-#include "ext/matrix_float4x4.hpp"
+#include<glm/glm.hpp>
+#include<glm/gtc/quaternion.hpp>
+#include<glm/common.hpp>
 
 namespace moonshine {
 
@@ -14,11 +16,13 @@ namespace moonshine {
 
     private:
         Transform m_transform{};
-        
+
     public:
         Camera();
-        
-        glm::mat4 GetViewmat();
+
+        glm::mat4 GetViewMat();
+
+        Transform *getTransform() { return &m_transform; }
     };
 
 } // moonshine

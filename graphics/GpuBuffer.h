@@ -8,8 +8,6 @@
 #include "Device.h"
 
 namespace moonshine {
-
-    static int I = 0;
     
     template<typename T>
     class GpuBuffer {

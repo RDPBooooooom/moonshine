@@ -5,9 +5,10 @@
 #ifndef MOONSHINE_TRANSFORM_H
 #define MOONSHINE_TRANSFORM_H
 
-#include "glm/gtc/vec1.hpp"
-#include "glm/gtc/quaternion.hpp"
-#include "fwd.hpp"
+
+#include<glm/glm.hpp>
+#include<glm/gtc/quaternion.hpp>
+#include<glm/common.hpp>
 
 struct Transform{
     glm::vec3 position;

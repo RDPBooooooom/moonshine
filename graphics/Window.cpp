@@ -9,17 +9,16 @@
 #include "GLFW/glfw3.h"
 
 namespace moonshine {
-    
-    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h} {
-        
+
+    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h}, m_window(createWindow(w, h, name)),
+                                                     m_inputHandler(m_window) {
         m_name = std::move(name);
-        
-        glfwInit();
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        m_window = glfwCreateWindow(m_width, m_height, m_name.c_str(), nullptr, nullptr);
 
         glfwSetWindowUserPointer(m_window, this);
         glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
+        glfwSetKeyCallback(m_window, keyCallback);
+
+        m_inputHandler = InputHandler(m_window);
     }
 
     Window::~Window() {
@@ -28,8 +27,8 @@ namespace moonshine {
         glfwTerminate();
     }
 
-    void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto moonWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+    void Window::framebufferResizeCallback(GLFWwindow *window, int width, int height) {
+        auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
         moonWindow->m_framebufferResized = true;
         moonWindow->m_width = width;
         moonWindow->m_height = height;
@@ -43,5 +42,10 @@ namespace moonshine {
 
     bool Window::shouldClose() {
         return glfwWindowShouldClose(m_window);
+    }
+
+    void Window::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        moonWindow->getInputHandler()->onKeypress(key, scancode, action, mods);
     }
 } // moonshine

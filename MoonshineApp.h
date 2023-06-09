@@ -26,23 +26,48 @@
 #include "graphics/Window.h"
 #include "graphics/Device.h"
 #include "graphics/Pipeline.h"
-#include "ext/matrix_transform.hpp"
-#include "ext/matrix_clip_space.hpp"
 #include "graphics/GpuBuffer.h"
 #include "utils/BufferUtils.h"
+#include "editor/Camera.h"
+#include<glm/glm.hpp>
+#include<glm/gtc/quaternion.hpp>
+#include<glm/common.hpp>
 
 namespace moonshine {
 
     inline std::vector<Vertex> vertices = {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-            {{0.5f,  -0.5f}, {0.0f, 1.0f, 0.0f}},
-            {{0.5f,  0.5f},  {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f},  {1.0f, 1.0f, 1.0f}}
+            {{-0.5f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}}, // front_top_Left
+            {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}}, //front_top_right
+            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}, // front_bot_left
+            {{0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}}, // front_bot_right
+
+            {{-0.5f, 0.5f, 1.0f}, {1.0f, 0.0f, 0.0f}}, // back_top_left
+            {{0.5f, 0.5f, 1.0f}, {0.0f, 1.0f, 0.0f}}, // back_top_right
+            {{-0.5f, -0.5f, 1.0f}, {0.0f, 0.0f, 1.0f}}, // back_bot_left
+            {{0.5f, -0.5f, 1.0f}, {1.0f, 1.0f, 1.0f}}, // back_bot_right
     };
 
     inline std::vector<uint16_t> indices = {
-            0, 1, 2, 2, 3, 0
+            // TOP
+            0, 4, 1,
+            1, 4, 5,
+            // Front
+            2, 0, 3,
+            3, 0, 1,
+            // BOT
+            6, 2, 7,
+            7, 2, 3,
+            // Right
+            7, 3, 5,
+            5, 3, 1,
+            // LEFT
+            4, 0, 6,
+            6, 0, 2,
+            // BACK
+            4, 6, 5,
+            5, 6, 7
     };
+
 
     class MoonshineApp {
     private:
@@ -56,9 +81,12 @@ namespace moonshine {
         std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
         
         VkCommandPool m_vkCommandPool;
+        
+        Camera m_camera;
 
     public:
 
+        MoonshineApp();
         void run();
 
     private:
@@ -78,6 +106,10 @@ namespace moonshine {
 
     private:
 
+        void keyPressedLog(){
+            std::cout << "Hey pressed button";
+        }
+        
         void initVulkan() {
             createCommandPool();
             
@@ -366,10 +398,11 @@ namespace moonshine {
             float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
             UniformBufferObject ubo{};
-            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                                   glm::vec3(0.0f, 0.0f, 1.0f));
             
+            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.view = m_camera.GetViewMat();
+            //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
+            //                       glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), m_pipeline.getSwapChainExtent().width /
                                                              (float) m_pipeline.getSwapChainExtent().height, 0.1f,
                                         10.0f);
