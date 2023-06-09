@@ -21,4 +21,4 @@ namespace moonshine {
         cleanup();
     }
 
-} // moonshine
+} // moonshined
