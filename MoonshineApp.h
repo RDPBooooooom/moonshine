@@ -32,6 +32,7 @@
 #include<glm/glm.hpp>
 #include<glm/gtc/quaternion.hpp>
 #include<glm/common.hpp>
+#include "editor/Time.h"
 
 namespace moonshine {
 
@@ -108,6 +109,10 @@ namespace moonshine {
 
         void keyPressedLog(){
             std::cout << "Hey pressed button";
+        }
+
+        void keyPressedLog2(){
+            std::cout << "Hey pressed button2";
         }
         
         void initVulkan() {
@@ -316,8 +321,11 @@ namespace moonshine {
         }
 
         void mainLoop() {
+            Time::initTime();
             while (!m_window.shouldClose()) {
+                Time::calcDeltaTime();
                 glfwPollEvents();
+                m_window.getInputHandler()->triggerEvents();
                 drawFrame();
             }
 
@@ -400,7 +408,7 @@ namespace moonshine {
             UniformBufferObject ubo{};
             
             ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.view = m_camera.GetViewMat();
+            ubo.view = m_camera.getViewMat();
             //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
             //                       glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), m_pipeline.getSwapChainExtent().width /

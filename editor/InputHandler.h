@@ -8,24 +8,58 @@
 #include <functional>
 #include <map>
 #include "GLFW/glfw3.h"
+#include "../utils/InputtUtils.h"
 
 namespace moonshine {
-    
+
+    struct KeyFunction {
+        int id = 0;
+        std::function<void()> function = nullptr;
+    };
+
+    struct MouseFunction {
+        int id = 0;
+        std::function<void(CursorPosition)> function = nullptr;
+    };
+
+    static int NEXT_FUNCTION_ID = 1;
+
+    class Window;
+
     class InputHandler {
 
     private:
         GLFWwindow *m_window;
-        std::map<int, std::vector<std::function<void()>>> registeredEvents;
-        
-    private:
-        
-    public:
-        explicit InputHandler(GLFWwindow* m_window);
-        void onKeypress(int key, int scancode, int action, int mods);
-        
-        void registerKeyEvent(int key, const std::function<void()>& callback);
+        std::vector<int> m_pressedKeys;
+        std::map<int, std::vector<KeyFunction>> m_registeredEvents;
+        std::vector<MouseFunction> m_registeredMouseEvents;
+        CursorPosition m_cursorPosition;
 
-        void unregisterKeyEvent(int key, std::function<void()>& callback);
+    private:
+        void addKey(int key);
+
+        void removeKey(int key);
+
+        void updateCursorPos();
+
+    public:
+        InputHandler(GLFWwindow *window);
+
+        void onKeypress(int key, int scancode, int action, int mods);
+
+        int registerKeyEvent(int key, const std::function<void()> &callback);
+
+        int registerMouseEvent(std::function<void(CursorPosition)> &callback);
+
+        void unregisterKeyEvent(int functionId);
+
+        static int getNewFuncId() {
+            return NEXT_FUNCTION_ID++;
+        }
+
+        void triggerEvents();
+
+
     };
 
 } // moonshine

@@ -5,56 +5,95 @@
 #include "InputHandler.h"
 
 namespace moonshine {
-    InputHandler::InputHandler(GLFWwindow *glfwWindow) : m_window{glfwWindow} {
+
+    InputHandler::InputHandler(GLFWwindow *window) : m_window{window} {
+
     }
 
     void InputHandler::onKeypress(int key, int scancode, int action, int mods) {
-        std::vector<std::function<void()>> linkedCallbacks = registeredEvents[key];
 
-        if (linkedCallbacks.empty()) return;
-
-        for (const auto &function: linkedCallbacks) {
-            function();
+        switch (action) {
+            case GLFW_PRESS:
+                addKey(key);
+                break;
+            case GLFW_RELEASE:
+                removeKey(key);
+                break;
         }
     }
 
-    void InputHandler::registerKeyEvent(int key, const std::function<void()> &callback) {
-        std::vector<std::function<void()>> *linkedCallbacks = &registeredEvents[key];
+    int InputHandler::registerKeyEvent(int key, const std::function<void()> &callback) {
+        std::vector<KeyFunction> *linkedCallbacks = &m_registeredEvents[key];
 
-        linkedCallbacks->push_back(callback);
+        KeyFunction newFunc{getNewFuncId(), callback};
 
-        registeredEvents[key] = *linkedCallbacks;
+        linkedCallbacks->push_back(newFunc);
+
+        m_registeredEvents[key] = *linkedCallbacks;
+
+        return newFunc.id;
     }
 
-    struct compare {
-        const std::function<void()> *extension;
-        std::function<void()> result;
+    int InputHandler::registerMouseEvent(std::function<void(CursorPosition)> &callback) {
+        MouseFunction newFunc{getNewFuncId(), callback};
 
-        explicit compare(const std::function<void()> *extension) : extension(extension) {}
+        m_registeredMouseEvents.push_back(newFunc);
 
-        bool operator()(std::function<void()> &toCompare) {
-            bool r = getAddress(toCompare) == getAddress(*extension);
-            if (r) result = toCompare;
-            return r;
-        }
+        return newFunc.id;
+    }
 
-        template<typename T, typename... U>
-        size_t getAddress(std::function<T(U...)> f) {
-            typedef T(fnType)(U...);
-            fnType **fnPointer = f.template target<fnType *>();
-            return (size_t) *fnPointer;
+    struct IdFinder {
+        int functionID;
+
+        IdFinder(int functionID) : functionID(functionID) {}
+
+        bool operator()(KeyFunction &toCompare) {
+            return toCompare.id == functionID;
         }
     };
 
-    void InputHandler::unregisterKeyEvent(int key, std::function<void()> &callback) {
-        std::vector<std::function<void()>> linkedCallbacks = registeredEvents[key];
+    void InputHandler::unregisterKeyEvent(int functionID) {
 
-        if (linkedCallbacks.empty()) return;
-        
-        compare toCompare = compare(&callback);
-        auto it = std::find_if(linkedCallbacks.begin(), linkedCallbacks.end(), toCompare);
-        if (it != linkedCallbacks.end()) {
-            linkedCallbacks.erase(it);
+        for (auto pair: m_registeredEvents) {
+            auto item = std::find_if(pair.second.begin(), pair.second.end(), IdFinder(functionID));
+            if (item != pair.second.end()) {
+                pair.second.erase(item);
+                m_registeredEvents[pair.first] = pair.second;
+            }
         }
+    }
+
+    void InputHandler::addKey(int key) {
+        m_pressedKeys.push_back(key);
+    }
+
+    void InputHandler::removeKey(int key) {
+        auto item = std::find(m_pressedKeys.begin(), m_pressedKeys.end(), key);
+        m_pressedKeys.erase(item);
+    }
+
+    void InputHandler::triggerEvents() {
+        updateCursorPos();
+
+        for (const auto &function: m_registeredMouseEvents) {
+            function.function(m_cursorPosition);
+        }
+        for (int key: m_pressedKeys) {
+            auto registeredFunctions = m_registeredEvents[key];
+
+            if (registeredFunctions.empty()) continue;
+
+            for (const auto &function: registeredFunctions) {
+                function.function();
+            }
+        }
+
+    }
+
+    void InputHandler::updateCursorPos() {
+        m_cursorPosition.oldX = m_cursorPosition.x;
+        m_cursorPosition.oldY = m_cursorPosition.y;
+
+        glfwGetCursorPos(m_window, &m_cursorPosition.x, &m_cursorPosition.y);
     }
 } // moonshine

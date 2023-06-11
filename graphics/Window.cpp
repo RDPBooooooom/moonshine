@@ -18,7 +18,7 @@ namespace moonshine {
         glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
         glfwSetKeyCallback(m_window, keyCallback);
 
-        m_inputHandler = InputHandler(m_window);
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
     Window::~Window() {
