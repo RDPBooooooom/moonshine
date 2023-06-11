@@ -2,8 +2,8 @@
 // Created by marvin on 11.06.2023.
 //
 
-#ifndef MOONSHINE_INPUTTUTILS_H
-#define MOONSHINE_INPUTTUTILS_H
+#ifndef MOONSHINE_INPUTUTILS_H
+#define MOONSHINE_INPUTUTILS_H
 
 struct CursorPosition {
     double oldX;
@@ -12,4 +12,4 @@ struct CursorPosition {
     double y;
 };
 
-#endif //MOONSHINE_INPUTTUTILS_H
+#endif //MOONSHINE_INPUTUTILS_H

@@ -33,46 +33,70 @@
 #include<glm/gtc/quaternion.hpp>
 #include<glm/common.hpp>
 #include "editor/Time.h"
+#include "graphics/TextureImage.h"
+#include "graphics/TextureSampler.h"
 
 namespace moonshine {
 
     inline std::vector<Vertex> vertices = {
-            {{-0.5f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}}, // front_top_Left
-            {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}}, //front_top_right
-            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}, // front_bot_left
-            {{0.5f, -0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}}, // front_bot_right
-
-            {{-0.5f, 0.5f, 1.0f}, {1.0f, 0.0f, 0.0f}}, // back_top_left
-            {{0.5f, 0.5f, 1.0f}, {0.0f, 1.0f, 0.0f}}, // back_top_right
-            {{-0.5f, -0.5f, 1.0f}, {0.0f, 0.0f, 1.0f}}, // back_bot_left
-            {{0.5f, -0.5f, 1.0f}, {1.0f, 1.0f, 1.0f}}, // back_bot_right
+            {{-0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 0
+            {{-0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 1
+            {{-0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 2
+//front_top_right 1
+            {{0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 3
+            {{0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 4
+            {{0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 5
+// front_bot_left 2
+            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}},  // 6
+            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 0.0f}},  // 7
+            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}},  // 8
+// front_bot_right 3
+            {{0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}},  // 9
+            {{0.5f, -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 1.0f}},  // 10
+            {{0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}},  // 11
+// back_top_left 4
+            {{-0.5f, 0.5f, 1.0f}, {1, 1, 1}, {0.0f, 1.0f}}, // 12
+            {{-0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 13
+            {{-0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 14
+// back_top_right 5
+            {{0.5f, 0.5f, 1.0f}, {1, 1, 1}, {0.0f, 0.0f}}, // 15
+            {{0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 16
+            {{0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 17
+// back_bot_left 6
+            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}}, // 18 
+            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}}, // 19
+            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}}, // 20
+// back_bot_right 7
+            {{0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}}, // 21 
+            {{0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}}, // 22
+            {{0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}} // 23
     };
 
     inline std::vector<uint16_t> indices = {
-            // TOP
-            0, 4, 1,
-            1, 4, 5,
             // Front
-            2, 0, 3,
-            3, 0, 1,
+            6, 0, 9,
+            9, 0, 3,
+            // TOP
+            1, 12, 4,
+            4, 12, 15,
             // BOT
-            6, 2, 7,
-            7, 2, 3,
+            18, 7, 21,
+            21, 7, 10,
             // Right
-            7, 3, 5,
-            5, 3, 1,
+            22, 11, 16,
+            16, 11, 5,
             // LEFT
-            4, 0, 6,
-            6, 0, 2,
+            13, 2, 19,
+            19, 2, 8,
             // BACK
-            4, 6, 5,
-            5, 6, 7
+            14, 20, 17,
+            17, 20, 23
     };
 
 
     class MoonshineApp {
     private:
-        
+
         // Members
         Window m_window = Window(APP_NAME, WIDTH, HEIGHT);
         Device m_device = Device(m_window);
@@ -80,14 +104,17 @@ namespace moonshine {
 
         std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
         std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
-        
+        std::unique_ptr<TextureImage> m_image;
+        std::unique_ptr<TextureSampler> m_sampler;
+
         VkCommandPool m_vkCommandPool;
-        
+
         Camera m_camera;
 
     public:
 
         MoonshineApp();
+
         void run();
 
     private:
@@ -107,27 +134,23 @@ namespace moonshine {
 
     private:
 
-        void keyPressedLog(){
-            std::cout << "Hey pressed button";
-        }
-
-        void keyPressedLog2(){
-            std::cout << "Hey pressed button2";
-        }
-        
         void initVulkan() {
             createCommandPool();
-            
-            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(vertices, m_device, m_vkCommandPool, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(indices, m_device, m_vkCommandPool, VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-            
+
+            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(vertices, m_device, m_vkCommandPool,
+                                                                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(indices, m_device, m_vkCommandPool,
+                                                                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+            m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device, m_vkCommandPool);
+            m_sampler = std::make_unique<TextureSampler>(&m_device);
+
             createUniformBuffers();
             createDescriptorPool();
             createDescriptorSets();
             createCommandBuffer();
             createSyncObjects();
         }
-        
+
         void
         createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
                      VkDeviceMemory &bufferMemory) {
@@ -147,7 +170,7 @@ namespace moonshine {
             VkMemoryAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, m_device);
+            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, &m_device);
 
             /*
              * TODO: vkAllocate should not me called because of maxMemoryAllocationCount. 
@@ -196,7 +219,7 @@ namespace moonshine {
 
             vkFreeCommandBuffers(m_device.getVkDevice(), m_vkCommandPool, 1, &commandBuffer);
         }
-        
+
         void createCommandPool() {
             QueueFamilyIndices queueFamilyIndices = findQueueFamilies(m_device.getVkPhysicalDevice(),
                                                                       m_device.getVkSurface());
@@ -229,14 +252,16 @@ namespace moonshine {
         }
 
         void createDescriptorPool() {
-            VkDescriptorPoolSize poolSize{};
-            poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            std::array<VkDescriptorPoolSize, 2> poolSizes{};
+            poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
             VkDescriptorPoolCreateInfo poolInfo{};
             poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            poolInfo.poolSizeCount = 1;
-            poolInfo.pPoolSizes = &poolSize;
+            poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+            poolInfo.pPoolSizes = poolSizes.data();
             poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
             if (vkCreateDescriptorPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
@@ -263,20 +288,31 @@ namespace moonshine {
                 bufferInfo.offset = 0;
                 bufferInfo.range = sizeof(UniformBufferObject);
 
-                VkWriteDescriptorSet descriptorWrite{};
-                descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                descriptorWrite.dstSet = m_descriptorSets[i];
-                descriptorWrite.dstBinding = 0;
-                descriptorWrite.dstArrayElement = 0;
+                VkDescriptorImageInfo imageInfo{};
+                imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imageInfo.imageView = m_image->getImageView();
+                imageInfo.sampler = m_sampler->getVkSampler();
 
-                descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                descriptorWrite.descriptorCount = 1;
+                std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
-                descriptorWrite.pBufferInfo = &bufferInfo;
-                descriptorWrite.pImageInfo = nullptr; // Optional
-                descriptorWrite.pTexelBufferView = nullptr; // Optional
+                descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites[0].dstSet = m_descriptorSets[i];
+                descriptorWrites[0].dstBinding = 0;
+                descriptorWrites[0].dstArrayElement = 0;
+                descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrites[0].descriptorCount = 1;
+                descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-                vkUpdateDescriptorSets(m_device.getVkDevice(), 1, &descriptorWrite, 0, nullptr);
+                descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites[1].dstSet = m_descriptorSets[i];
+                descriptorWrites[1].dstBinding = 1;
+                descriptorWrites[1].dstArrayElement = 0;
+                descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptorWrites[1].descriptorCount = 1;
+                descriptorWrites[1].pImageInfo = &imageInfo;
+
+                vkUpdateDescriptorSets(m_device.getVkDevice(), static_cast<uint32_t>(descriptorWrites.size()),
+                                       descriptorWrites.data(), 0, nullptr);
             }
         }
 
@@ -406,7 +442,7 @@ namespace moonshine {
             float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
             UniformBufferObject ubo{};
-            
+
             ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.view = m_camera.getViewMat();
             //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
@@ -495,7 +531,7 @@ namespace moonshine {
             }
 
             vkDestroyCommandPool(m_device.getVkDevice(), m_vkCommandPool, nullptr);
-            
+
             m_vertexBuffer = nullptr;
             m_indexBuffer = nullptr;
         }

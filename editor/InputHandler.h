@@ -8,7 +8,7 @@
 #include <functional>
 #include <map>
 #include "GLFW/glfw3.h"
-#include "../utils/InputtUtils.h"
+#include "../utils/InputUtils.h"
 
 namespace moonshine {
 

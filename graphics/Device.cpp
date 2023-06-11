@@ -190,6 +190,10 @@ namespace moonshine {
             return 0;
         }
 
+        if (!deviceFeatures.samplerAnisotropy) {
+            return 0;
+        }
+
         // Do this after extensions
         SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, m_vkSurface);
         if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty()) {
@@ -238,6 +242,7 @@ namespace moonshine {
         }
 
         VkPhysicalDeviceFeatures deviceFeatures{};
+        deviceFeatures.samplerAnisotropy = VK_TRUE;
 
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

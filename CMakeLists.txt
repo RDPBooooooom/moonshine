@@ -3,7 +3,7 @@ project(moonshine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputtUtils.h)
+add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
@@ -20,6 +20,8 @@ if (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
         endif ()
     endif ()
 endif ()
+
+include_directories(external/stb/)
 
 # Add and link libraries
 add_subdirectory(external/glfw)
@@ -114,11 +116,15 @@ if(WIN32)
     add_dependencies(${PROJECT_NAME} CompileShaders)
 endif()
 
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
+add_custom_target(
+        CopyShaders ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders
         ${CMAKE_CURRENT_BINARY_DIR}/resources/shaders
         COMMENT "Copying shaders to build directory"
 )
-add_dependencies(${PROJECT_NAME} CompileShaders)
+
+add_dependencies(${PROJECT_NAME} CopyShaders)
+add_dependencies(CopyShaders CompileShaders)
+
+

@@ -27,8 +27,6 @@ namespace moonshine {
             currentFrame = glfwGetTime();
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
-            
-            std::cout << "DT: " << deltaTime << std::endl;
         }
     };
     
