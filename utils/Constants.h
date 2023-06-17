@@ -6,9 +6,6 @@
 
 #ifndef MOONSHINE_CONSTANTS_H
 #define MOONSHINE_CONSTANTS_H
-
-#endif //MOONSHINE_CONSTANTS_H
-
 namespace moonshine {
 
     static const std::string  APP_NAME = "Moonshine";
@@ -17,3 +14,6 @@ namespace moonshine {
 
     static const int MAX_FRAMES_IN_FLIGHT = 2;
 }
+
+#endif //MOONSHINE_CONSTANTS_H
+

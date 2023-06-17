@@ -35,41 +35,42 @@
 #include "editor/Time.h"
 #include "graphics/TextureImage.h"
 #include "graphics/TextureSampler.h"
+#include "graphics/UniformBuffer.h"
 
 namespace moonshine {
 
     inline std::vector<Vertex> vertices = {
-            {{-0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 0
-            {{-0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 1
-            {{-0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 2
+            {{-0.5f, 0.5f,  0.0f}, {1, 1, 1}, {1.0f, 0.0f}, {0,  0,  -1}}, // 0
+            {{-0.5f, 0.5f,  0.0f}, {1, 1, 1}, {1.0f, 1.0f}, {0,  1,  0}}, // 1
+            {{-0.5f, 0.5f,  0.0f}, {1, 1, 1}, {1.0f, 1.0f}, {-1, 0,  0}}, // 2
 //front_top_right 1
-            {{0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 3
-            {{0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 4
-            {{0.5f, 0.5f, 0.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 5
+            {{0.5f,  0.5f,  0.0f}, {1, 1, 1}, {1.0f, 1.0f}, {0,  0,  -1}}, // 3
+            {{0.5f,  0.5f,  0.0f}, {1, 1, 1}, {1.0f, 0.0f}, {0,  1,  0}}, // 4
+            {{0.5f,  0.5f,  0.0f}, {1, 1, 1}, {1.0f, 0.0f}, {1,  0,  0}}, // 5
 // front_bot_left 2
-            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}},  // 6
-            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 0.0f}},  // 7
-            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}},  // 8
+            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}, {0,  0,  -1}},  // 6
+            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 0.0f}, {0,  -1, 0}},  // 7
+            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}, {-1, 0,  0}},  // 8
 // front_bot_right 3
-            {{0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}},  // 9
-            {{0.5f, -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 1.0f}},  // 10
-            {{0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}},  // 11
+            {{0.5f,  -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}, {0,  0,  -1}},  // 9
+            {{0.5f,  -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 1.0f}, {0,  -1, 0}},  // 10
+            {{0.5f,  -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}, {1,  0,  0}},  // 11
 // back_top_left 4
-            {{-0.5f, 0.5f, 1.0f}, {1, 1, 1}, {0.0f, 1.0f}}, // 12
-            {{-0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 13
-            {{-0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 14
+            {{-0.5f, 0.5f,  1.0f}, {1, 1, 1}, {0.0f, 1.0f}, {0,  1,  0}}, // 12
+            {{-0.5f, 0.5f,  1.0f}, {1, 1, 1}, {1.0f, 0.0f}, {-1, 0,  0}}, // 13
+            {{-0.5f, 0.5f,  1.0f}, {1, 1, 1}, {1.0f, 1.0f}, {0,  0,  1}}, // 14
 // back_top_right 5
-            {{0.5f, 0.5f, 1.0f}, {1, 1, 1}, {0.0f, 0.0f}}, // 15
-            {{0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 1.0f}}, // 16
-            {{0.5f, 0.5f, 1.0f}, {1, 1, 1}, {1.0f, 0.0f}}, // 17
+            {{0.5f,  0.5f,  1.0f}, {1, 1, 1}, {0.0f, 0.0f}, {0,  1,  0}}, // 15
+            {{0.5f,  0.5f,  1.0f}, {1, 1, 1}, {1.0f, 1.0f}, {1,  0,  0}}, // 16
+            {{0.5f,  0.5f,  1.0f}, {1, 1, 1}, {1.0f, 0.0f}, {0,  0,  1}}, // 17
 // back_bot_left 6
-            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}}, // 18 
-            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}}, // 19
-            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}}, // 20
+            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}, {0,  -1, 0}}, // 18 
+            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}, {-1, 0,  0}}, // 19
+            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}, {0,  0,  1}}, // 20
 // back_bot_right 7
-            {{0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}}, // 21 
-            {{0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}}, // 22
-            {{0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}} // 23
+            {{0.5f,  -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}, {0,  -1, 0}}, // 21 
+            {{0.5f,  -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}, {1,  -0, 0}}, // 22
+            {{0.5f,  -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}, {0,  0,  1}} // 23
     };
 
     inline std::vector<uint16_t> indices = {
@@ -107,6 +108,9 @@ namespace moonshine {
         std::unique_ptr<TextureImage> m_image;
         std::unique_ptr<TextureSampler> m_sampler;
 
+        std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBO;
+        std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBO;
+
         VkCommandPool m_vkCommandPool;
 
         Camera m_camera;
@@ -118,10 +122,6 @@ namespace moonshine {
         void run();
 
     private:
-
-        std::vector<VkBuffer> m_uniformBuffers;
-        std::vector<VkDeviceMemory> m_uniformBuffersMemory;
-        std::vector<void *> m_uniformBuffersMapped;
 
         VkDescriptorPool m_descriptorPool;
         std::vector<VkDescriptorSet> m_descriptorSets;
@@ -137,87 +137,25 @@ namespace moonshine {
         void initVulkan() {
             createCommandPool();
 
-            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(vertices, m_device, m_vkCommandPool,
-                                                                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(indices, m_device, m_vkCommandPool,
-                                                                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-            m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device, m_vkCommandPool);
+            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>
+                    (vertices, m_device, m_vkCommandPool,
+                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>
+                    (indices, m_device, m_vkCommandPool,
+                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+            m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
+                                                     m_vkCommandPool);
             m_sampler = std::make_unique<TextureSampler>(&m_device);
 
-            createUniformBuffers();
+            m_matrixUBO = std::make_unique<UniformBuffer<UniformBufferObject>>
+                    (&m_device);
+            m_fragUBO = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>
+                    (&m_device);
+
             createDescriptorPool();
             createDescriptorSets();
             createCommandBuffer();
             createSyncObjects();
-        }
-
-        void
-        createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                     VkDeviceMemory &bufferMemory) {
-            VkBufferCreateInfo bufferInfo{};
-            bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            bufferInfo.size = size;
-            bufferInfo.usage = usage;
-            bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-            if (vkCreateBuffer(m_device.getVkDevice(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create buffer!");
-            }
-
-            VkMemoryRequirements memRequirements;
-            vkGetBufferMemoryRequirements(m_device.getVkDevice(), buffer, &memRequirements);
-
-            VkMemoryAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, &m_device);
-
-            /*
-             * TODO: vkAllocate should not me called because of maxMemoryAllocationCount. 
-             * If you do this for every single buffer it might be exceeded
-             * You need to handles this either by yourself or use something like
-             * https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-            */
-            if (vkAllocateMemory(m_device.getVkDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-                throw std::runtime_error("failed to allocate buffer memory!");
-            }
-
-            vkBindBufferMemory(m_device.getVkDevice(), buffer, bufferMemory, 0);
-        }
-
-        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
-            VkCommandBufferAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandPool = m_vkCommandPool;
-            allocInfo.commandBufferCount = 1;
-
-            VkCommandBuffer commandBuffer;
-            vkAllocateCommandBuffers(m_device.getVkDevice(), &allocInfo, &commandBuffer);
-
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-            vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
-            VkBufferCopy copyRegion{};
-            copyRegion.srcOffset = 0; // Optional
-            copyRegion.dstOffset = 0; // Optional
-            copyRegion.size = size;
-            vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-            vkEndCommandBuffer(commandBuffer);
-
-            VkSubmitInfo submitInfo{};
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &commandBuffer;
-
-            vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(m_device.getGraphicsQueue());
-
-            vkFreeCommandBuffers(m_device.getVkDevice(), m_vkCommandPool, 1, &commandBuffer);
         }
 
         void createCommandPool() {
@@ -229,25 +167,9 @@ namespace moonshine {
             poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
             poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 
-            if (vkCreateCommandPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_vkCommandPool) != VK_SUCCESS) {
+            if (vkCreateCommandPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_vkCommandPool) !=
+                VK_SUCCESS) {
                 throw std::runtime_error("failed to create command pool!");
-            }
-        }
-
-        void createUniformBuffers() {
-            VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-            m_uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-            m_uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
-            m_uniformBuffersMapped.resize(MAX_FRAMES_IN_FLIGHT);
-
-            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                             m_uniformBuffers[i], m_uniformBuffersMemory[i]);
-
-                vkMapMemory(m_device.getVkDevice(), m_uniformBuffersMemory[i], 0, bufferSize, 0,
-                            &m_uniformBuffersMapped[i]);
             }
         }
 
@@ -264,13 +186,15 @@ namespace moonshine {
             poolInfo.pPoolSizes = poolSizes.data();
             poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
-            if (vkCreateDescriptorPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS) {
+            if (vkCreateDescriptorPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_descriptorPool) !=
+                VK_SUCCESS) {
                 throw std::runtime_error("failed to create descriptor pool!");
             }
         }
 
         void createDescriptorSets() {
-            std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, m_pipeline.getDiscriptorSetLayout());
+            std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,
+                                                       m_pipeline.getDiscriptorSetLayout());
             VkDescriptorSetAllocateInfo allocInfo{};
             allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
             allocInfo.descriptorPool = m_descriptorPool;
@@ -278,13 +202,14 @@ namespace moonshine {
             allocInfo.pSetLayouts = layouts.data();
 
             m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-            if (vkAllocateDescriptorSets(m_device.getVkDevice(), &allocInfo, m_descriptorSets.data()) != VK_SUCCESS) {
+            if (vkAllocateDescriptorSets(m_device.getVkDevice(), &allocInfo, m_descriptorSets.data()) !=
+                VK_SUCCESS) {
                 throw std::runtime_error("failed to allocate descriptor sets!");
             }
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
                 VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = m_uniformBuffers[i];
+                bufferInfo.buffer = m_matrixUBO->getUniformBuffer(i);
                 bufferInfo.offset = 0;
                 bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -293,7 +218,12 @@ namespace moonshine {
                 imageInfo.imageView = m_image->getImageView();
                 imageInfo.sampler = m_sampler->getVkSampler();
 
-                std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+                VkDescriptorBufferInfo fragBufferInfo{};
+                fragBufferInfo.buffer = m_fragUBO->getUniformBuffer(i);
+                fragBufferInfo.offset = 0;
+                fragBufferInfo.range = sizeof(FragmentUniformBufferObject);
+
+                std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
                 descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 descriptorWrites[0].dstSet = m_descriptorSets[i];
@@ -311,6 +241,14 @@ namespace moonshine {
                 descriptorWrites[1].descriptorCount = 1;
                 descriptorWrites[1].pImageInfo = &imageInfo;
 
+                descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptorWrites[2].dstSet = m_descriptorSets[i];
+                descriptorWrites[2].dstBinding = 2;
+                descriptorWrites[2].dstArrayElement = 0;
+                descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                descriptorWrites[2].descriptorCount = 1;
+                descriptorWrites[2].pBufferInfo = &fragBufferInfo;
+
                 vkUpdateDescriptorSets(m_device.getVkDevice(), static_cast<uint32_t>(descriptorWrites.size()),
                                        descriptorWrites.data(), 0, nullptr);
             }
@@ -325,7 +263,8 @@ namespace moonshine {
             allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             allocInfo.commandBufferCount = (uint32_t) m_vkCommandBuffers.size();
 
-            if (vkAllocateCommandBuffers(m_device.getVkDevice(), &allocInfo, m_vkCommandBuffers.data()) != VK_SUCCESS) {
+            if (vkAllocateCommandBuffers(m_device.getVkDevice(), &allocInfo, m_vkCommandBuffers.data()) !=
+                VK_SUCCESS) {
                 throw std::runtime_error("failed to allocate command buffers!");
             }
         }
@@ -349,7 +288,8 @@ namespace moonshine {
                     vkCreateSemaphore(m_device.getVkDevice(), &semaphoreInfo, nullptr,
                                       &m_vkRenderFinishedSemaphores[i]) !=
                     VK_SUCCESS ||
-                    vkCreateFence(m_device.getVkDevice(), &fenceInfo, nullptr, &m_vkInFlightFences[i]) != VK_SUCCESS) {
+                    vkCreateFence(m_device.getVkDevice(), &fenceInfo, nullptr, &m_vkInFlightFences[i]) !=
+                    VK_SUCCESS) {
 
                     throw std::runtime_error("failed to create synchronization objects for a frame!");
                 }
@@ -369,12 +309,14 @@ namespace moonshine {
         }
 
         void drawFrame() {
-            vkWaitForFences(m_device.getVkDevice(), 1, &m_vkInFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+            vkWaitForFences(m_device.getVkDevice(), 1, &m_vkInFlightFences[m_currentFrame], VK_TRUE,
+                            UINT64_MAX);
 
             updateUniformBuffer(m_currentFrame);
 
             uint32_t imageIndex;
-            VkResult result = vkAcquireNextImageKHR(m_device.getVkDevice(), m_pipeline.getSwapChain(), UINT64_MAX,
+            VkResult result = vkAcquireNextImageKHR(m_device.getVkDevice(), m_pipeline.getSwapChain(),
+                                                    UINT64_MAX,
                                                     m_vkImageAvailableSemaphores[m_currentFrame],
                                                     VK_NULL_HANDLE,
                                                     &imageIndex);
@@ -407,7 +349,8 @@ namespace moonshine {
             submitInfo.signalSemaphoreCount = 1;
             submitInfo.pSignalSemaphores = signalSemaphores;
 
-            if (vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo, m_vkInFlightFences[m_currentFrame]) !=
+            if (vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo,
+                              m_vkInFlightFences[m_currentFrame]) !=
                 VK_SUCCESS) {
                 throw std::runtime_error("failed to submit draw command buffer!");
             }
@@ -426,7 +369,8 @@ namespace moonshine {
 
             result = vkQueuePresentKHR(m_device.getPresentQueue(), &presentInfo);
 
-            if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_window.m_framebufferResized) {
+            if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
+                m_window.m_framebufferResized) {
                 m_pipeline.recreateSwapChain();
             } else if (result != VK_SUCCESS) {
                 throw std::runtime_error("failed to present swap chain image");
@@ -439,7 +383,8 @@ namespace moonshine {
             static auto startTime = std::chrono::high_resolution_clock::now();
 
             auto currentTime = std::chrono::high_resolution_clock::now();
-            float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+            float time = std::chrono::duration<float, std::chrono::seconds::period>(
+                    currentTime - startTime).count();
 
             UniformBufferObject ubo{};
 
@@ -448,8 +393,11 @@ namespace moonshine {
             //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
             //                       glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), m_pipeline.getSwapChainExtent().width /
-                                                             (float) m_pipeline.getSwapChainExtent().height, 0.1f,
+                                                             (float) m_pipeline.getSwapChainExtent().height,
+                                        0.1f,
                                         10.0f);
+            ubo.tangentToWorld = glm::transpose(glm::inverse(
+                    glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))));
 
             /*
              * GLM was originally designed for OpenGL, where the Y coordinate of the clip coordinates is inverted.
@@ -457,7 +405,21 @@ namespace moonshine {
              * in the projection matrix. If you don't do this, then the image will be rendered upside down.
              */
             ubo.proj[1][1] *= -1;
-            memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+
+            Material material{};
+            DirLight light{};
+            light.direction = glm::normalize(glm::vec3(0, 1, -1));
+            light.ambient = glm::vec3(1, 0, 0) * 0.2f;
+            light.diffuse = glm::vec3(0, 1, 0) * 0.8f;
+            light.specular = glm::vec3(0, 0, 1) * 1.0f;
+
+            FragmentUniformBufferObject fragUBO{};
+            fragUBO.dirLight = light;
+            fragUBO.material = material;
+            fragUBO.viewPos = m_camera.getTransform()->position;
+
+            memcpy(m_matrixUBO->getMappedUniformBuffer(currentImage), &ubo, sizeof(ubo));
+            memcpy(m_fragUBO->getMappedUniformBuffer(currentImage), &fragUBO, sizeof(fragUBO));
         }
 
         void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -504,7 +466,8 @@ namespace moonshine {
 
             vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.getPipelineLayout(), 0,
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    m_pipeline.getPipelineLayout(), 0,
                                     1, &m_descriptorSets[m_currentFrame], 0, nullptr);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
@@ -518,11 +481,6 @@ namespace moonshine {
 
         void cleanup() {
             vkDestroyDescriptorPool(m_device.getVkDevice(), m_descriptorPool, nullptr);
-
-            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                vkDestroyBuffer(m_device.getVkDevice(), m_uniformBuffers[i], nullptr);
-                vkFreeMemory(m_device.getVkDevice(), m_uniformBuffersMemory[i], nullptr);
-            }
 
             for (size_t i = 0; i < moonshine::MAX_FRAMES_IN_FLIGHT; i++) {
                 vkDestroySemaphore(m_device.getVkDevice(), m_vkRenderFinishedSemaphores[i], nullptr);

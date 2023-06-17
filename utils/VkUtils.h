@@ -61,7 +61,7 @@ namespace moonshine {
         }
     };
 
-    
+
     static QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
         QueueFamilyIndices indices;
         // Logic to find queue family indices to populate struct with
@@ -91,7 +91,7 @@ namespace moonshine {
 
         return indices;
     }
-    
+
     /*
      * TODO: Decide if this is the right place for it, probably not
      */
@@ -100,6 +100,7 @@ namespace moonshine {
         glm::vec3 pos;
         glm::vec3 color;
         glm::vec2 texCoord;
+        glm::vec3 normal;
 
         static VkVertexInputBindingDescription getBindingDescription() {
             VkVertexInputBindingDescription bindingDescription{};
@@ -109,8 +110,8 @@ namespace moonshine {
             return bindingDescription;
         }
 
-        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+        static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
+            std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
             attributeDescriptions[0].binding = 0;
             attributeDescriptions[0].location = 0;
             attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -125,7 +126,12 @@ namespace moonshine {
             attributeDescriptions[2].location = 2;
             attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
             attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-            
+
+            attributeDescriptions[3].binding = 0;
+            attributeDescriptions[3].location = 3;
+            attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+            attributeDescriptions[3].offset = offsetof(Vertex, normal);
+
             return attributeDescriptions;
         }
     };
@@ -134,7 +140,30 @@ namespace moonshine {
         glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
+        glm::mat4 tangentToWorld;
     };
     
+    struct Material {
+        float ambient = 1;
+        float diffuse = 1;
+        float specular = 1;
+        float shininess = 1;
+    };
+    
+    struct DirLight{
+        glm::vec3 direction;
+
+        glm::vec3 ambient;
+        glm::vec3 diffuse;
+        glm::vec3 specular;
+    };
+    
+    struct FragmentUniformBufferObject {
+        glm::vec3  viewPos;
+        DirLight dirLight;
+        Material material;
+    };
+    
+
 }
 #endif //MOONSHINE_VKUTILS_H
