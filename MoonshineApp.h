@@ -36,6 +36,7 @@
 #include "graphics/TextureImage.h"
 #include "graphics/TextureSampler.h"
 #include "graphics/UniformBuffer.h"
+#include "editor/SceneObject.h"
 
 namespace moonshine {
 
@@ -108,6 +109,8 @@ namespace moonshine {
         std::unique_ptr<TextureImage> m_image;
         std::unique_ptr<TextureSampler> m_sampler;
 
+        SceneObject cube = SceneObject("resources/Models/Box.gltf");
+
         std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBO;
         std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBO;
 
@@ -143,7 +146,9 @@ namespace moonshine {
             m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>
                     (indices, m_device, m_vkCommandPool,
                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-            m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
+            //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
+            //                                         m_vkCommandPool);
+            m_image = std::make_unique<TextureImage>("../resources/textures/img.jpg", &m_device,
                                                      m_vkCommandPool);
             m_sampler = std::make_unique<TextureSampler>(&m_device);
 
@@ -409,9 +414,9 @@ namespace moonshine {
             Material material{};
             DirLight light{};
             light.direction = glm::normalize(glm::vec3(0, 1, -1));
-            light.ambient = glm::vec3(1, 0, 0) * 0.2f;
-            light.diffuse = glm::vec3(0, 1, 0) * 0.8f;
-            light.specular = glm::vec3(0, 0, 1) * 1.0f;
+            light.ambient = glm::vec3(1, 1, 1) * 0.2f;
+            light.diffuse = glm::vec3(1, 1, 1) * 0.8f;
+            light.specular = glm::vec3(1, 1, 1) * 1.0f;
 
             FragmentUniformBufferObject fragUBO{};
             fragUBO.dirLight = light;

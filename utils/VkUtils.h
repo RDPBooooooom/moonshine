@@ -147,7 +147,7 @@ namespace moonshine {
         float ambient = 1;
         float diffuse = 1;
         float specular = 1;
-        float shininess = 1;
+        float shininess = 100;
     };
     
     struct DirLight{

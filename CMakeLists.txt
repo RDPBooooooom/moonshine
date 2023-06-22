@@ -3,7 +3,7 @@ project(moonshine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/UniformBuffer.cpp graphics/UniformBuffer.h)
+add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/UniformBuffer.cpp graphics/UniformBuffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
@@ -26,6 +26,10 @@ include_directories(external/stb/)
 # Add and link libraries
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
+
+set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
+set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+add_subdirectory(external/tinygltf)
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC external/glfw/include
@@ -117,14 +121,14 @@ if(WIN32)
 endif()
 
 add_custom_target(
-        CopyShaders ALL
+        CopyResources ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders
-        ${CMAKE_CURRENT_BINARY_DIR}/resources/shaders
-        COMMENT "Copying shaders to build directory"
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources
+        ${CMAKE_CURRENT_BINARY_DIR}/resources
+        COMMENT "Copying resources to build directory"
 )
 
-add_dependencies(${PROJECT_NAME} CopyShaders)
-add_dependencies(CopyShaders CompileShaders)
+add_dependencies(${PROJECT_NAME} CopyResources)
+add_dependencies(CopyResources CompileShaders)
 
 
