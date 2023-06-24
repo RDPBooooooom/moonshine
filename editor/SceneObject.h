@@ -17,6 +17,7 @@ namespace moonshine {
         tinygltf::Model model;
         Transform transform;
         std::vector<Vertex> vertices;
+        std::vector<uint16_t> indices;
 
     public:
         SceneObject(const char *filepath);
