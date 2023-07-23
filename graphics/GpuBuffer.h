@@ -22,7 +22,7 @@ namespace moonshine {
         VkDeviceMemory m_vkBufferMemory;
 
     public:
-        GpuBuffer(std::vector<T> &buffer, Device &device, VkCommandPool vkCommandPool, VkBufferUsageFlagBits vkBufferUsageFlag) : m_device{&device}, m_vkCommandPool{vkCommandPool}, m_buffer{buffer}{
+        GpuBuffer(std::vector<T> &buffer, Device* device, VkCommandPool vkCommandPool, VkBufferUsageFlagBits vkBufferUsageFlag) : m_device{device}, m_vkCommandPool{vkCommandPool}, m_buffer{buffer}{
             
             VkDeviceSize bufferSize = sizeof(buffer[0]) * buffer.size();
 

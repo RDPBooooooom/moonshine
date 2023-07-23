@@ -5,24 +5,41 @@
 #ifndef MOONSHINE_SCENEOBJECT_H
 #define MOONSHINE_SCENEOBJECT_H
 
-
+#include <memory>
 #include "../external/tinygltf/tiny_gltf.h"
 #include "Transform.h"
 #include "../utils/VkUtils.h"
+#include "../graphics/GpuBuffer.h"
 
 namespace moonshine {
     class SceneObject {
 
     private:
-        tinygltf::Model model;
-        Transform transform;
-        std::vector<Vertex> vertices;
-        std::vector<uint16_t> indices;
+        tinygltf::Model m_model;
+        Transform m_transform;
+        std::vector<Vertex> m_vertices;
+        std::vector<uint16_t> m_indices;
+        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
+        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
 
     public:
-        SceneObject(const char *filepath);
+        explicit SceneObject(const char *filepath, Device* device, VkCommandPool vkCommandPool);
 
+        VkBuffer getVertBuffer(){
+            return m_vertexBuffer->getBuffer();
+        }
 
+        size_t getIndexSize(){
+            return m_indices.size();
+        }
+        
+        VkBuffer getIndexBuffer(){
+            return m_indexBuffer->getBuffer();
+        }
+        
+        Transform* getTransform(){
+            return &m_transform;
+        }
     };
 
 }

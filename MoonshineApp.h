@@ -109,7 +109,7 @@ namespace moonshine {
         std::unique_ptr<TextureImage> m_image;
         std::unique_ptr<TextureSampler> m_sampler;
 
-        SceneObject cube = SceneObject("resources/Models/Box.gltf");
+        std::shared_ptr<SceneObject> cube;
 
         std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBO;
         std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBO;
@@ -141,14 +141,14 @@ namespace moonshine {
             createCommandPool();
 
             m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>
-                    (vertices, m_device, m_vkCommandPool,
+                    (vertices, &m_device, m_vkCommandPool,
                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
             m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>
-                    (indices, m_device, m_vkCommandPool,
+                    (indices, &m_device, m_vkCommandPool,
                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
             //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
             //                                         m_vkCommandPool);
-            m_image = std::make_unique<TextureImage>("../resources/textures/img.jpg", &m_device,
+            m_image = std::make_unique<TextureImage>("../resources/Models/Avocado/Avocado_baseColor.png", &m_device,
                                                      m_vkCommandPool);
             m_sampler = std::make_unique<TextureSampler>(&m_device);
 
@@ -157,6 +157,10 @@ namespace moonshine {
             m_fragUBO = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>
                     (&m_device);
 
+            cube = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", &m_device, m_vkCommandPool);
+            cube->getTransform()->position = glm::vec3(0, 0, -1);
+            cube->getTransform()->scaling *= 20;
+            
             createDescriptorPool();
             createDescriptorSets();
             createCommandBuffer();
@@ -393,7 +397,8 @@ namespace moonshine {
 
             UniformBufferObject ubo{};
 
-            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            //ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.model = cube->getTransform()->getMatrix();
             ubo.view = m_camera.getViewMat();
             //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
             //                       glm::vec3(0.0f, 0.0f, 1.0f));
@@ -465,18 +470,17 @@ namespace moonshine {
             scissor.extent = m_pipeline.getSwapChainExtent();
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-            VkBuffer vertexBuffers[] = {m_vertexBuffer->getBuffer()};
+            VkBuffer vertexBuffers[] = {cube->getVertBuffer()};
             VkDeviceSize offsets[] = {0};
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-            vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer->getBuffer(), 0, VK_INDEX_TYPE_UINT16);
+            vkCmdBindIndexBuffer(commandBuffer, cube->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                     m_pipeline.getPipelineLayout(), 0,
                                     1, &m_descriptorSets[m_currentFrame], 0, nullptr);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube->getIndexSize()), 1, 0, 0, 0);
 
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
             vkCmdEndRenderPass(commandBuffer);
 
             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
