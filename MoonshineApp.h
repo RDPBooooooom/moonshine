@@ -114,8 +114,6 @@ namespace moonshine {
         std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBO;
         std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBO;
 
-        VkCommandPool m_vkCommandPool;
-
         Camera m_camera;
 
     public:
@@ -129,7 +127,7 @@ namespace moonshine {
         VkDescriptorPool m_descriptorPool;
         std::vector<VkDescriptorSet> m_descriptorSets;
 
-        std::vector<VkCommandBuffer> m_vkCommandBuffers;
+        
         std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
         std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
         std::vector<VkFence> m_vkInFlightFences;
@@ -138,18 +136,17 @@ namespace moonshine {
     private:
 
         void initVulkan() {
-            createCommandPool();
 
             m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>
-                    (vertices, &m_device, m_vkCommandPool,
+                    (vertices, &m_device, m_device.getCommandPool(),
                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
             m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>
-                    (indices, &m_device, m_vkCommandPool,
+                    (indices, &m_device, m_device.getCommandPool(),
                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
             //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
             //                                         m_vkCommandPool);
             m_image = std::make_unique<TextureImage>("../resources/Models/Avocado/Avocado_baseColor.png", &m_device,
-                                                     m_vkCommandPool);
+                                                     m_device.getCommandPool());
             m_sampler = std::make_unique<TextureSampler>(&m_device);
 
             m_matrixUBO = std::make_unique<UniformBuffer<UniformBufferObject>>
@@ -157,30 +154,16 @@ namespace moonshine {
             m_fragUBO = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>
                     (&m_device);
 
-            cube = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", &m_device, m_vkCommandPool);
+            cube = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", &m_device, m_device.getCommandPool());
             cube->getTransform()->position = glm::vec3(0, 0, -1);
             cube->getTransform()->scaling *= 20;
             
             createDescriptorPool();
             createDescriptorSets();
-            createCommandBuffer();
             createSyncObjects();
         }
 
-        void createCommandPool() {
-            QueueFamilyIndices queueFamilyIndices = findQueueFamilies(m_device.getVkPhysicalDevice(),
-                                                                      m_device.getVkSurface());
-
-            VkCommandPoolCreateInfo poolInfo{};
-            poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-            poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-            poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-
-            if (vkCreateCommandPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_vkCommandPool) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to create command pool!");
-            }
-        }
+        
 
         void createDescriptorPool() {
             std::array<VkDescriptorPoolSize, 2> poolSizes{};
@@ -263,20 +246,7 @@ namespace moonshine {
             }
         }
 
-        void createCommandBuffer() {
-            m_vkCommandBuffers.resize(moonshine::MAX_FRAMES_IN_FLIGHT);
-
-            VkCommandBufferAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-            allocInfo.commandPool = m_vkCommandPool;
-            allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            allocInfo.commandBufferCount = (uint32_t) m_vkCommandBuffers.size();
-
-            if (vkAllocateCommandBuffers(m_device.getVkDevice(), &allocInfo, m_vkCommandBuffers.data()) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to allocate command buffers!");
-            }
-        }
+        
 
         void createSyncObjects() {
             m_vkImageAvailableSemaphores.resize(moonshine::MAX_FRAMES_IN_FLIGHT);
@@ -311,82 +281,14 @@ namespace moonshine {
                 Time::calcDeltaTime();
                 glfwPollEvents();
                 m_window.getInputHandler()->triggerEvents();
+
                 drawFrame();
             }
 
             vkDeviceWaitIdle(m_device.getVkDevice());
         }
 
-        void drawFrame() {
-            vkWaitForFences(m_device.getVkDevice(), 1, &m_vkInFlightFences[m_currentFrame], VK_TRUE,
-                            UINT64_MAX);
-
-            updateUniformBuffer(m_currentFrame);
-
-            uint32_t imageIndex;
-            VkResult result = vkAcquireNextImageKHR(m_device.getVkDevice(), m_pipeline.getSwapChain(),
-                                                    UINT64_MAX,
-                                                    m_vkImageAvailableSemaphores[m_currentFrame],
-                                                    VK_NULL_HANDLE,
-                                                    &imageIndex);
-
-            if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-                m_pipeline.recreateSwapChain();
-                return;
-            } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-                throw std::runtime_error("failed to acquire swap chain image");
-            }
-
-            // Only reset the fence if we are submitting work
-            vkResetFences(m_device.getVkDevice(), 1, &m_vkInFlightFences[m_currentFrame]);
-
-            vkResetCommandBuffer(m_vkCommandBuffers[m_currentFrame], 0);
-            recordCommandBuffer(m_vkCommandBuffers[m_currentFrame], imageIndex);
-
-            VkSubmitInfo submitInfo{};
-            submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
-            VkSemaphore waitSemaphores[] = {m_vkImageAvailableSemaphores[m_currentFrame]};
-            VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-            submitInfo.waitSemaphoreCount = 1;
-            submitInfo.pWaitSemaphores = waitSemaphores;
-            submitInfo.pWaitDstStageMask = waitStages;
-            submitInfo.commandBufferCount = 1;
-            submitInfo.pCommandBuffers = &m_vkCommandBuffers[m_currentFrame];
-
-            VkSemaphore signalSemaphores[] = {m_vkRenderFinishedSemaphores[m_currentFrame]};
-            submitInfo.signalSemaphoreCount = 1;
-            submitInfo.pSignalSemaphores = signalSemaphores;
-
-            if (vkQueueSubmit(m_device.getGraphicsQueue(), 1, &submitInfo,
-                              m_vkInFlightFences[m_currentFrame]) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to submit draw command buffer!");
-            }
-
-            VkPresentInfoKHR presentInfo{};
-            presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-            presentInfo.waitSemaphoreCount = 1;
-            presentInfo.pWaitSemaphores = signalSemaphores;
-
-            VkSwapchainKHR swapChains[] = {m_pipeline.getSwapChain()};
-            presentInfo.swapchainCount = 1;
-            presentInfo.pSwapchains = swapChains;
-            presentInfo.pImageIndices = &imageIndex;
-            presentInfo.pResults = nullptr; // Optional
-
-            result = vkQueuePresentKHR(m_device.getPresentQueue(), &presentInfo);
-
-            if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
-                m_window.m_framebufferResized) {
-                m_pipeline.recreateSwapChain();
-            } else if (result != VK_SUCCESS) {
-                throw std::runtime_error("failed to present swap chain image");
-            }
-
-            m_currentFrame = (m_currentFrame + 1) % moonshine::MAX_FRAMES_IN_FLIGHT;
-        }
+        
 
         void updateUniformBuffer(uint32_t currentImage) {
             static auto startTime = std::chrono::high_resolution_clock::now();
@@ -497,7 +399,7 @@ namespace moonshine {
                 vkDestroyFence(m_device.getVkDevice(), m_vkInFlightFences[i], nullptr);
             }
 
-            vkDestroyCommandPool(m_device.getVkDevice(), m_vkCommandPool, nullptr);
+            
 
             m_vertexBuffer = nullptr;
             m_indexBuffer = nullptr;

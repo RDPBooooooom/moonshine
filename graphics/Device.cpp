@@ -25,6 +25,8 @@ namespace moonshine {
     }
 
     Device::~Device() {
+        vkDestroyCommandPool(getVkDevice(), m_vkCommandPool, nullptr);
+        
         vkDestroyDevice(m_vkDevice, nullptr);
 
         if (enableValidationLayers) {
@@ -269,5 +271,20 @@ namespace moonshine {
 
         vkGetDeviceQueue(m_vkDevice, indices.graphicsFamily.value(), 0, &m_vkGraphicsQueue);
         vkGetDeviceQueue(m_vkDevice, indices.presentFamily.value(), 0, &m_vkPresentQueue);
+    }
+
+    void Device::createCommandPool() {
+        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(getVkPhysicalDevice(),
+                                                                  getVkSurface());
+
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+        poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+        if (vkCreateCommandPool(getVkDevice(), &poolInfo, nullptr, &m_vkCommandPool) !=
+            VK_SUCCESS) {
+            throw std::runtime_error("failed to create command pool!");
+        }
     }
 } // moonshine

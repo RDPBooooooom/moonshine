@@ -16,13 +16,6 @@ namespace moonshine {
         Window* m_window;
         Device* m_device;
 
-        VkSwapchainKHR m_vkSwapChain;
-        std::vector<VkImage> m_swapChainImages;
-        std::vector<VkImageView> m_swapChainImageViews;
-        VkFormat m_swapChainImageFormat;
-        VkExtent2D m_swapChainExtent;
-        VkRenderPass m_vkRenderPass;
-
         VkDescriptorSetLayout m_descriptorSetLayout;
 
         VkPipelineLayout m_vkPipelineLayout;
@@ -31,17 +24,7 @@ namespace moonshine {
         std::vector<VkFramebuffer> m_swapChainFramebuffers;
 
     private:
-        void createSwapChain();
-
-        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
-
-        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
-
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
-
-        void createImageViews();
-
-        void createRenderPass();
+        
 
         void createDescriptorSetLayout();
 
@@ -51,20 +34,12 @@ namespace moonshine {
 
         void createFramebuffers();
 
-        void cleanupSwapChain();
+        
 
     public:
         Pipeline(Window &window, Device &device);
 
         ~Pipeline();
-
-        void recreateSwapChain();
-
-        VkSwapchainKHR getSwapChain() { return m_vkSwapChain; }
-
-        VkExtent2D getSwapChainExtent() { return m_swapChainExtent; }
-
-        VkRenderPass getRenderPass() { return m_vkRenderPass; }
 
         VkPipeline getGraphicsPipeline() { return m_vkGraphicsPipeline; }
 

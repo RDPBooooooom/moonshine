@@ -27,8 +27,7 @@ namespace moonshine {
         VkQueue m_vkGraphicsQueue;
         VkQueue m_vkPresentQueue;
 
-    public:
-
+        VkCommandPool m_vkCommandPool;
 
     private:
 
@@ -47,10 +46,14 @@ namespace moonshine {
 
         void createLogicalDevice();
 
+        void createCommandPool();
+
     public:
         Device(Window &window);
 
         ~Device();
+
+        Device &operator=(const Device &) = delete;
 
         VkInstance getVkInstance() { return m_vkInstance; }
 
@@ -63,6 +66,9 @@ namespace moonshine {
         VkQueue getGraphicsQueue() { return m_vkGraphicsQueue; }
 
         VkQueue getPresentQueue() { return m_vkPresentQueue; }
+
+        VkCommandPool getCommandPool() { return m_vkCommandPool; }
+
     };
 
 } // moonshine
