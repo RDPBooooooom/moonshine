@@ -7,6 +7,7 @@
 
 #include "Window.h"
 #include "Device.h"
+#include "SwapChain.h"
 
 namespace moonshine {
 
@@ -17,16 +18,21 @@ namespace moonshine {
     private:
         Window &m_window;
         Device &m_device;
-        uint32_t m_currentFrame;
-        bool isFrameStarted;
+        std::unique_ptr<SwapChain> m_swapChain;
+        uint32_t m_currentImageIndex{0};
+        bool isFrameStarted = false;
 
         std::vector<VkCommandBuffer> m_vkCommandBuffers;
 
-        void createCommandBuffer();
+    private:
+        
+        void createCommandBuffers();
 
     public:
 
         Renderer(Window &window, Device &device);
+
+        ~Renderer();
 
         VkCommandBuffer beginFrame();
 
@@ -37,12 +43,21 @@ namespace moonshine {
         void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
 
         bool isFrameInProgress() const { return isFrameStarted; }
-        
+
         VkCommandBuffer getCurrentCommandBuffer() const {
             assert(isFrameStarted && "Cannot get command buffer when frame is not in progress");
-            return m_vkCommandBuffers[m_currentFrame]; }
+            return m_vkCommandBuffers[m_currentImageIndex];
+        }
 
-        VkRenderPass getSwapChainRenderPass() const { return}
+        VkRenderPass getSwapChainRenderPass() const { return m_swapChain->getRenderPass(); }
+
+        VkExtent2D getSwapChainExtent() { return m_swapChain->getSwapChainExtent();}
+
+        void recreateSwapChain();
+
+        void freeCommandBuffers();
+        
+        uint32_t getFrameIndex() { return m_currentImageIndex; }
     };
 
 } // moonshine

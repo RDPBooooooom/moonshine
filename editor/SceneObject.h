@@ -19,11 +19,11 @@ namespace moonshine {
         Transform m_transform;
         std::vector<Vertex> m_vertices;
         std::vector<uint16_t> m_indices;
-        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
-        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
 
     public:
-        explicit SceneObject(const char *filepath, Device* device, VkCommandPool vkCommandPool);
+        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
+        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
+        explicit SceneObject(const char *filepath, Device &device);
 
         VkBuffer getVertBuffer(){
             return m_vertexBuffer->getBuffer();
@@ -33,7 +33,7 @@ namespace moonshine {
             return m_indices.size();
         }
         
-        VkBuffer getIndexBuffer(){
+        VkBuffer const getIndexBuffer(){
             return m_indexBuffer->getBuffer();
         }
         

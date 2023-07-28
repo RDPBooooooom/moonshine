@@ -7,54 +7,51 @@
 
 #include "Device.h"
 #include "../utils/BufferUtils.h"
+#include "Buffer.h"
 
 namespace moonshine {
-    
+
     template<typename T>
     class GpuBuffer {
-        
+
     private:
-        Device* m_device;
-        VkCommandPool m_vkCommandPool;
-        std::vector<T> m_buffer;
+        Device& m_device;
+        std::vector<T> m_bufferData;
 
-        VkBuffer m_vkBuffer;
-        VkDeviceMemory m_vkBufferMemory;
-
+        std::unique_ptr<Buffer> m_buffer;
+ 
     public:
-        GpuBuffer(std::vector<T> &buffer, Device* device, VkCommandPool vkCommandPool, VkBufferUsageFlagBits vkBufferUsageFlag) : m_device{device}, m_vkCommandPool{vkCommandPool}, m_buffer{buffer}{
-            
-            VkDeviceSize bufferSize = sizeof(buffer[0]) * buffer.size();
+        GpuBuffer(std::vector<T> &buffer, Device& device, VkBufferUsageFlagBits vkBufferUsageFlag) :
+                m_device{device},
+                m_bufferData{buffer} {
 
-            VkBuffer stagingBuffer;
-            VkDeviceMemory stagingBufferMemory;
-            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer,
-                         stagingBufferMemory, m_device);
+            uint32_t size = sizeof(buffer[0]);
 
-            void *data;
-            vkMapMemory(m_device->getVkDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, buffer.data(), (size_t) bufferSize);
-            vkUnmapMemory(m_device->getVkDevice(), stagingBufferMemory);
+            Buffer stagingBuffer{
+                    reinterpret_cast<Device &>(m_device),
+                    buffer.size(),
+                    size,
+                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+            };
 
-            createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | vkBufferUsageFlag,
-                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vkBuffer, m_vkBufferMemory, m_device);
+            stagingBuffer.map();
+            stagingBuffer.writeToBuffer((void *) m_bufferData.data());
 
-            copyBuffer(stagingBuffer, m_vkBuffer, bufferSize, m_device, m_vkCommandPool);
-
-            vkDestroyBuffer(m_device->getVkDevice(), stagingBuffer, nullptr);
-            vkFreeMemory(m_device->getVkDevice(), stagingBufferMemory, nullptr);
+            m_buffer = std::make_unique<Buffer>(m_device,
+                                                buffer.size(),
+                                                size,
+                                                VK_BUFFER_USAGE_TRANSFER_DST_BIT | vkBufferUsageFlag,
+                                                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         };
+
+        VkBuffer getBuffer() { return m_buffer->getBuffer(); }
 
         ~GpuBuffer() {
-            vkDestroyBuffer(m_device->getVkDevice(), m_vkBuffer, nullptr);
-            vkFreeMemory(m_device->getVkDevice(), m_vkBufferMemory, nullptr);
-        };
-        
 
-        VkBuffer &getBuffer() { return m_vkBuffer; }
-        VkDeviceMemory &getBufferMemory() { return m_vkBufferMemory; }
-        
+        };
+
+
     };
 
 } // moonshine

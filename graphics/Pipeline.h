@@ -10,44 +10,56 @@
 
 namespace moonshine {
 
+    struct PipelineConfigInfo {
+        PipelineConfigInfo() = default;
+        PipelineConfigInfo(const PipelineConfigInfo&) = delete;
+        PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+
+        VkPipelineViewportStateCreateInfo viewportInfo;
+        VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
+        VkPipelineRasterizationStateCreateInfo rasterizationInfo;
+        VkPipelineMultisampleStateCreateInfo multisampleInfo;
+        VkPipelineColorBlendAttachmentState colorBlendAttachment;
+        VkPipelineColorBlendStateCreateInfo colorBlendInfo;
+        VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
+        std::vector<VkDynamicState> dynamicStateEnables;
+        VkPipelineDynamicStateCreateInfo dynamicStateInfo;
+        VkPipelineLayout pipelineLayout = nullptr;
+        VkRenderPass renderPass = nullptr;
+        uint32_t subpass = 0;
+    };
+
+
     class Pipeline {
 
     private:
+        
         Window* m_window;
         Device* m_device;
+        
+        VkShaderModule m_vertShaderModule;
+        VkShaderModule m_fragShaderModule;
 
-        VkDescriptorSetLayout m_descriptorSetLayout;
-
-        VkPipelineLayout m_vkPipelineLayout;
         VkPipeline m_vkGraphicsPipeline;
-
-        std::vector<VkFramebuffer> m_swapChainFramebuffers;
-
+        
     private:
         
-
-        void createDescriptorSetLayout();
-
-        void createGraphicsPipeline();
+        void createGraphicsPipeline(const std::string &vertFilepath, const std::string &fragFilepath,
+                                    const PipelineConfigInfo &configInfo);
 
         VkShaderModule createShaderModule(const std::vector<char> &code);
-
-        void createFramebuffers();
-
         
-
     public:
-        Pipeline(Window &window, Device &device);
+        Pipeline(Device &device, std::string vertFilepath, std::string fragFilepath,
+                 const PipelineConfigInfo &configInfo);
 
         ~Pipeline();
 
         VkPipeline getGraphicsPipeline() { return m_vkGraphicsPipeline; }
+        
+        static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
 
-        VkPipelineLayout getPipelineLayout() { return m_vkPipelineLayout; }
-
-        VkDescriptorSetLayout getDiscriptorSetLayout() { return m_descriptorSetLayout; }
-
-        std::vector<VkFramebuffer> getFramebuffers() { return m_swapChainFramebuffers; }
+        void bind(VkCommandBuffer commandBuffer);
     };
 
 } // moonshine

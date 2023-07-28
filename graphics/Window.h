@@ -42,6 +42,8 @@ namespace moonshine {
 
         void createSurface(VkInstance instance, VkSurfaceKHR *surface);
 
+        VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
+
     private:
         static GLFWwindow *createWindow(int width, int height, const std::string &name) {
             glfwInit();

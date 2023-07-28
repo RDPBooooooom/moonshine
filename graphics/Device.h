@@ -53,7 +53,10 @@ namespace moonshine {
 
         ~Device();
 
+        Device(const Device &) = delete;
         Device &operator=(const Device &) = delete;
+        Device(Device &&) = delete;
+        Device &operator=(Device &&) = delete;
 
         VkInstance getVkInstance() { return m_vkInstance; }
 
@@ -68,7 +71,14 @@ namespace moonshine {
         VkQueue getPresentQueue() { return m_vkPresentQueue; }
 
         VkCommandPool getCommandPool() { return m_vkCommandPool; }
+        
+        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
+        VkPhysicalDeviceProperties properties;
+
+        void
+        createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                     VkDeviceMemory &bufferMemory);
     };
 
 } // moonshine

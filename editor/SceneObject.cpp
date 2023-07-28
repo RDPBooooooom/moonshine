@@ -5,7 +5,7 @@
 #include "SceneObject.h"
 #include "ModelLoader.h"
 
-moonshine::SceneObject::SceneObject(const char *filepath, Device *device, VkCommandPool vkCommandPool) {
+moonshine::SceneObject::SceneObject(const char *filepath, Device &device) {
     ModelLoader::loadASCIIModel(m_model, filepath);
 
     // Iterate over all meshes in the model
@@ -110,14 +110,21 @@ moonshine::SceneObject::SceneObject(const char *filepath, Device *device, VkComm
 
                 auto mat = m_model.materials[primitive.material];
                 int textureIndex = mat.pbrMetallicRoughness.baseColorTexture.index;
-                
-                
+
+
             }
         }
     }
 
-    m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(m_vertices, device, vkCommandPool,
+    std::cout << "Managed to load gltf 2.0 => creating buffers next \n";
+    
+    m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(m_vertices, device,
                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-    m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(m_indices, device, vkCommandPool,
+
+    std::cout << "Finished vertex buffer => creating index buffer next \n";
+    
+    m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(m_indices, device,
                                                           VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
+    std::cout << "finished index buffer \n";
 }

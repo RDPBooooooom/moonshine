@@ -58,7 +58,7 @@ void main() {
     //for(int i = 0; i < NR_POINT_LIGHTS; i++)
     //result += CalcPointLight(pointLights[i], norm, vertexPos, viewDir);
 
-    outColor = vec4(baseColor * result, 1.0);
+    outColor = vec4(baseColor, 1.0);//vec4(baseColor * result, 1.0);
 }
 
 vec3 ambientReflection(float factor, vec3 lightColor) {

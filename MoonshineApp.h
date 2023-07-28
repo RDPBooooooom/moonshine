@@ -35,8 +35,11 @@
 #include "editor/Time.h"
 #include "graphics/TextureImage.h"
 #include "graphics/TextureSampler.h"
-#include "graphics/UniformBuffer.h"
+#include "graphics/Buffer.h"
 #include "editor/SceneObject.h"
+#include "graphics/Renderer.h"
+#include "graphics/SimpleRenderSystem.h"
+#include "graphics/Descriptors.h"
 
 namespace moonshine {
 
@@ -102,17 +105,20 @@ namespace moonshine {
         // Members
         Window m_window = Window(APP_NAME, WIDTH, HEIGHT);
         Device m_device = Device(m_window);
-        Pipeline m_pipeline = Pipeline(m_window, m_device);
+        Renderer m_renderer = Renderer(m_window, m_device);
+
+        std::unique_ptr<DescriptorPool> globalPool{};
 
         std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
         std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
-        std::unique_ptr<TextureImage> m_image;
-        std::unique_ptr<TextureSampler> m_sampler;
 
         std::shared_ptr<SceneObject> cube;
 
-        std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBO;
-        std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBO;
+        std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
+        std::vector<std::unique_ptr<Buffer>> m_fragUBO;
+
+        std::unique_ptr<TextureImage> m_image;
+        std::unique_ptr<TextureSampler> m_sampler;
 
         Camera m_camera;
 
@@ -122,26 +128,48 @@ namespace moonshine {
 
         void run();
 
-    private:
-
-        VkDescriptorPool m_descriptorPool;
-        std::vector<VkDescriptorSet> m_descriptorSets;
-
-        
-        std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
-        std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
-        std::vector<VkFence> m_vkInFlightFences;
-        uint32_t m_currentFrame = 0;
 
     private:
 
         void initVulkan() {
+            globalPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
+                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT)
+                    .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_FRAMES_IN_FLIGHT)
+                    .build();
 
+
+            m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
+            for (int i = 0; i < m_matrixUBO.size(); i++) {
+                m_matrixUBO[i] = std::make_unique<Buffer>(
+                        m_device,
+                        sizeof(UniformBufferObject),
+                        1,
+                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                );
+                m_matrixUBO[i]->map();
+            };
+
+            std::cout << "UBO created \n";
+
+            m_fragUBO.resize(MAX_FRAMES_IN_FLIGHT);
+            for (int i = 0; i < m_matrixUBO.size(); i++) {
+                m_fragUBO[i] = std::make_unique<Buffer>(
+                        m_device,
+                        sizeof(FragmentUniformBufferObject),
+                        MAX_FRAMES_IN_FLIGHT,
+                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                        m_device.properties.limits.minUniformBufferOffsetAlignment
+                );
+                m_fragUBO[i]->map();
+            };
+
+            std::cout << "FRAG UBO created \n";
             m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>
-                    (vertices, &m_device, m_device.getCommandPool(),
-                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+                    (vertices, m_device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
             m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>
-                    (indices, &m_device, m_device.getCommandPool(),
+                    (indices, m_device,
                      VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
             //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
             //                                         m_vkCommandPool);
@@ -149,146 +177,85 @@ namespace moonshine {
                                                      m_device.getCommandPool());
             m_sampler = std::make_unique<TextureSampler>(&m_device);
 
-            m_matrixUBO = std::make_unique<UniformBuffer<UniformBufferObject>>
-                    (&m_device);
-            m_fragUBO = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>
-                    (&m_device);
+            std::cout << "opened Image and created Sampler \n";
 
-            cube = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", &m_device, m_device.getCommandPool());
+            cube = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device);
             cube->getTransform()->position = glm::vec3(0, 0, -1);
             cube->getTransform()->scaling *= 20;
-            
-            createDescriptorPool();
-            createDescriptorSets();
-            createSyncObjects();
         }
 
-        
+        void mainLoop() {
+            Time::initTime();
 
-        void createDescriptorPool() {
-            std::array<VkDescriptorPoolSize, 2> poolSizes{};
-            poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+            auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
+                    .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                    .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                    .build();
+            std::vector<VkDescriptorSet> globalDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 
-            VkDescriptorPoolCreateInfo poolInfo{};
-            poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-            poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-            poolInfo.pPoolSizes = poolSizes.data();
-            poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-            if (vkCreateDescriptorPool(m_device.getVkDevice(), &poolInfo, nullptr, &m_descriptorPool) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to create descriptor pool!");
-            }
-        }
-
-        void createDescriptorSets() {
-            std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT,
-                                                       m_pipeline.getDiscriptorSetLayout());
-            VkDescriptorSetAllocateInfo allocInfo{};
-            allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            allocInfo.descriptorPool = m_descriptorPool;
-            allocInfo.descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-            allocInfo.pSetLayouts = layouts.data();
-
-            m_descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-            if (vkAllocateDescriptorSets(m_device.getVkDevice(), &allocInfo, m_descriptorSets.data()) !=
-                VK_SUCCESS) {
-                throw std::runtime_error("failed to allocate descriptor sets!");
-            }
-
-            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = m_matrixUBO->getUniformBuffer(i);
-                bufferInfo.offset = 0;
-                bufferInfo.range = sizeof(UniformBufferObject);
+            for (int i = 0; i < globalDescriptorSets.size(); i++) {
+                auto bufferInfo = m_matrixUBO[i]->descriptorInfo();
 
                 VkDescriptorImageInfo imageInfo{};
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
                 imageInfo.imageView = m_image->getImageView();
                 imageInfo.sampler = m_sampler->getVkSampler();
 
-                VkDescriptorBufferInfo fragBufferInfo{};
-                fragBufferInfo.buffer = m_fragUBO->getUniformBuffer(i);
-                fragBufferInfo.offset = 0;
-                fragBufferInfo.range = sizeof(FragmentUniformBufferObject);
+                auto bufferInfoTwo = m_fragUBO[i]->descriptorInfo();
 
-                std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
-
-                descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                descriptorWrites[0].dstSet = m_descriptorSets[i];
-                descriptorWrites[0].dstBinding = 0;
-                descriptorWrites[0].dstArrayElement = 0;
-                descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                descriptorWrites[0].descriptorCount = 1;
-                descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-                descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                descriptorWrites[1].dstSet = m_descriptorSets[i];
-                descriptorWrites[1].dstBinding = 1;
-                descriptorWrites[1].dstArrayElement = 0;
-                descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                descriptorWrites[1].descriptorCount = 1;
-                descriptorWrites[1].pImageInfo = &imageInfo;
-
-                descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                descriptorWrites[2].dstSet = m_descriptorSets[i];
-                descriptorWrites[2].dstBinding = 2;
-                descriptorWrites[2].dstArrayElement = 0;
-                descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                descriptorWrites[2].descriptorCount = 1;
-                descriptorWrites[2].pBufferInfo = &fragBufferInfo;
-
-                vkUpdateDescriptorSets(m_device.getVkDevice(), static_cast<uint32_t>(descriptorWrites.size()),
-                                       descriptorWrites.data(), 0, nullptr);
+                DescriptorWriter(*globalSetLayout, *globalPool)
+                        .writeBuffer(0, &bufferInfo)
+                        .writeImage(1, &imageInfo)
+                        .writeBuffer(2, &bufferInfoTwo)
+                        .build(globalDescriptorSets[i]);
             }
-        }
 
-        
-
-        void createSyncObjects() {
-            m_vkImageAvailableSemaphores.resize(moonshine::MAX_FRAMES_IN_FLIGHT);
-            m_vkRenderFinishedSemaphores.resize(moonshine::MAX_FRAMES_IN_FLIGHT);
-            m_vkInFlightFences.resize(moonshine::MAX_FRAMES_IN_FLIGHT);
-
-            VkSemaphoreCreateInfo semaphoreInfo{};
-            semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-            VkFenceCreateInfo fenceInfo{};
-            fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-            for (size_t i = 0; i < moonshine::MAX_FRAMES_IN_FLIGHT; i++) {
-                if (vkCreateSemaphore(m_device.getVkDevice(), &semaphoreInfo, nullptr,
-                                      &m_vkImageAvailableSemaphores[i]) !=
-                    VK_SUCCESS ||
-                    vkCreateSemaphore(m_device.getVkDevice(), &semaphoreInfo, nullptr,
-                                      &m_vkRenderFinishedSemaphores[i]) !=
-                    VK_SUCCESS ||
-                    vkCreateFence(m_device.getVkDevice(), &fenceInfo, nullptr, &m_vkInFlightFences[i]) !=
-                    VK_SUCCESS) {
-
-                    throw std::runtime_error("failed to create synchronization objects for a frame!");
-                }
-            }
-        }
-
-        void mainLoop() {
-            Time::initTime();
+            SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.getSwapChainRenderPass(),
+                                                  globalSetLayout->getDescriptorSetLayout()};
             while (!m_window.shouldClose()) {
                 Time::calcDeltaTime();
                 glfwPollEvents();
                 m_window.getInputHandler()->triggerEvents();
 
-                drawFrame();
+                if (auto commandBuffer = m_renderer.beginFrame()) {
+
+                    int frameIndex = m_renderer.getFrameIndex();
+                    updateUniformBuffer(frameIndex);
+
+                    m_renderer.beginSwapChainRenderPass(commandBuffer);
+                    std::vector<std::shared_ptr<SceneObject>> objs;
+                    objs.push_back(cube);
+
+                    FrameInfo frameInfo{
+                            frameIndex,
+                            Time::deltaTime,
+                            commandBuffer,
+                            m_camera,
+                            globalDescriptorSets[frameIndex]};
+
+                    simpleRenderSystem.renderGameObjects(frameInfo, objs);
+
+                    m_renderer.endSwapChainRenderPass(commandBuffer);
+                    m_renderer.endFrame();
+                }
             }
 
             vkDeviceWaitIdle(m_device.getVkDevice());
         }
 
-        
+        /*void renderGameObjects(VkCommandBuffer commandBuffer) {
+            VkBuffer vertexBuffers[] = {cube->getVertBuffer()};
+            VkDeviceSize offsets[] = {0};
+            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+            vkCmdBindIndexBuffer(commandBuffer, cube->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    m_pipeline.getPipelineLayout(), 0,
+                                    1, &m_descriptorSets[m_currentFrame], 0, nullptr);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube->getIndexSize()), 1, 0, 0, 0);
+        }*/
 
         void updateUniformBuffer(uint32_t currentImage) {
             static auto startTime = std::chrono::high_resolution_clock::now();
@@ -299,13 +266,12 @@ namespace moonshine {
 
             UniformBufferObject ubo{};
 
-            //ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.model = cube->getTransform()->getMatrix();
+            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.view = m_camera.getViewMat();
             //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
             //                       glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.proj = glm::perspective(glm::radians(45.0f), m_pipeline.getSwapChainExtent().width /
-                                                             (float) m_pipeline.getSwapChainExtent().height,
+            ubo.proj = glm::perspective(glm::radians(45.0f), m_renderer.getSwapChainExtent().width /
+                                                             (float) m_renderer.getSwapChainExtent().height,
                                         0.1f,
                                         10.0f);
             ubo.tangentToWorld = glm::transpose(glm::inverse(
@@ -321,88 +287,79 @@ namespace moonshine {
             Material material{};
             DirLight light{};
             light.direction = glm::normalize(glm::vec3(0, 1, -1));
-            light.ambient = glm::vec3(1, 1, 1) * 0.2f;
-            light.diffuse = glm::vec3(1, 1, 1) * 0.8f;
-            light.specular = glm::vec3(1, 1, 1) * 1.0f;
+            light.ambient = glm::vec3(1, 0, 0) * 0.2f;
+            light.diffuse = glm::vec3(0, 1, 0) * 0.8f;
+            light.specular = glm::vec3(0, 0, 1) * 1.0f;
 
             FragmentUniformBufferObject fragUBO{};
             fragUBO.dirLight = light;
             fragUBO.material = material;
             fragUBO.viewPos = m_camera.getTransform()->position;
 
-            memcpy(m_matrixUBO->getMappedUniformBuffer(currentImage), &ubo, sizeof(ubo));
-            memcpy(m_fragUBO->getMappedUniformBuffer(currentImage), &fragUBO, sizeof(fragUBO));
+            m_matrixUBO[currentImage]->writeToBuffer(&ubo);
+            m_matrixUBO[currentImage]->flush();
+
+            m_fragUBO[currentImage]->writeToBuffer(&ubo);
+            m_fragUBO[currentImage]->flush();
         }
 
-        void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-            VkCommandBufferBeginInfo beginInfo{};
-            beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-            beginInfo.flags = 0; // Optional
-            beginInfo.pInheritanceInfo = nullptr; // Optional
-
-            if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-                throw std::runtime_error("failed to begin recording command buffer!");
-            }
-
-            VkRenderPassBeginInfo renderPassInfo{};
-            renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-            renderPassInfo.renderPass = m_pipeline.getRenderPass();
-            renderPassInfo.framebuffer = m_pipeline.getFramebuffers()[imageIndex];
-            renderPassInfo.renderArea.offset = {0, 0};
-            renderPassInfo.renderArea.extent = m_pipeline.getSwapChainExtent();
-
-            VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-            renderPassInfo.clearValueCount = 1;
-            renderPassInfo.pClearValues = &clearColor;
-
-            vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-            vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.getGraphicsPipeline());
-
-            VkViewport viewport{};
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.width = static_cast<float>(m_pipeline.getSwapChainExtent().width);
-            viewport.height = static_cast<float>(m_pipeline.getSwapChainExtent().height);
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
-            vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-            VkRect2D scissor{};
-            scissor.offset = {0, 0};
-            scissor.extent = m_pipeline.getSwapChainExtent();
-            vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-            VkBuffer vertexBuffers[] = {cube->getVertBuffer()};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-            vkCmdBindIndexBuffer(commandBuffer, cube->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    m_pipeline.getPipelineLayout(), 0,
-                                    1, &m_descriptorSets[m_currentFrame], 0, nullptr);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube->getIndexSize()), 1, 0, 0, 0);
-
-            vkCmdEndRenderPass(commandBuffer);
-
-            if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                throw std::runtime_error("failed to record command buffer!");
-            }
-        }
+        /* void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+             VkCommandBufferBeginInfo beginInfo{};
+             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+             beginInfo.flags = 0; // Optional
+             beginInfo.pInheritanceInfo = nullptr; // Optional
+ 
+             if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+                 throw std::runtime_error("failed to begin recording command buffer!");
+             }
+ 
+             VkRenderPassBeginInfo renderPassInfo{};
+             renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+             renderPassInfo.renderPass = m_swap.getRenderPass();
+             renderPassInfo.framebuffer = m_pipeline.getFramebuffers()[imageIndex];
+             renderPassInfo.renderArea.offset = {0, 0};
+             renderPassInfo.renderArea.extent = m_pipeline.getSwapChainExtent();
+ 
+             VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+             renderPassInfo.clearValueCount = 1;
+             renderPassInfo.pClearValues = &clearColor;
+ 
+             vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.getGraphicsPipeline());
+ 
+             VkViewport viewport{};
+             viewport.x = 0.0f;
+             viewport.y = 0.0f;
+             viewport.width = static_cast<float>(m_pipeline.getSwapChainExtent().width);
+             viewport.height = static_cast<float>(m_pipeline.getSwapChainExtent().height);
+             viewport.minDepth = 0.0f;
+             viewport.maxDepth = 1.0f;
+             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+ 
+             VkRect2D scissor{};
+             scissor.offset = {0, 0};
+             scissor.extent = m_pipeline.getSwapChainExtent();
+             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+ 
+             VkBuffer vertexBuffers[] = {cube->getVertBuffer()};
+             VkDeviceSize offsets[] = {0};
+             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+ 
+             vkCmdBindIndexBuffer(commandBuffer, cube->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
+ 
+             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                     m_pipeline.getPipelineLayout(), 0,
+                                     1, &m_descriptorSets[m_currentFrame], 0, nullptr);
+             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube->getIndexSize()), 1, 0, 0, 0);
+ 
+             vkCmdEndRenderPass(commandBuffer);
+ 
+             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+                 throw std::runtime_error("failed to record command buffer!");
+             }
+         }*/
 
         void cleanup() {
-            vkDestroyDescriptorPool(m_device.getVkDevice(), m_descriptorPool, nullptr);
-
-            for (size_t i = 0; i < moonshine::MAX_FRAMES_IN_FLIGHT; i++) {
-                vkDestroySemaphore(m_device.getVkDevice(), m_vkRenderFinishedSemaphores[i], nullptr);
-                vkDestroySemaphore(m_device.getVkDevice(), m_vkImageAvailableSemaphores[i], nullptr);
-                vkDestroyFence(m_device.getVkDevice(), m_vkInFlightFences[i], nullptr);
-            }
-
-            
-
-            m_vertexBuffer = nullptr;
-            m_indexBuffer = nullptr;
         }
     };
 
