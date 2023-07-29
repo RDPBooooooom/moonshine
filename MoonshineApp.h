@@ -244,18 +244,6 @@ namespace moonshine {
             vkDeviceWaitIdle(m_device.getVkDevice());
         }
 
-        /*void renderGameObjects(VkCommandBuffer commandBuffer) {
-            VkBuffer vertexBuffers[] = {cube->getVertBuffer()};
-            VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-            vkCmdBindIndexBuffer(commandBuffer, cube->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    m_pipeline.getPipelineLayout(), 0,
-                                    1, &m_descriptorSets[m_currentFrame], 0, nullptr);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube->getIndexSize()), 1, 0, 0, 0);
-        }*/
 
         void updateUniformBuffer(uint32_t currentImage) {
             static auto startTime = std::chrono::high_resolution_clock::now();
@@ -273,9 +261,9 @@ namespace moonshine {
             ubo.proj = glm::perspective(glm::radians(45.0f), m_renderer.getSwapChainExtent().width /
                                                              (float) m_renderer.getSwapChainExtent().height,
                                         0.1f,
-                                        10.0f);
+                                        100.0f);
             ubo.tangentToWorld = glm::transpose(glm::inverse(
-                    glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))));
+                    cube->getTransform()->getMatrix()));
 
             /*
              * GLM was originally designed for OpenGL, where the Y coordinate of the clip coordinates is inverted.
@@ -299,65 +287,9 @@ namespace moonshine {
             m_matrixUBO[currentImage]->writeToBuffer(&ubo);
             m_matrixUBO[currentImage]->flush();
 
-            m_fragUBO[currentImage]->writeToBuffer(&ubo);
+            m_fragUBO[currentImage]->writeToBuffer(&fragUBO);
             m_fragUBO[currentImage]->flush();
         }
-
-        /* void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-             VkCommandBufferBeginInfo beginInfo{};
-             beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-             beginInfo.flags = 0; // Optional
-             beginInfo.pInheritanceInfo = nullptr; // Optional
- 
-             if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-                 throw std::runtime_error("failed to begin recording command buffer!");
-             }
- 
-             VkRenderPassBeginInfo renderPassInfo{};
-             renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-             renderPassInfo.renderPass = m_swap.getRenderPass();
-             renderPassInfo.framebuffer = m_pipeline.getFramebuffers()[imageIndex];
-             renderPassInfo.renderArea.offset = {0, 0};
-             renderPassInfo.renderArea.extent = m_pipeline.getSwapChainExtent();
- 
-             VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-             renderPassInfo.clearValueCount = 1;
-             renderPassInfo.pClearValues = &clearColor;
- 
-             vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.getGraphicsPipeline());
- 
-             VkViewport viewport{};
-             viewport.x = 0.0f;
-             viewport.y = 0.0f;
-             viewport.width = static_cast<float>(m_pipeline.getSwapChainExtent().width);
-             viewport.height = static_cast<float>(m_pipeline.getSwapChainExtent().height);
-             viewport.minDepth = 0.0f;
-             viewport.maxDepth = 1.0f;
-             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
- 
-             VkRect2D scissor{};
-             scissor.offset = {0, 0};
-             scissor.extent = m_pipeline.getSwapChainExtent();
-             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
- 
-             VkBuffer vertexBuffers[] = {cube->getVertBuffer()};
-             VkDeviceSize offsets[] = {0};
-             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
- 
-             vkCmdBindIndexBuffer(commandBuffer, cube->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
- 
-             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                     m_pipeline.getPipelineLayout(), 0,
-                                     1, &m_descriptorSets[m_currentFrame], 0, nullptr);
-             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(cube->getIndexSize()), 1, 0, 0, 0);
- 
-             vkCmdEndRenderPass(commandBuffer);
- 
-             if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-                 throw std::runtime_error("failed to record command buffer!");
-             }
-         }*/
 
         void cleanup() {
         }

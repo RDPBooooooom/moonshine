@@ -99,48 +99,6 @@ namespace moonshine {
                 &m_vkGraphicsPipeline) != VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics pipeline");
         }
-
-        /*
-             
-
-       
-        VkPipelineViewportStateCreateInfo viewportState{};
-        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-        viewportState.viewportCount = 1;
-        viewportState.pViewports = &viewport;
-        viewportState.scissorCount = 1;
-        viewportState.pScissors = &scissor;
-        
-
-     
-
-
-        if (vkCreatePipelineLayout(m_device->getVkDevice(), &pipelineLayoutInfo, nullptr, &m_vkPipelineLayout) !=
-            VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
-
-        VkGraphicsPipelineCreateInfo pipelineInfo{};
-        pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        pipelineInfo.stageCount = 2;
-        pipelineInfo.pStages = shaderStages;
-
-        pipelineInfo.pVertexInputState = &vertexInputInfo;
-        pipelineInfo.pInputAssemblyState = &inputAssembly;
-        pipelineInfo.pViewportState = &viewportState;
-        pipelineInfo.pRasterizationState = &rasterizer;
-        pipelineInfo.pMultisampleState = &multisampling;
-        pipelineInfo.pDepthStencilState = nullptr; // Optional
-        pipelineInfo.pColorBlendState = &colorBlending;
-        pipelineInfo.pDynamicState = &dynamicState;
-
-        pipelineInfo.layout = m_vkPipelineLayout;
-        pipelineInfo.renderPass = m_vkRenderPass;
-        pipelineInfo.subpass = 0;
-        pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-        pipelineInfo.basePipelineIndex = -1; // Optional
-        
-         */
     }
 
     VkShaderModule Pipeline::createShaderModule(const std::vector<char> &code) {
@@ -176,7 +134,7 @@ namespace moonshine {
         configInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
         configInfo.rasterizationInfo.lineWidth = 1.0f;
         configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-        configInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+        configInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         configInfo.rasterizationInfo.depthBiasEnable = VK_FALSE;
         configInfo.rasterizationInfo.depthBiasConstantFactor = 0.0f;  // Optional
         configInfo.rasterizationInfo.depthBiasClamp = 0.0f;           // Optional
