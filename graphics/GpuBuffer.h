@@ -25,6 +25,7 @@ namespace moonshine {
                 m_device{device},
                 m_bufferData{buffer} {
 
+            VkDeviceSize bufferSize = sizeof(buffer[0]) * buffer.size();
             uint32_t size = sizeof(buffer[0]);
 
             Buffer stagingBuffer{
@@ -43,6 +44,8 @@ namespace moonshine {
                                                 size,
                                                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | vkBufferUsageFlag,
                                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+            m_device.copyBuffer(stagingBuffer.getBuffer(), m_buffer->getBuffer(), bufferSize);
         };
 
         VkBuffer getBuffer() { return m_buffer->getBuffer(); }

@@ -266,7 +266,7 @@ namespace moonshine {
 
             UniformBufferObject ubo{};
 
-            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.model = cube->getTransform()->getMatrix();
             ubo.view = m_camera.getViewMat();
             //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
             //                       glm::vec3(0.0f, 0.0f, 1.0f));

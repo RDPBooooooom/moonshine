@@ -320,6 +320,50 @@ namespace moonshine {
         vkBindBufferMemory(m_vkDevice, buffer, bufferMemory, 0);
     }
 
+    void Device::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+        VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        VkBufferCopy copyRegion{};
+        copyRegion.srcOffset = 0;  // Optional
+        copyRegion.dstOffset = 0;  // Optional
+        copyRegion.size = size;
+        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+        endSingleTimeCommands(commandBuffer);
+    }
+
+    VkCommandBuffer Device::beginSingleTimeCommands() {
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandPool = m_vkCommandPool;
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &commandBuffer);
+
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        return commandBuffer;
+    }
+
+    void Device::endSingleTimeCommands(VkCommandBuffer commandBuffer) {
+        vkEndCommandBuffer(commandBuffer);
+
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(m_vkGraphicsQueue);
+
+        vkFreeCommandBuffers(m_vkDevice, m_vkCommandPool, 1, &commandBuffer);
+    }
+
     uint32_t Device::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
