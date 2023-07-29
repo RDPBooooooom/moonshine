@@ -147,7 +147,7 @@ namespace moonshine {
         float ambient = 1;
         float diffuse = 1;
         float specular = 1;
-        float shininess = 100;
+        float shininess = 128;
     };
     
     struct DirLight{
@@ -159,9 +159,9 @@ namespace moonshine {
     };
     
     struct FragmentUniformBufferObject {
+        Material material;
         glm::vec3  viewPos;
         DirLight dirLight;
-        Material material;
     };
     
 

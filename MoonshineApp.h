@@ -133,7 +133,7 @@ namespace moonshine {
 
         void initVulkan() {
             globalPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
-                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT)
+                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
                     .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_FRAMES_IN_FLIGHT)
                     .build();
 
@@ -157,7 +157,7 @@ namespace moonshine {
                 m_fragUBO[i] = std::make_unique<Buffer>(
                         m_device,
                         sizeof(FragmentUniformBufferObject),
-                        MAX_FRAMES_IN_FLIGHT,
+                        1,
                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                         m_device.properties.limits.minUniformBufferOffsetAlignment
@@ -276,13 +276,13 @@ namespace moonshine {
             DirLight light{};
             light.direction = glm::normalize(glm::vec3(0, 1, -1));
             light.ambient = glm::vec3(1, 0, 0) * 0.2f;
-            light.diffuse = glm::vec3(0, 1, 0) * 0.8f;
-            light.specular = glm::vec3(0, 0, 1) * 1.0f;
+            light.diffuse = glm::vec3(1, 1, 1) * 0.8f;
+            light.specular = glm::vec3(1, 1, 1) * 1.0f;
 
             FragmentUniformBufferObject fragUBO{};
             fragUBO.dirLight = light;
             fragUBO.material = material;
-            fragUBO.viewPos = m_camera.getTransform()->position;
+            fragUBO.viewPos = -m_camera.getTransform()->position;
 
             m_matrixUBO[currentImage]->writeToBuffer(&ubo);
             m_matrixUBO[currentImage]->flush();
