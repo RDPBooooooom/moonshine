@@ -12,8 +12,8 @@
 
 struct Transform {
     glm::vec3 position;
-    glm::quat rotation;
-    glm::vec3 scaling = glm::vec3(1,1,1);
+    glm::quat rotation = glm::quat(0, 0, 0, 1);
+    glm::vec3 scale = glm::vec3(1, 1, 1);
 
     glm::vec3 getForward() {
         glm::vec3 forward = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f) * mat4_cast(rotation);
@@ -31,6 +31,7 @@ struct Transform {
     }
 
     glm::mat4 getMatrix() {
+        
         glm::mat4 model = glm::mat4(1.0f);
 
         // Apply the scale, rotation, and translation transformations.
@@ -45,9 +46,11 @@ struct Transform {
         model = glm::rotate(model, glm::radians(rotation.z),
                             glm::vec3(0.0f, 0.0f, 1.0f));  // Apply rotation around z-axis.
 
-        model = glm::scale(model, scaling);  // Apply scale.
+        model = glm::scale(model, scale);  // Apply scale.
         return model;
     }
+
+
 };
 
 #endif //MOONSHINE_TRANSFORM_H

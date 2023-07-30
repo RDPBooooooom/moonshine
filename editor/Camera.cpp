@@ -4,6 +4,7 @@
 
 #include "Camera.h"
 #include "Time.h"
+#include "glm/gtx/string_cast.hpp"
 #define GLM_FORCE_RADIANS
 
 namespace moonshine {

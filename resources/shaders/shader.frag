@@ -35,6 +35,11 @@ layout(binding = 2) uniform fragUBO {
     DirLight dirLight;
 };
 
+layout(push_constant) uniform Push {
+    mat4 transform; // projection * view * model
+    mat4 normalMatrix;
+} push;
+
 layout (location = 0) in vec3 fragColor;
 layout (location = 1) in vec2 fragTexCoord;
 layout (location = 2) in vec3 vertexPos;

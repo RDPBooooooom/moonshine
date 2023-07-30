@@ -40,6 +40,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/SimpleRenderSystem.h"
 #include "graphics/Descriptors.h"
+#include "graphics/UniformBuffer.h"
 
 namespace moonshine {
 
@@ -112,11 +113,14 @@ namespace moonshine {
         std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
         std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
 
-        std::shared_ptr<SceneObject> cube;
+        std::vector<std::shared_ptr<SceneObject>> gameObjects;
 
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
         std::vector<std::unique_ptr<Buffer>> m_fragUBO;
-
+/*
+        std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBONew;
+        std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBONew;
+*/
         std::unique_ptr<TextureImage> m_image;
         std::unique_ptr<TextureSampler> m_sampler;
 
@@ -136,7 +140,19 @@ namespace moonshine {
                     .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
                     .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_FRAMES_IN_FLIGHT)
                     .build();
+/*
+            m_matrixUBONew = std::make_unique<UniformBuffer<UniformBufferObject>>(m_device);
+            m_fragUBONew = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>(m_device);
+*/
 
+            std::function<void()> mvObject = std::bind(&MoonshineApp::moveObject, this);
+            m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_Q, mvObject);
+            std::function<void()> mvObjectTwo = std::bind(&MoonshineApp::moveObjectTwo, this);
+            m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_E, mvObjectTwo);
+            std::function<void()> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this);
+            m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_R, mvObjectThree);
+            std::function<void()> newGameObj = std::bind(&MoonshineApp::addGameObject, this);
+            m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj);
 
             m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
             for (int i = 0; i < m_matrixUBO.size(); i++) {
@@ -145,7 +161,8 @@ namespace moonshine {
                         sizeof(UniformBufferObject),
                         1,
                         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                        m_device.properties.limits.minUniformBufferOffsetAlignment
                 );
                 m_matrixUBO[i]->map();
             };
@@ -179,9 +196,37 @@ namespace moonshine {
 
             std::cout << "opened Image and created Sampler \n";
 
-            cube = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device);
-            cube->getTransform()->position = glm::vec3(0, 0, -1);
-            cube->getTransform()->scaling *= 20;
+            for (int i = 0; i < 100; ++i) {
+                gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device));
+                gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
+                gameObjects[i]->getTransform()->scale *= 20;
+            }
+            
+        }
+
+        void moveObject() {
+            for (auto & i : gameObjects) {
+                i->getTransform()->position += glm::vec3(0, 0, 1) * Time::deltaTime;
+            }
+        }
+
+        void moveObjectTwo() {
+            for (auto & i : gameObjects) {
+                i->getTransform()->position += glm::vec3(0, 1, 0) * Time::deltaTime;
+            }
+        }
+
+        void moveObjectThree() {
+            for (auto & i : gameObjects) {
+                i->getTransform()->position += glm::vec3(1, 0, 0) * Time::deltaTime;
+            }
+        }
+        
+        void addGameObject(){
+            size_t i = gameObjects.size();
+            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device));
+            gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
+            gameObjects[i]->getTransform()->scale *= 20;
         }
 
         void mainLoop() {
@@ -195,6 +240,7 @@ namespace moonshine {
             std::vector<VkDescriptorSet> globalDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 
             for (int i = 0; i < globalDescriptorSets.size(); i++) {
+
                 auto bufferInfo = m_matrixUBO[i]->descriptorInfo();
 
                 VkDescriptorImageInfo imageInfo{};
@@ -202,12 +248,28 @@ namespace moonshine {
                 imageInfo.imageView = m_image->getImageView();
                 imageInfo.sampler = m_sampler->getVkSampler();
 
-                auto bufferInfoTwo = m_fragUBO[i]->descriptorInfo();
+                auto fragBufferInfo = m_fragUBO[i]->descriptorInfo();
 
+                /*
+                VkDescriptorBufferInfo bufferInfo{};
+                bufferInfo.buffer = m_matrixUBONew->getUniformBuffer(i);
+                bufferInfo.offset = 0;
+                bufferInfo.range = sizeof(UniformBufferObject);
+
+                VkDescriptorImageInfo imageInfo{};
+                imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imageInfo.imageView = m_image->getImageView();
+                imageInfo.sampler = m_sampler->getVkSampler();
+
+                VkDescriptorBufferInfo fragBufferInfo{};
+                fragBufferInfo.buffer = m_fragUBONew->getUniformBuffer(i);
+                fragBufferInfo.offset = 0;
+                fragBufferInfo.range = sizeof(FragmentUniformBufferObject);
+*/
                 DescriptorWriter(*globalSetLayout, *globalPool)
                         .writeBuffer(0, &bufferInfo)
                         .writeImage(1, &imageInfo)
-                        .writeBuffer(2, &bufferInfoTwo)
+                        .writeBuffer(2, &fragBufferInfo)
                         .build(globalDescriptorSets[i]);
             }
 
@@ -224,8 +286,6 @@ namespace moonshine {
                     updateUniformBuffer(frameIndex);
 
                     m_renderer.beginSwapChainRenderPass(commandBuffer);
-                    std::vector<std::shared_ptr<SceneObject>> objs;
-                    objs.push_back(cube);
 
                     FrameInfo frameInfo{
                             frameIndex,
@@ -234,7 +294,7 @@ namespace moonshine {
                             m_camera,
                             globalDescriptorSets[frameIndex]};
 
-                    simpleRenderSystem.renderGameObjects(frameInfo, objs);
+                    simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
 
                     m_renderer.endSwapChainRenderPass(commandBuffer);
                     m_renderer.endFrame();
@@ -254,16 +314,11 @@ namespace moonshine {
 
             UniformBufferObject ubo{};
 
-            ubo.model = cube->getTransform()->getMatrix();
             ubo.view = m_camera.getViewMat();
-            //ubo.view = glm::lookAt(glm::vec3(0.0f, 2.5f, 2.5f), glm::vec3(0.0f, 0.0f, 0.0f),
-            //                       glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), m_renderer.getSwapChainExtent().width /
                                                              (float) m_renderer.getSwapChainExtent().height,
                                         0.1f,
                                         100.0f);
-            ubo.tangentToWorld = glm::transpose(glm::inverse(
-                    cube->getTransform()->getMatrix()));
 
             /*
              * GLM was originally designed for OpenGL, where the Y coordinate of the clip coordinates is inverted.
@@ -275,20 +330,26 @@ namespace moonshine {
             Material material{};
             DirLight light{};
             light.direction = glm::normalize(glm::vec3(0, 1, -1));
-            light.ambient = glm::vec3(1, 0, 0) * 0.2f;
+            light.ambient = glm::vec3(1, 1, 1) * 0.2f;
             light.diffuse = glm::vec3(1, 1, 1) * 0.8f;
             light.specular = glm::vec3(1, 1, 1) * 1.0f;
 
             FragmentUniformBufferObject fragUBO{};
             fragUBO.dirLight = light;
             fragUBO.material = material;
-            fragUBO.viewPos = -m_camera.getTransform()->position;
+            fragUBO.viewPos = glm::vec4(-m_camera.getTransform()->position, 0);
+
 
             m_matrixUBO[currentImage]->writeToBuffer(&ubo);
             m_matrixUBO[currentImage]->flush();
 
             m_fragUBO[currentImage]->writeToBuffer(&fragUBO);
             m_fragUBO[currentImage]->flush();
+
+            /*memcpy(m_matrixUBONew->getMappedUniformBuffer(currentImage), &ubo, sizeof(ubo));
+            m_matrixUBONew->flush(currentImage, VK_WHOLE_SIZE, 0);
+            memcpy(m_fragUBONew->getMappedUniformBuffer(currentImage), &fragUBO, sizeof(fragUBO));
+            m_fragUBONew->flush(currentImage, VK_WHOLE_SIZE, 0);*/
         }
 
         void cleanup() {

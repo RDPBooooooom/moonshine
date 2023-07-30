@@ -137,10 +137,8 @@ namespace moonshine {
     };
 
     struct UniformBufferObject {
-        glm::mat4 model;
         glm::mat4 view;
         glm::mat4 proj;
-        glm::mat4 tangentToWorld;
     };
     
     struct Material {
@@ -151,17 +149,16 @@ namespace moonshine {
     };
     
     struct DirLight{
-        glm::vec3 direction;
-
-        glm::vec3 ambient;
-        glm::vec3 diffuse;
-        glm::vec3 specular;
+        alignas(16) glm::vec3 direction;
+        alignas(16) glm::vec3 ambient;
+        alignas(16) glm::vec3 diffuse;
+        alignas(16) glm::vec3 specular;
     };
     
     struct FragmentUniformBufferObject {
         Material material;
-        glm::vec3  viewPos;
-        DirLight dirLight;
+        alignas(16) glm::vec3  viewPos;
+        alignas(16) DirLight dirLight;
     };
     
 
