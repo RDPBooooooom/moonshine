@@ -86,9 +86,15 @@ namespace moonshine {
         void
         createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
                      VkDeviceMemory &bufferMemory);
-
-
+        
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+        VkFormat
+        findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
+                            VkFormatFeatureFlags features);
+
+        void createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPropertyFlags properties, VkImage &image,
+                                 VkDeviceMemory &imageMemory);
     };
 
 } // moonshine

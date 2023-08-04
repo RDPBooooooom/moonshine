@@ -196,7 +196,7 @@ namespace moonshine {
 
             std::cout << "opened Image and created Sampler \n";
 
-            for (int i = 0; i < 100; ++i) {
+            for (int i = 0; i < 5; ++i) {
                 gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device));
                 gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
                 gameObjects[i]->getTransform()->scale *= 20;

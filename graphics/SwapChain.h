@@ -22,9 +22,16 @@ namespace moonshine {
         VkSwapchainKHR m_vkSwapChain;
         std::vector<VkImage> m_swapChainImages;
         std::vector<VkImageView> m_swapChainImageViews;
+        
         VkFormat m_swapChainImageFormat;
+        VkFormat m_swapChainDepthFormat;
+        
         VkExtent2D m_swapChainExtent;
         VkRenderPass m_vkRenderPass;
+
+        std::vector<VkImage> m_depthImages;
+        std::vector<VkDeviceMemory> m_depthImageMemorys;
+        std::vector<VkImageView> m_depthImageViews;
 
         std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
         std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
@@ -53,6 +60,9 @@ namespace moonshine {
         void createRenderPass();
 
         void createFramebuffers();
+
+        void createDepthResources();
+        VkFormat findDepthFormat();
 
         void cleanupSwapChain();
 
