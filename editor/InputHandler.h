@@ -14,7 +14,7 @@ namespace moonshine {
 
     struct KeyFunction {
         int id = 0;
-        std::function<void()> function = nullptr;
+        std::function<void(bool)> function = nullptr;
     };
 
     struct MouseFunction {
@@ -31,9 +31,11 @@ namespace moonshine {
     private:
         GLFWwindow *m_window;
         std::vector<int> m_pressedKeys;
+        std::vector<int> m_removedKeys;
         std::map<int, std::vector<KeyFunction>> m_registeredEvents;
+        std::map<int, std::vector<KeyFunction>> m_registeredOnReleasedEvents;
         std::vector<MouseFunction> m_registeredMouseEvents;
-        CursorPosition m_cursorPosition;
+        CursorPosition m_cursorPosition{};
 
     private:
         void addKey(int key);
@@ -43,11 +45,15 @@ namespace moonshine {
         void updateCursorPos();
 
     public:
-        InputHandler(GLFWwindow *window);
+        explicit InputHandler(GLFWwindow *window);
 
         void onKeypress(int key, int scancode, int action, int mods);
+        
+        void onMousePress(int button, int action, int mods);
 
-        int registerKeyEvent(int key, const std::function<void()> &callback);
+        int registerKeyEvent(int key, const std::function<void(bool)> &callback);
+
+        int registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease);
 
         int registerMouseEvent(std::function<void(CursorPosition)> &callback);
 

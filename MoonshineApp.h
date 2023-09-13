@@ -44,62 +44,6 @@
 
 namespace moonshine {
 
-    inline std::vector<Vertex> vertices = {
-            {{-0.5f, 0.5f,  0.0f}, {1, 1, 1}, {1.0f, 0.0f}, {0,  0,  -1}}, // 0
-            {{-0.5f, 0.5f,  0.0f}, {1, 1, 1}, {1.0f, 1.0f}, {0,  1,  0}}, // 1
-            {{-0.5f, 0.5f,  0.0f}, {1, 1, 1}, {1.0f, 1.0f}, {-1, 0,  0}}, // 2
-//front_top_right 1
-            {{0.5f,  0.5f,  0.0f}, {1, 1, 1}, {1.0f, 1.0f}, {0,  0,  -1}}, // 3
-            {{0.5f,  0.5f,  0.0f}, {1, 1, 1}, {1.0f, 0.0f}, {0,  1,  0}}, // 4
-            {{0.5f,  0.5f,  0.0f}, {1, 1, 1}, {1.0f, 0.0f}, {1,  0,  0}}, // 5
-// front_bot_left 2
-            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}, {0,  0,  -1}},  // 6
-            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 0.0f}, {0,  -1, 0}},  // 7
-            {{-0.5f, -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}, {-1, 0,  0}},  // 8
-// front_bot_right 3
-            {{0.5f,  -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 1.0f}, {0,  0,  -1}},  // 9
-            {{0.5f,  -0.5f, 0.0f}, {0, 0, 0}, {1.0f, 1.0f}, {0,  -1, 0}},  // 10
-            {{0.5f,  -0.5f, 0.0f}, {0, 0, 0}, {0.0f, 0.0f}, {1,  0,  0}},  // 11
-// back_top_left 4
-            {{-0.5f, 0.5f,  1.0f}, {1, 1, 1}, {0.0f, 1.0f}, {0,  1,  0}}, // 12
-            {{-0.5f, 0.5f,  1.0f}, {1, 1, 1}, {1.0f, 0.0f}, {-1, 0,  0}}, // 13
-            {{-0.5f, 0.5f,  1.0f}, {1, 1, 1}, {1.0f, 1.0f}, {0,  0,  1}}, // 14
-// back_top_right 5
-            {{0.5f,  0.5f,  1.0f}, {1, 1, 1}, {0.0f, 0.0f}, {0,  1,  0}}, // 15
-            {{0.5f,  0.5f,  1.0f}, {1, 1, 1}, {1.0f, 1.0f}, {1,  0,  0}}, // 16
-            {{0.5f,  0.5f,  1.0f}, {1, 1, 1}, {1.0f, 0.0f}, {0,  0,  1}}, // 17
-// back_bot_left 6
-            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}, {0,  -1, 0}}, // 18 
-            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}, {-1, 0,  0}}, // 19
-            {{-0.5f, -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}, {0,  0,  1}}, // 20
-// back_bot_right 7
-            {{0.5f,  -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}, {0,  -1, 0}}, // 21 
-            {{0.5f,  -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 1.0f}, {1,  -0, 0}}, // 22
-            {{0.5f,  -0.5f, 1.0f}, {0, 0, 0}, {0.0f, 0.0f}, {0,  0,  1}} // 23
-    };
-
-    inline std::vector<uint16_t> indices = {
-            // Front
-            6, 0, 9,
-            9, 0, 3,
-            // TOP
-            1, 12, 4,
-            4, 12, 15,
-            // BOT
-            18, 7, 21,
-            21, 7, 10,
-            // Right
-            22, 11, 16,
-            16, 11, 5,
-            // LEFT
-            13, 2, 19,
-            19, 2, 8,
-            // BACK
-            14, 20, 17,
-            17, 20, 23
-    };
-
-
     class MoonshineApp {
     private:
 
@@ -109,9 +53,6 @@ namespace moonshine {
         Renderer m_renderer = Renderer(m_window, m_device);
 
         std::unique_ptr<DescriptorPool> globalPool{};
-
-        std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
-        std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
 
         std::vector<std::shared_ptr<SceneObject>> gameObjects;
 
@@ -144,14 +85,14 @@ namespace moonshine {
             m_matrixUBONew = std::make_unique<UniformBuffer<UniformBufferObject>>(m_device);
             m_fragUBONew = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>(m_device);
 */
-
-            std::function<void()> mvObject = std::bind(&MoonshineApp::moveObject, this);
+            using std::placeholders::_1;
+            std::function<void(bool)> mvObject = std::bind(&MoonshineApp::moveObject, this, _1);
             m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_Q, mvObject);
-            std::function<void()> mvObjectTwo = std::bind(&MoonshineApp::moveObjectTwo, this);
+            std::function<void(bool)> mvObjectTwo = std::bind(&MoonshineApp::moveObjectTwo, this, _1);
             m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_E, mvObjectTwo);
-            std::function<void()> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this);
+            std::function<void(bool)> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this, _1);
             m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_R, mvObjectThree);
-            std::function<void()> newGameObj = std::bind(&MoonshineApp::addGameObject, this);
+            std::function<void(bool)> newGameObj = std::bind(&MoonshineApp::addGameObject, this, _1);
             m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj);
 
             m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
@@ -183,14 +124,10 @@ namespace moonshine {
             };
 
             std::cout << "FRAG UBO created \n";
-            m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>
-                    (vertices, m_device, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-            m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>
-                    (indices, m_device,
-                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+
             //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
             //                                         m_vkCommandPool);
-            m_image = std::make_unique<TextureImage>("../resources/Models/Avocado/Avocado_baseColor.png", &m_device,
+            m_image = std::make_unique<TextureImage>((getExecutablePath() + "/resources/Models/Avocado/Avocado_baseColor.png").c_str(), &m_device,
                                                      m_device.getCommandPool());
             m_sampler = std::make_unique<TextureSampler>(&m_device);
 
@@ -204,25 +141,32 @@ namespace moonshine {
             
         }
 
-        void moveObject() {
+        std::string getExecutablePath() {
+            char buffer[MAX_PATH];
+            GetModuleFileName(NULL, buffer, MAX_PATH);
+            std::string::size_type pos = std::string(buffer).find_last_of("\\/");
+            return std::string(buffer).substr(0, pos);
+        }
+
+        void moveObject(bool isReleased) {
             for (auto & i : gameObjects) {
                 i->getTransform()->position += glm::vec3(0, 0, 1) * Time::deltaTime;
             }
         }
 
-        void moveObjectTwo() {
+        void moveObjectTwo(bool isReleased) {
             for (auto & i : gameObjects) {
                 i->getTransform()->position += glm::vec3(0, 1, 0) * Time::deltaTime;
             }
         }
 
-        void moveObjectThree() {
+        void moveObjectThree(bool isReleased) {
             for (auto & i : gameObjects) {
                 i->getTransform()->position += glm::vec3(1, 0, 0) * Time::deltaTime;
             }
         }
         
-        void addGameObject(){
+        void addGameObject(bool isReleased){
             size_t i = gameObjects.size();
             gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device));
             gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
