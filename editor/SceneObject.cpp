@@ -87,7 +87,7 @@ moonshine::SceneObject::SceneObject(const char *filepath, Device &device) {
                 if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
                     // handle indices as unsigned bytes
                     const auto *indices_uint8 = reinterpret_cast<const uint8_t *>(indices);
-                    std::cout << "[Indices Import] Unsigned byte - Currently not supported - Fix it Marvin! \n";
+                    //std::cout << "[Indices Import] Unsigned byte - Currently not supported - Fix it Marvin! \n";
                     // ... use indices_uint8 ...
                 } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
                     // handle indices as unsigned shorts
@@ -102,7 +102,7 @@ moonshine::SceneObject::SceneObject(const char *filepath, Device &device) {
                 } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
                     // handle indices as unsigned ints
                     const auto *indices_uint32 = reinterpret_cast<const uint32_t *>(indices);
-                    std::cout << "[Indices Import] Unsigned int - Currently not supported - Fix it Marvin! \n";
+                    //std::cout << "[Indices Import] Unsigned int - Currently not supported - Fix it Marvin! \n";
                     // ... use indices_uint32 ...
                 }
             }
@@ -116,15 +116,15 @@ moonshine::SceneObject::SceneObject(const char *filepath, Device &device) {
         }
     }
 
-    std::cout << "Managed to load gltf 2.0 => creating buffers next \n";
+    //std::cout << "Managed to load gltf 2.0 => creating buffers next \n";
     
     m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(m_vertices, device,
                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
-    std::cout << "Finished vertex buffer => creating index buffer next \n";
+    //std::cout << "Finished vertex buffer => creating index buffer next \n";
     
     m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(m_indices, device,
                                                           VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
-    std::cout << "finished index buffer \n";
+    //std::cout << "finished index buffer \n";
 }

@@ -3,7 +3,10 @@ project(moonshine)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/Buffer.cpp graphics/Buffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h graphics/Renderer.cpp graphics/Renderer.h graphics/SwapChain.cpp graphics/SwapChain.h graphics/SimpleRenderSystem.cpp graphics/SimpleRenderSystem.h graphics/Descriptors.cpp graphics/Descriptors.h graphics/FrameInfo.h "graphics/UniformBuffer.h")
+set(IMGUI_DIR external/imgui/)
+include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
+
+add_executable(moonshine main.cpp utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/Buffer.cpp graphics/Buffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h graphics/Renderer.cpp graphics/Renderer.h graphics/SwapChain.cpp graphics/SwapChain.h graphics/SimpleRenderSystem.cpp graphics/SimpleRenderSystem.h graphics/Descriptors.cpp graphics/Descriptors.h graphics/FrameInfo.h "graphics/UniformBuffer.h" ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
@@ -42,6 +45,7 @@ target_link_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} glfw)
 target_link_libraries(${PROJECT_NAME} glm)
+
 
 # https://github.com/PacktPublishing/Learning-Vulkan/blob/master/Chapter%2003/HandShake/CMakeLists.txt
 # AUTO_LOCATE_VULKAN - accepted value ON or OFF

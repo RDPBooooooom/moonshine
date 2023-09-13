@@ -25,7 +25,9 @@ namespace moonshine {
         VkDevice m_vkDevice;
 
         VkQueue m_vkGraphicsQueue;
+        int32_t m_graphicsQueueFamily;
         VkQueue m_vkPresentQueue;
+        int32_t m_presentQueueFamily;
 
         VkCommandPool m_vkCommandPool;
 
@@ -74,8 +76,12 @@ namespace moonshine {
         VkSurfaceKHR getVkSurface() { return m_vkSurface; }
 
         VkQueue getGraphicsQueue() { return m_vkGraphicsQueue; }
+        
+        int32_t getGraphicsQueueFamily() { return m_graphicsQueueFamily; }
 
         VkQueue getPresentQueue() { return m_vkPresentQueue; }
+
+        int32_t getPresentQueueFamily() { return m_presentQueueFamily; }
 
         VkCommandPool getCommandPool() { return m_vkCommandPool; }
 

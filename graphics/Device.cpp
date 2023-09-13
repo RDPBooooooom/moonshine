@@ -272,6 +272,9 @@ namespace moonshine {
             throw std::runtime_error("failed to create logical device!");
         }
 
+        m_graphicsQueueFamily = indices.graphicsFamily.value();
+        m_presentQueueFamily = indices.presentFamily.value();
+        
         vkGetDeviceQueue(m_vkDevice, indices.graphicsFamily.value(), 0, &m_vkGraphicsQueue);
         vkGetDeviceQueue(m_vkDevice, indices.presentFamily.value(), 0, &m_vkPresentQueue);
     }

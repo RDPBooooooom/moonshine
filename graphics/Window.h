@@ -50,6 +50,8 @@ namespace moonshine {
 
         VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
 
+        GLFWwindow* getGLFWWindow(){ return m_window; }
+        
     private:
         static GLFWwindow *createWindow(int width, int height, const std::string &name) {
             glfwInit();

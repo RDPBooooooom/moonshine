@@ -41,6 +41,9 @@
 #include "graphics/SimpleRenderSystem.h"
 #include "graphics/Descriptors.h"
 #include "graphics/UniformBuffer.h"
+#include "external/imgui/imgui.h"
+#include "external/imgui/backends/imgui_impl_glfw.h"
+#include "external/imgui/backends/imgui_impl_vulkan.h"
 
 namespace moonshine {
 
@@ -52,7 +55,7 @@ namespace moonshine {
         Device m_device = Device(m_window);
         Renderer m_renderer = Renderer(m_window, m_device);
 
-        std::unique_ptr<DescriptorPool> globalPool{};
+        std::shared_ptr<DescriptorPool> globalPool{};
 
         std::vector<std::shared_ptr<SceneObject>> gameObjects;
 
@@ -193,23 +196,7 @@ namespace moonshine {
                 imageInfo.sampler = m_sampler->getVkSampler();
 
                 auto fragBufferInfo = m_fragUBO[i]->descriptorInfo();
-
-                /*
-                VkDescriptorBufferInfo bufferInfo{};
-                bufferInfo.buffer = m_matrixUBONew->getUniformBuffer(i);
-                bufferInfo.offset = 0;
-                bufferInfo.range = sizeof(UniformBufferObject);
-
-                VkDescriptorImageInfo imageInfo{};
-                imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = m_image->getImageView();
-                imageInfo.sampler = m_sampler->getVkSampler();
-
-                VkDescriptorBufferInfo fragBufferInfo{};
-                fragBufferInfo.buffer = m_fragUBONew->getUniformBuffer(i);
-                fragBufferInfo.offset = 0;
-                fragBufferInfo.range = sizeof(FragmentUniformBufferObject);
-*/
+                
                 DescriptorWriter(*globalSetLayout, *globalPool)
                         .writeBuffer(0, &bufferInfo)
                         .writeImage(1, &imageInfo)
@@ -219,10 +206,16 @@ namespace moonshine {
 
             SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.getSwapChainRenderPass(),
                                                   globalSetLayout->getDescriptorSetLayout()};
+            
             while (!m_window.shouldClose()) {
                 Time::calcDeltaTime();
                 glfwPollEvents();
                 m_window.getInputHandler()->triggerEvents();
+
+                ImGui_ImplVulkan_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+                ImGui::ShowDemoWindow();
 
                 if (auto commandBuffer = m_renderer.beginFrame()) {
 
@@ -239,12 +232,15 @@ namespace moonshine {
                             globalDescriptorSets[frameIndex]};
 
                     simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
-
+                    
+                    ImGui::Render();
+                    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+                    
                     m_renderer.endSwapChainRenderPass(commandBuffer);
                     m_renderer.endFrame();
                 }
             }
-
+            
             vkDeviceWaitIdle(m_device.getVkDevice());
         }
 
@@ -297,7 +293,12 @@ namespace moonshine {
         }
 
         void cleanup() {
+            ImGui_ImplVulkan_Shutdown();
+            ImGui_ImplGlfw_Shutdown();
+            ImGui::DestroyContext();
         }
+
+        void initImGui();
     };
 
 } // moonshine
