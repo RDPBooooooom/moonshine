@@ -2,6 +2,7 @@
 // Created by marvin on 09.06.2023.
 //
 
+#include <iostream>
 #include "InputHandler.h"
 
 namespace moonshine {
@@ -11,7 +12,7 @@ namespace moonshine {
     }
 
     void InputHandler::onKeypress(int key, int scancode, int action, int mods) {
-
+        
         switch (action) {
             case GLFW_PRESS:
                 addKey(key);
@@ -22,7 +23,22 @@ namespace moonshine {
         }
     }
 
-    int InputHandler::registerKeyEvent(int key, const std::function<void()> &callback) {
+    void InputHandler::onMousePress(int button, int action, int mods) {
+        switch (action) {
+            case GLFW_PRESS:
+                addKey(button);
+                break;
+            case GLFW_RELEASE:
+                removeKey(button);
+                break;
+        }
+    }
+    
+    int InputHandler::registerKeyEvent(int key, const std::function<void(bool)> &callback) {
+        return registerKeyEvent(key, callback, false);
+    }
+
+    int InputHandler::registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease) {
         std::vector<KeyFunction> *linkedCallbacks = &m_registeredEvents[key];
 
         KeyFunction newFunc{getNewFuncId(), callback};
@@ -30,6 +46,10 @@ namespace moonshine {
         linkedCallbacks->push_back(newFunc);
 
         m_registeredEvents[key] = *linkedCallbacks;
+
+        if (triggerOnRelease) {
+            m_registeredOnReleasedEvents[key] = *linkedCallbacks;
+        }
 
         return newFunc.id;
     }
@@ -45,7 +65,7 @@ namespace moonshine {
     struct IdFinder {
         int functionID;
 
-        IdFinder(int functionID) : functionID(functionID) {}
+        explicit IdFinder(int functionID) : functionID(functionID) {}
 
         bool operator()(KeyFunction &toCompare) {
             return toCompare.id == functionID;
@@ -61,6 +81,14 @@ namespace moonshine {
                 m_registeredEvents[pair.first] = pair.second;
             }
         }
+        for (auto pair: m_registeredOnReleasedEvents) {
+            auto item = std::find_if(pair.second.begin(), pair.second.end(), IdFinder(functionID));
+            if (item != pair.second.end()) {
+                pair.second.erase(item);
+                m_registeredOnReleasedEvents[pair.first] = pair.second;
+            }
+        }
+        
     }
 
     void InputHandler::addKey(int key) {
@@ -69,6 +97,7 @@ namespace moonshine {
 
     void InputHandler::removeKey(int key) {
         auto item = std::find(m_pressedKeys.begin(), m_pressedKeys.end(), key);
+        m_removedKeys.push_back(*item);
         m_pressedKeys.erase(item);
     }
 
@@ -84,9 +113,19 @@ namespace moonshine {
             if (registeredFunctions.empty()) continue;
 
             for (const auto &function: registeredFunctions) {
-                function.function();
+                function.function(false);
             }
         }
+        for (int key: m_removedKeys) {
+            auto registeredFunctions = m_registeredOnReleasedEvents[key];
+
+            if (registeredFunctions.empty()) continue;
+
+            for (const auto &function: registeredFunctions) {
+                function.function(true);
+            }
+        }
+        m_removedKeys.clear();
 
     }
 
@@ -96,4 +135,5 @@ namespace moonshine {
 
         glfwGetCursorPos(m_window, &m_cursorPosition.x, &m_cursorPosition.y);
     }
+
 } // moonshine

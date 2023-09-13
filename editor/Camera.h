@@ -19,9 +19,11 @@ namespace moonshine {
         Window *m_window;
         Transform m_transform{};
 
+        bool m_movementModeActive = false;
+
         float m_camSpeed = 10;
         float m_rotationSpeed = 5;
-        
+
         float m_angleH;
         float m_angleV;
 
@@ -38,15 +40,17 @@ namespace moonshine {
 
 
     private:
+        void handleMovementMode(bool isReleased);
+
         void move(glm::vec3 toMove);
 
-        void moveForward();
+        void moveForward(bool isReleased);
 
-        void moveBackward();
+        void moveBackward(bool isReleased);
 
-        void moveRight();
+        void moveRight(bool isReleased);
 
-        void moveLeft();
+        void moveLeft(bool isReleased);
 
         void mouseMovement(CursorPosition cPos);
 

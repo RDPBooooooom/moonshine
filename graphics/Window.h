@@ -37,10 +37,16 @@ namespace moonshine {
         static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
 
         static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+        
+        static void mouseBtnCallback(GLFWwindow *window, int key, int action, int mods);
 
         bool shouldClose();
 
         void createSurface(VkInstance instance, VkSurfaceKHR *surface);
+
+        void setNoCursorMode();
+
+        void setCursorMode();
 
         VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
 

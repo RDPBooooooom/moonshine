@@ -17,8 +17,9 @@ namespace moonshine {
         glfwSetWindowUserPointer(m_window, this);
         glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
         glfwSetKeyCallback(m_window, keyCallback);
+        glfwSetMouseButtonCallback(m_window, mouseBtnCallback);
 
-        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        setCursorMode();
     }
 
     Window::~Window() {
@@ -47,5 +48,18 @@ namespace moonshine {
     void Window::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
         auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
         moonWindow->getInputHandler()->onKeypress(key, scancode, action, mods);
+    }
+
+    void Window::mouseBtnCallback(GLFWwindow *window, int button, int action, int mods) {
+        auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        moonWindow->getInputHandler()->onMousePress(button, action, mods);
+    }
+
+    void Window::setNoCursorMode() {
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    void Window::setCursorMode() {
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 } // moonshine
