@@ -54,7 +54,7 @@ namespace moonshine {
         std::function<void(bool)> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this, _1);
         m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_R, mvObjectThree);
         std::function<void(bool)> newGameObj = std::bind(&MoonshineApp::addGameObject, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj);
+        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj, false, false);
 
         m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < m_matrixUBO.size(); i++) {
@@ -96,9 +96,10 @@ namespace moonshine {
         std::cout << "opened Image and created Sampler \n";
 
         for (int i = 0; i < 5; ++i) {
-            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device));
+            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf"));
             gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
             gameObjects[i]->getTransform()->scale *= 20;
+            gameObjects[i]->initBuffer(m_device);
         }
 
     }
@@ -205,7 +206,7 @@ namespace moonshine {
             ImGui::NewFrame();
             
             m_window.getInputHandler()->triggerEvents();
-
+            editGameObjectsMutex.lock();
             if (auto commandBuffer = m_renderer.beginFrame()) {
 
                 int frameIndex = m_renderer.getFrameIndex();
@@ -219,8 +220,8 @@ namespace moonshine {
                         commandBuffer,
                         m_camera,
                         globalDescriptorSets[frameIndex]};
-
-                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
+                
+                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects, &editGameObjectsMutex);
 
                 ImGui::Render();
                 ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
@@ -228,6 +229,7 @@ namespace moonshine {
                 m_renderer.endSwapChainRenderPass(commandBuffer);
                 m_renderer.endFrame();
             }
+            editGameObjectsMutex.unlock();
         }
 
         vkDeviceWaitIdle(m_device.getVkDevice());

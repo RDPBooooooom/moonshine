@@ -31,9 +31,11 @@ namespace moonshine {
     private:
         GLFWwindow *m_window;
         std::vector<int> m_pressedKeys;
+        std::vector<int> m_freshlyPressedKeys;
         std::vector<int> m_removedKeys;
         std::map<int, std::vector<KeyFunction>> m_registeredEvents;
         std::map<int, std::vector<KeyFunction>> m_registeredOnReleasedEvents;
+        std::map<int, std::vector<KeyFunction>> m_registeredOnPressedEvents;
         std::vector<MouseFunction> m_registeredMouseEvents;
         CursorPosition m_cursorPosition{};
 
@@ -67,6 +69,8 @@ namespace moonshine {
 
         void triggerEvents();
 
+        int
+        registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease, bool triggerOnHold);
     };
 
 } // moonshine

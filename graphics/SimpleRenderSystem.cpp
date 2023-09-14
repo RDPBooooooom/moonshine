@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "iostream"
 #include <chrono>
+#include <mutex>
 #include "SimpleRenderSystem.h"
 #include "../utils/Constants.h"
 
@@ -14,8 +15,9 @@ namespace moonshine {
         glm::mat4 modelMatrix{1.f};
         glm::mat4 tangentToWorld{1.f};
     };
-    
-    SimpleRenderSystem::SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+
+    SimpleRenderSystem::SimpleRenderSystem(Device &device, VkRenderPass renderPass,
+                                           VkDescriptorSetLayout globalSetLayout)
             : m_device{device} {
         createPipelineLayout(globalSetLayout);
         createPipeline(renderPass);
@@ -30,7 +32,7 @@ namespace moonshine {
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
-        
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 1;
@@ -46,15 +48,15 @@ namespace moonshine {
 
     void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
-        
+
         std::cout << "Creating pipeline \n";
 
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
-        
+
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = m_pipelineLayout;
-        
+
         m_pipeline = std::make_unique<Pipeline>(
                 m_device,
                 "resources/shaders/shader.vert.spv",
@@ -63,7 +65,8 @@ namespace moonshine {
     }
 
     void SimpleRenderSystem::renderGameObjects(
-            FrameInfo& frmInfo, std::vector<std::shared_ptr<SceneObject>> gameObjects) {
+            FrameInfo &frmInfo, std::vector<std::shared_ptr<SceneObject>> gameObjects, std::mutex *toLock) {
+        
         m_pipeline->bind(frmInfo.commandBuffer);
 
         vkCmdBindDescriptorSets(frmInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -93,12 +96,11 @@ namespace moonshine {
 
             vkCmdBindIndexBuffer(frmInfo.commandBuffer, obj->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
-            
+
             vkCmdDrawIndexed(frmInfo.commandBuffer, static_cast<uint32_t>(obj->getIndexSize()), 1, 0, 0, 0);
 
         }
     }
 
-    
 
 } // moonshine

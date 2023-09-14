@@ -32,6 +32,8 @@
 #include<glm/glm.hpp>
 #include<glm/gtc/quaternion.hpp>
 #include<glm/common.hpp>
+#include <thread>
+#include <mutex>
 #include "editor/Time.h"
 #include "graphics/TextureImage.h"
 #include "graphics/TextureSampler.h"
@@ -60,6 +62,7 @@ namespace moonshine {
 
         std::shared_ptr<DescriptorPool> globalPool{};
 
+        std::mutex editGameObjectsMutex;
         std::vector<std::shared_ptr<SceneObject>> gameObjects;
 
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
@@ -92,28 +95,39 @@ namespace moonshine {
         }
 
         void moveObject(bool isReleased) {
-            for (auto & i : gameObjects) {
+            for (auto &i: gameObjects) {
                 i->getTransform()->position += glm::vec3(0, 0, 1) * Time::deltaTime;
             }
         }
 
         void moveObjectTwo(bool isReleased) {
-            for (auto & i : gameObjects) {
+            for (auto &i: gameObjects) {
                 i->getTransform()->position += glm::vec3(0, 1, 0) * Time::deltaTime;
             }
         }
 
         void moveObjectThree(bool isReleased) {
-            for (auto & i : gameObjects) {
+            for (auto &i: gameObjects) {
                 i->getTransform()->position += glm::vec3(1, 0, 0) * Time::deltaTime;
             }
         }
-        
-        void addGameObject(bool isReleased){
+
+        void loadAvocado() {
             size_t i = gameObjects.size();
-            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf", m_device));
-            gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
-            gameObjects[i]->getTransform()->scale *= 20;
+            std::shared_ptr<SceneObject> obj = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf");
+            obj->getTransform()->position = glm::vec3(0 + i, 0, 0);
+            obj->getTransform()->scale *= 20;
+            std::lock_guard<std::mutex> lock(editGameObjectsMutex);
+            obj->initBuffer(m_device);
+
+            
+            gameObjects.push_back(obj);
+        }
+        
+        void addGameObject(bool isReleased) {
+            std::function<void()> handleLoadAvocado = std::bind(&MoonshineApp::loadAvocado, this);
+            std::thread t(handleLoadAvocado);
+            t.detach();
         }
 
         void mainLoop();

@@ -23,8 +23,10 @@ namespace moonshine {
     public:
         std::unique_ptr<GpuBuffer<Vertex>> m_vertexBuffer;
         std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
-        explicit SceneObject(const char *filepath, Device &device);
+        explicit SceneObject(const char *filepath);
 
+        void initBuffer(Device &device);
+        
         VkBuffer getVertBuffer(){
             return m_vertexBuffer->getBuffer();
         }

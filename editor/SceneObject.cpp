@@ -5,7 +5,7 @@
 #include "SceneObject.h"
 #include "ModelLoader.h"
 
-moonshine::SceneObject::SceneObject(const char *filepath, Device &device) {
+moonshine::SceneObject::SceneObject(const char *filepath) {
     ModelLoader::loadASCIIModel(m_model, filepath);
 
     // Iterate over all meshes in the model
@@ -118,11 +118,15 @@ moonshine::SceneObject::SceneObject(const char *filepath, Device &device) {
 
     //std::cout << "Managed to load gltf 2.0 => creating buffers next \n";
     
+
+}
+
+void moonshine::SceneObject::initBuffer(Device &device) {
     m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(m_vertices, device,
                                                          VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
     //std::cout << "Finished vertex buffer => creating index buffer next \n";
-    
+
     m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(m_indices, device,
                                                           VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
