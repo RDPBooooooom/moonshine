@@ -102,7 +102,7 @@ namespace moonshine {
     }
 
     float Camera::getPercentRotation(float distance, float totalDistance) {
-        return distance / totalDistance;
+        return distance / totalDistance * 100;
     }
 
 

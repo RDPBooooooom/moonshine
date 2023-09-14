@@ -44,11 +44,13 @@ namespace moonshine {
 
         void updateCursorPos();
 
+        void drawMouseDebug() const;
+
     public:
         explicit InputHandler(GLFWwindow *window);
 
         void onKeypress(int key, int scancode, int action, int mods);
-        
+
         void onMousePress(int button, int action, int mods);
 
         int registerKeyEvent(int key, const std::function<void(bool)> &callback);
@@ -64,7 +66,6 @@ namespace moonshine {
         }
 
         void triggerEvents();
-
 
     };
 

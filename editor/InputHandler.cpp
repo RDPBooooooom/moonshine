@@ -4,6 +4,9 @@
 
 #include <iostream>
 #include "InputHandler.h"
+#include "Settings.h"
+#include "imgui.h"
+#include "moonshine/MoonshineApp.h"
 
 namespace moonshine {
 
@@ -134,6 +137,18 @@ namespace moonshine {
         m_cursorPosition.oldY = m_cursorPosition.y;
 
         glfwGetCursorPos(m_window, &m_cursorPosition.x, &m_cursorPosition.y);
+
+        if (MoonshineApp::APP_SETTINGS.ENABLE_MOUSE_DEBUG){
+            drawMouseDebug();
+        }
+    }
+    
+    void InputHandler::drawMouseDebug() const{
+        // render your GUI
+        ImGui::Begin("Mouse Debugging");
+        ImGui::Text("Mouse: X: %f | Y: %f", m_cursorPosition.x, m_cursorPosition.y);
+        ImGui::Text("Old Mouse: X: %f | Y: %f", m_cursorPosition.oldX, m_cursorPosition.oldY);
+        ImGui::End();
     }
 
 } // moonshine

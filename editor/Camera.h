@@ -22,7 +22,7 @@ namespace moonshine {
         bool m_movementModeActive = false;
 
         float m_camSpeed = 10;
-        float m_rotationSpeed = 5;
+        float m_rotationSpeed = 200;
 
         float m_angleH;
         float m_angleV;
