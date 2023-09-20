@@ -110,14 +110,13 @@ moonshine::SceneObject::SceneObject(const char *filepath) {
 
                 auto mat = m_model.materials[primitive.material];
                 int textureIndex = mat.pbrMetallicRoughness.baseColorTexture.index;
-
-
             }
         }
+
+        m_name = mesh.name;
     }
 
     //std::cout << "Managed to load gltf 2.0 => creating buffers next \n";
-    
 
 }
 
