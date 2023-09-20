@@ -120,7 +120,6 @@ namespace moonshine {
             obj->getTransform()->scale *= 20;
             std::lock_guard<std::mutex> lock(editGameObjectsMutex);
             obj->initBuffer(m_device);
-
             
             gameObjects.push_back(obj);
         }
@@ -147,9 +146,12 @@ namespace moonshine {
 
         void loadSettings();
 
+        void createDockSpace();
+        
         void showSceneGraph();
 
         void showInspector();
+        
     };
 
 } // moonshine
