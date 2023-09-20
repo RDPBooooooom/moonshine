@@ -64,6 +64,7 @@ namespace moonshine {
 
         std::mutex editGameObjectsMutex;
         std::vector<std::shared_ptr<SceneObject>> gameObjects;
+        std::shared_ptr<SceneObject> selectedGameObject;
 
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
         std::vector<std::unique_ptr<Buffer>> m_fragUBO;
@@ -145,6 +146,10 @@ namespace moonshine {
         void initImGui();
 
         void loadSettings();
+
+        void showSceneGraph();
+
+        void showInspector();
     };
 
 } // moonshine

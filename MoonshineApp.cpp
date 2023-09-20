@@ -7,12 +7,13 @@
 #include "external/imgui/backends/imgui_impl_glfw.h"
 #include "external/imgui/backends/imgui_impl_vulkan.h"
 #include "editor/Settings.h"
+#include "glm/gtc/type_ptr.hpp"
 
 
 namespace moonshine {
 
     Settings MoonshineApp::APP_SETTINGS;
-    
+
     static void check_vk_result(VkResult err) {
         if (err == 0)
             return;
@@ -67,7 +68,7 @@ namespace moonshine {
                     m_device.properties.limits.minUniformBufferOffsetAlignment
             );
             m_matrixUBO[i]->map();
-        };
+        }
 
         std::cout << "UBO created \n";
 
@@ -82,7 +83,7 @@ namespace moonshine {
                     m_device.properties.limits.minUniformBufferOffsetAlignment
             );
             m_fragUBO[i]->map();
-        };
+        }
 
         std::cout << "FRAG UBO created \n";
 
@@ -204,9 +205,12 @@ namespace moonshine {
             ImGui_ImplVulkan_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
-            
+
             m_window.getInputHandler()->triggerEvents();
+
             editGameObjectsMutex.lock();
+            showSceneGraph();
+            showInspector();
             if (auto commandBuffer = m_renderer.beginFrame()) {
 
                 int frameIndex = m_renderer.getFrameIndex();
@@ -220,7 +224,7 @@ namespace moonshine {
                         commandBuffer,
                         m_camera,
                         globalDescriptorSets[frameIndex]};
-                
+
                 simpleRenderSystem.renderGameObjects(frameInfo, gameObjects, &editGameObjectsMutex);
 
                 ImGui::Render();
@@ -233,6 +237,49 @@ namespace moonshine {
         }
 
         vkDeviceWaitIdle(m_device.getVkDevice());
+    }
+
+    void MoonshineApp::showSceneGraph() {
+        ImGui::Begin("Scene Graph");
+
+        int index = 0;
+        for (const auto &item: gameObjects) {
+            std::string uniqueName = item->getName() + "##" + std::to_string(index++);
+
+            bool isOpen = ImGui::TreeNode(uniqueName.c_str());
+            if (ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem("Select")) {
+                    selectedGameObject = item;
+                }
+                if (ImGui::MenuItem("Rename")) { /* Handle rename... */ }
+                if (ImGui::MenuItem("Delete")) { /* Handle delete... */ }
+                ImGui::EndPopup();
+            }
+
+            if (isOpen) {
+                ImGui::TreePop();
+            }
+
+        }
+
+        ImGui::End();
+    }
+
+    void MoonshineApp::showInspector() {
+        ImGui::Begin("Inspector");
+
+        if (selectedGameObject != nullptr) {
+            ImGui::Text(selectedGameObject->getName().c_str());
+
+            ImGui::Text("Transform");
+            ImGui::InputFloat3("Position", glm::value_ptr(selectedGameObject->getTransform()->position));
+            glm::vec3 rotEulerAngles = eulerAngles(selectedGameObject->getTransform()->rotation);
+            if(ImGui::InputFloat3("Rotation", glm::value_ptr(rotEulerAngles))){
+                selectedGameObject->getTransform()->rotation = glm::quat(rotEulerAngles);
+            }
+            ImGui::InputFloat3("Scale", glm::value_ptr(selectedGameObject->getTransform()->scale));
+        }
+        ImGui::End();
     }
 
     void MoonshineApp::updateUniformBuffer(uint32_t currentImage) {

@@ -95,8 +95,7 @@ namespace moonshine {
             vkCmdBindVertexBuffers(frmInfo.commandBuffer, 0, 1, vertexBuffers, offsets);
 
             vkCmdBindIndexBuffer(frmInfo.commandBuffer, obj->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
-
-
+            
             vkCmdDrawIndexed(frmInfo.commandBuffer, static_cast<uint32_t>(obj->getIndexSize()), 1, 0, 0, 0);
 
         }

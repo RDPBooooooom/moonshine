@@ -16,6 +16,7 @@ namespace moonshine {
 
     private:
         tinygltf::Model m_model;
+        std::basic_string<char> m_name;
         Transform m_transform;
         std::vector<Vertex> m_vertices;
         std::vector<uint16_t> m_indices;
@@ -35,12 +36,16 @@ namespace moonshine {
             return m_indices.size();
         }
         
-        VkBuffer const getIndexBuffer(){
+        VkBuffer getIndexBuffer(){
             return m_indexBuffer->getBuffer();
         }
         
         Transform* getTransform(){
             return &m_transform;
+        }
+
+        std::basic_string<char> getName(){
+            return m_name;
         }
     };
 

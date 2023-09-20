@@ -333,7 +333,7 @@ namespace moonshine {
     SwapChain::SwapChain(moonshine::Device &deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> previous)
             : m_device{deviceRef}, m_windowExtent(windowExtent) {
         init();
-        previous = nullptr;
+        m_oldSwapChain = std::move(previous);
     }
 
     void SwapChain::init() {
@@ -346,15 +346,13 @@ namespace moonshine {
     }
 
     SwapChain::~SwapChain() {
-
-
+        
         for (int i = 0; i < m_depthImages.size(); i++) {
             vkDestroyImageView(m_device.getVkDevice(), m_depthImageViews[i], nullptr);
             vkDestroyImage(m_device.getVkDevice(), m_depthImages[i], nullptr);
             vkFreeMemory(m_device.getVkDevice(), m_depthImageMemorys[i], nullptr);
         }
-
-
+        
         for (size_t i = 0; i < moonshine::MAX_FRAMES_IN_FLIGHT; i++) {
             vkDestroySemaphore(m_device.getVkDevice(), m_vkRenderFinishedSemaphores[i], nullptr);
             vkDestroySemaphore(m_device.getVkDevice(), m_vkImageAvailableSemaphores[i], nullptr);
@@ -363,7 +361,6 @@ namespace moonshine {
 
         cleanupSwapChain();
         vkDestroyRenderPass(m_device.getVkDevice(), m_vkRenderPass, nullptr);
-
     }
 
     void SwapChain::createDepthResources() {
