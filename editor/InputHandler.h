@@ -38,6 +38,8 @@ namespace moonshine {
         std::map<int, std::vector<KeyFunction>> m_registeredOnPressedEvents;
         std::vector<MouseFunction> m_registeredMouseEvents;
         CursorPosition m_cursorPosition{};
+        
+        bool disabled;
 
     private:
         void addKey(int key);
@@ -71,6 +73,14 @@ namespace moonshine {
 
         int
         registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease, bool triggerOnHold);
+    
+        void disable(){
+            disabled = true;
+        }
+        
+        void enable(){
+            disabled = false;
+        }
     };
 
 } // moonshine

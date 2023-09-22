@@ -77,6 +77,9 @@ namespace moonshine {
 
         Camera m_camera;
 
+        bool openPopup = false;
+        std::shared_ptr<SceneObject> popupItem = nullptr;
+
     public:
 
         MoonshineApp();
@@ -120,10 +123,10 @@ namespace moonshine {
             obj->getTransform()->scale *= 20;
             std::lock_guard<std::mutex> lock(editGameObjectsMutex);
             obj->initBuffer(m_device);
-            
+
             gameObjects.push_back(obj);
         }
-        
+
         void addGameObject(bool isReleased) {
             std::function<void()> handleLoadAvocado = std::bind(&MoonshineApp::loadAvocado, this);
             std::thread t(handleLoadAvocado);
@@ -147,11 +150,12 @@ namespace moonshine {
         void loadSettings();
 
         void createDockSpace();
-        
+
         void showSceneGraph();
 
         void showInspector();
-        
+
+        void showPopup(std::shared_ptr<SceneObject> &item);
     };
 
 } // moonshine

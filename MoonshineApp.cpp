@@ -1,5 +1,5 @@
 ﻿//
-// Created by marvi on 29.05.2023.
+// Created by marvin on 29.05.2023.
 //
 
 #include "MoonshineApp.h"
@@ -245,7 +245,7 @@ namespace moonshine {
         ImGui::Begin("Scene Graph");
 
         int index = 0;
-        for (const auto &item: gameObjects) {
+        for (auto &item: gameObjects) {
             std::string uniqueName = item->getName() + "##" + std::to_string(index++);
 
             bool isOpen = ImGui::TreeNode(uniqueName.c_str());
@@ -253,7 +253,11 @@ namespace moonshine {
                 if (ImGui::MenuItem("Select")) {
                     selectedGameObject = item;
                 }
-                if (ImGui::MenuItem("Rename")) { /* Handle rename... */ }
+                if (ImGui::MenuItem("Rename")) {
+                    openPopup = true;
+                    popupItem = item;
+                }
+
                 if (ImGui::MenuItem("Delete")) { /* Handle delete... */ }
                 ImGui::EndPopup();
             }
@@ -264,7 +268,9 @@ namespace moonshine {
 
         }
 
+        showPopup(popupItem);
         ImGui::End();
+
     }
 
     void MoonshineApp::showInspector() {
@@ -282,6 +288,41 @@ namespace moonshine {
             ImGui::InputFloat3("Scale", glm::value_ptr(selectedGameObject->getTransform()->scale));
         }
         ImGui::End();
+    }
+
+    void MoonshineApp::showPopup(std::shared_ptr<SceneObject> &item) {
+        if (!item) return;
+
+        if (openPopup) {
+            ImGui::OpenPopup(("Rename " + item->getName()).c_str());
+            m_window.getInputHandler()->disable();
+            openPopup = false;
+        }
+
+        // Always center this window when appearing
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+        if (ImGui::BeginPopupModal(("Rename " + item->getName()).c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            const int bufferSize = 256;
+            char text[bufferSize] = {};
+            std::string name = item->getName();
+            strncpy(text, name.c_str(), bufferSize - 1);
+            text[bufferSize - 1] = '\0'; // Ensure null-termination
+            ImGui::Text("Rename");
+            ImGui::SameLine();
+            ImGui::SetKeyboardFocusHere();
+            if (ImGui::InputText("##objectName", text, bufferSize,
+                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
+                std::string nameStr(text);
+                item->setName(nameStr);
+                ImGui::CloseCurrentPopup();
+
+                popupItem = nullptr;
+                m_window.getInputHandler()->enable();
+            }
+            ImGui::EndPopup();
+        }
     }
 
     void MoonshineApp::updateUniformBuffer(uint32_t currentImage) {
@@ -378,16 +419,18 @@ namespace moonshine {
                 ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
 
                 // split the dockspace into 2 nodes -- DockBuilderSplitNode takes in the following args in the following order
-                //   window ID to split, direction, fraction (between 0 and 1), the final two setting let's us choose which id we want (which ever one we DON'T set as NULL, will be returned by the function)
+                //   window ID to split, direction, fraction (between 0 and 1), the final two setting let's choose which id we want (which ever one we DON'T set as NULL, will be returned by the function)
                 //                                                              out_id_at_dir is the id of the node in the direction we specified earlier, out_id_at_opposite_dir is in the opposite direction
                 auto dock_id_left = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr,
                                                                 &dockspace_id);
                 auto dock_id_down = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Down, 0.25f, nullptr,
                                                                 &dockspace_id);
+                auto dock_id_right = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.15f, nullptr,
+                                                                 &dockspace_id);
 
                 // we now dock our windows into the docking node we made above
-                ImGui::DockBuilderDockWindow("Down", dock_id_down);
-                ImGui::DockBuilderDockWindow("Left", dock_id_left);
+                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
+                ImGui::DockBuilderDockWindow("Scene Graph", dock_id_left);
                 ImGui::DockBuilderFinish(dockspace_id);
             }
         }

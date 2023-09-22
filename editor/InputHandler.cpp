@@ -15,7 +15,8 @@ namespace moonshine {
     }
 
     void InputHandler::onKeypress(int key, int scancode, int action, int mods) {
-
+        if(disabled) return;
+        
         switch (action) {
             case GLFW_PRESS:
                 addKey(key);
@@ -114,18 +115,38 @@ namespace moonshine {
     }
 
     void InputHandler::addKey(int key) {
+        if(disabled) return;
+        
         m_pressedKeys.push_back(key);
         m_freshlyPressedKeys.push_back(key);
     }
 
     void InputHandler::removeKey(int key) {
         auto item = std::find(m_pressedKeys.begin(), m_pressedKeys.end(), key);
+        
+        if(item == m_pressedKeys.end()) return;
+        
         m_removedKeys.push_back(*item);
         m_pressedKeys.erase(item);
     }
 
     void InputHandler::triggerEvents() {
         updateCursorPos();
+
+        // Do even if disabled, to make sure all events are triggered when not pressing the key anymore
+        // Since general use for this is mostly to stop doing something once it isn't pressed anymore.
+        for (int key: m_removedKeys) {
+            auto registeredFunctions = m_registeredOnReleasedEvents[key];
+
+            if (registeredFunctions.empty()) continue;
+
+            for (const auto &function: registeredFunctions) {
+                function.function(true);
+            }
+        }
+        m_removedKeys.clear();
+        
+        if(disabled) return;
 
         for (const auto &function: m_registeredMouseEvents) {
             function.function(m_cursorPosition);
@@ -151,17 +172,6 @@ namespace moonshine {
             }
         }
         m_freshlyPressedKeys.clear();
-
-        for (int key: m_removedKeys) {
-            auto registeredFunctions = m_registeredOnReleasedEvents[key];
-
-            if (registeredFunctions.empty()) continue;
-
-            for (const auto &function: registeredFunctions) {
-                function.function(true);
-            }
-        }
-        m_removedKeys.clear();
     }
 
     void InputHandler::updateCursorPos() {

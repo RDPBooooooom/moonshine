@@ -6,6 +6,7 @@
 #define MOONSHINE_SCENEOBJECT_H
 
 #include <memory>
+#include <utility>
 #include "../external/tinygltf/tiny_gltf.h"
 #include "Transform.h"
 #include "../utils/VkUtils.h"
@@ -16,7 +17,7 @@ namespace moonshine {
 
     private:
         tinygltf::Model m_model;
-        std::basic_string<char> m_name;
+        std::string m_name;
         Transform m_transform;
         std::vector<Vertex> m_vertices;
         std::vector<uint16_t> m_indices;
@@ -46,6 +47,10 @@ namespace moonshine {
 
         std::basic_string<char> getName(){
             return m_name;
+        }
+        
+        void setName(std::string name){
+            m_name = name;
         }
     };
 
