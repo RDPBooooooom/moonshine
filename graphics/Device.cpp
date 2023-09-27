@@ -73,17 +73,15 @@ namespace moonshine {
         createInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
         createInfo.ppEnabledExtensionNames = glfwExtensions.data();
 
-        createInfo.enabledLayerCount = 0;
-
         uint32_t extensionCount = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-        std::cout << "available extensions:\n";
+        std::cout << "enabled extensions:\n";
 
-        for (const auto &extension: extensions) {
-            std::cout << '\t' << extension.extensionName << '\n';
+        for (const auto &extension: glfwExtensions) {
+            std::cout << '\t' << extension << '\n';
         }
 
         if (!checkGLFWCompatability(glfwExtensions, static_cast<uint32_t>(glfwExtensions.size()), extensions)) {
