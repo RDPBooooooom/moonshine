@@ -61,6 +61,7 @@ namespace moonshine {
         Renderer m_renderer = Renderer(m_window, m_device);
 
         std::shared_ptr<DescriptorPool> globalPool{};
+        VkDescriptorPool m_imGuiPool;
 
         std::mutex editGameObjectsMutex;
         std::vector<std::shared_ptr<SceneObject>> gameObjects;
@@ -140,6 +141,7 @@ namespace moonshine {
 
         void cleanup() {
             //TODO Destroy descriptor set for imgui
+            vkDestroyDescriptorPool(m_device.getVkDevice(), m_imGuiPool, nullptr);
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplGlfw_Shutdown();
             ImGui::DestroyContext();

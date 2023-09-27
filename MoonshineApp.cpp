@@ -129,8 +129,7 @@ namespace moonshine {
         pool_info.poolSizeCount = std::size(pool_sizes);
         pool_info.pPoolSizes = pool_sizes;
 
-        VkDescriptorPool imguiPool;
-        check_vk_result(vkCreateDescriptorPool(m_device.getVkDevice(), &pool_info, nullptr, &imguiPool));
+        check_vk_result(vkCreateDescriptorPool(m_device.getVkDevice(), &pool_info, nullptr, &m_imGuiPool));
 
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
@@ -150,7 +149,7 @@ namespace moonshine {
         init_info.QueueFamily = m_device.getGraphicsQueueFamily();
         init_info.Queue = m_device.getGraphicsQueue();
         init_info.PipelineCache = VK_NULL_HANDLE;
-        init_info.DescriptorPool = imguiPool;
+        init_info.DescriptorPool = m_imGuiPool;
         init_info.Subpass = 0;
         init_info.MinImageCount = 2;
         init_info.ImageCount = 2;
