@@ -141,7 +141,7 @@ namespace moonshine {
         glm::mat4 proj;
     };
     
-    struct Material {
+    struct MaterialData {
         float ambient = 1;
         float diffuse = 1;
         float specular = 1;
@@ -156,7 +156,7 @@ namespace moonshine {
     };
     
     struct FragmentUniformBufferObject {
-        Material material;
+        MaterialData material;
         alignas(16) glm::vec3  viewPos;
         alignas(16) DirLight dirLight;
     };

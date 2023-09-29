@@ -47,6 +47,7 @@
 #include "external/imgui/backends/imgui_impl_glfw.h"
 #include "external/imgui/backends/imgui_impl_vulkan.h"
 #include "editor/Settings.h"
+#include "graphics/MaterialManager.h"
 
 namespace moonshine {
 
@@ -61,7 +62,7 @@ namespace moonshine {
         Renderer m_renderer = Renderer(m_window, m_device);
 
         std::shared_ptr<DescriptorPool> globalPool{};
-        std::shared_ptr<DescriptorPool> materialPool{};
+        std::shared_ptr<MaterialManager> m_materialManager;
         VkDescriptorPool m_imGuiPool;
 
         std::mutex editGameObjectsMutex;
@@ -76,7 +77,7 @@ namespace moonshine {
 */
         std::unique_ptr<TextureImage> m_image;
         std::unique_ptr<TextureImage> m_imageTwo;
-        std::unique_ptr<TextureSampler> m_sampler;
+        
 
         Camera m_camera;
 
@@ -93,13 +94,6 @@ namespace moonshine {
     private:
 
         void initVulkan();
-
-        std::string getExecutablePath() {
-            char buffer[MAX_PATH];
-            GetModuleFileName(NULL, buffer, MAX_PATH);
-            std::string::size_type pos = std::string(buffer).find_last_of("\\/");
-            return std::string(buffer).substr(0, pos);
-        }
 
         void moveObject(bool isReleased) {
             for (auto &i: gameObjects) {
@@ -121,11 +115,11 @@ namespace moonshine {
 
         void loadAvocado() {
             size_t i = gameObjects.size();
-            std::shared_ptr<SceneObject> obj = std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf");
+            std::shared_ptr<SceneObject> obj = std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf");
             obj->getTransform()->position = glm::vec3(0 + i, 0, 0);
             obj->getTransform()->scale *= 20;
             std::lock_guard<std::mutex> lock(editGameObjectsMutex);
-            obj->initBuffer(m_device);
+            obj->init(m_device, m_materialManager);
 
             gameObjects.push_back(obj);
         }
@@ -142,7 +136,6 @@ namespace moonshine {
         void updateUniformBuffer(uint32_t currentImage);
 
         void cleanup() {
-            //TODO Destroy descriptor set for imgui
             vkDestroyDescriptorPool(m_device.getVkDevice(), m_imGuiPool, nullptr);
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplGlfw_Shutdown();

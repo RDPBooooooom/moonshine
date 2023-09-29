@@ -35,7 +35,7 @@ namespace moonshine {
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
         void
-        renderGameObjects(FrameInfo &frmInfo, std::vector<std::shared_ptr<SceneObject>> gameObjects,
+        renderGameObjects(FrameInfo &frmInfo, std::vector<std::shared_ptr<SceneObject>>& gameObjects,
                           std::mutex *toLock);
 
     private:

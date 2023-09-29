@@ -67,7 +67,7 @@ namespace moonshine {
     }
 
     void SimpleRenderSystem::renderGameObjects(
-            FrameInfo &frmInfo, std::vector<std::shared_ptr<SceneObject>> gameObjects, std::mutex *toLock) {
+            FrameInfo &frmInfo, std::vector<std::shared_ptr<SceneObject>>& gameObjects, std::mutex *toLock) {
         
         m_pipeline->bind(frmInfo.commandBuffer);
 

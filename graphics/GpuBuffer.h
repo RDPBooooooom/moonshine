@@ -15,13 +15,13 @@ namespace moonshine {
     class GpuBuffer {
 
     private:
-        Device& m_device;
+        Device &m_device;
         std::vector<T> m_bufferData;
 
         std::unique_ptr<Buffer> m_buffer;
- 
+
     public:
-        GpuBuffer(std::vector<T> &buffer, Device& device, VkBufferUsageFlagBits vkBufferUsageFlag) :
+        GpuBuffer(std::vector<T> &buffer, Device &device, VkBufferUsageFlagBits vkBufferUsageFlag) :
                 m_device{device},
                 m_bufferData{buffer} {
 
@@ -53,8 +53,6 @@ namespace moonshine {
         ~GpuBuffer() {
 
         };
-
-
     };
 
 } // moonshine

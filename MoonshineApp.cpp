@@ -43,10 +43,9 @@ namespace moonshine {
         globalPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
                 .build();
-        
-        materialPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_MATERIALS / 2)
-                .build();
+
+        m_materialManager = std::make_unique<MaterialManager>(&m_device);
+
 /*
             m_matrixUBONew = std::make_unique<UniformBuffer<UniformBufferObject>>(m_device);
             m_fragUBONew = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>(m_device);
@@ -93,24 +92,27 @@ namespace moonshine {
 
         //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
         //                                         m_vkCommandPool);
-        m_image = std::make_unique<TextureImage>(
-                (getExecutablePath() + "/resources/Models/Avocado/Avocado_baseColor.png").c_str(), &m_device,
-                m_device.getCommandPool());
-        m_imageTwo = std::make_unique<TextureImage>(
-                (getExecutablePath() + "/resources/textures/texture.jpg").c_str(), &m_device,
-                m_device.getCommandPool());
-        m_sampler = std::make_unique<TextureSampler>(&m_device);
+//        m_image = std::make_unique<TextureImage>(
+//                (getExecutablePath() + "/resources/Models/Avocado/Avocado_baseColor.png").c_str(), &m_device,
+//                m_device.getCommandPool());
+//        m_imageTwo = std::make_unique<TextureImage>(
+//                (getExecutablePath() + "/resources/textures/texture.jpg").c_str(), &m_device,
+//                m_device.getCommandPool());
+
 
         std::cout << "opened Image and created Sampler \n";
 
-        for (int i = 0; i < 5; ++i) {
-            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/Avocado.gltf"));
+        std::shared_ptr<SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/", "BarramundiFish.gltf");
+        fox->getTransform()->position = glm::vec3(0, 2, 0);
+        fox->init(m_device, m_materialManager);
+        gameObjects.push_back(fox);
+
+        for (int i = 1; i < 6; ++i) {
+            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
             gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
             gameObjects[i]->getTransform()->scale *= 20;
-            gameObjects[i]->initBuffer(m_device);
-            gameObjects[i]->setMaterialIdx(i % 2);
+            gameObjects[i]->init(m_device, m_materialManager);
         }
-
     }
 
     void MoonshineApp::initImGui() {
@@ -182,11 +184,7 @@ namespace moonshine {
                 .addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
                 .build();
         std::vector<VkDescriptorSet> globalDescriptorSets(MAX_FRAMES_IN_FLIGHT);
-        
-        auto materialSetLayout = DescriptorSetLayout::Builder(m_device)
-                .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                .build();
-        std::vector<VkDescriptorSet> materialDescriptorSets(MAX_FRAMES_IN_FLIGHT);
+
 
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
 
@@ -200,20 +198,9 @@ namespace moonshine {
                     .build(globalDescriptorSets[i]);
         }
 
-        for (int i = 0; i < materialDescriptorSets.size(); i++) {
-
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = i % 2 > 0 ? m_image->getImageView() : m_imageTwo->getImageView();
-            imageInfo.sampler = m_sampler->getVkSampler();
-
-            DescriptorWriter(*materialSetLayout, *materialPool)
-                    .writeImage(0, &imageInfo)
-                    .build(materialDescriptorSets[i]);
-        }
-
         SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.getSwapChainRenderPass(),
-                                              globalSetLayout->getDescriptorSetLayout(), materialSetLayout->getDescriptorSetLayout()};
+                                              globalSetLayout->getDescriptorSetLayout(),
+                                              m_materialManager->getMaterialLayout()};
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
@@ -242,7 +229,7 @@ namespace moonshine {
                         commandBuffer,
                         m_camera,
                         globalDescriptorSets[frameIndex],
-                        materialDescriptorSets};
+                        m_materialManager->getDescriptorSet()};
 
                 simpleRenderSystem.renderGameObjects(frameInfo, gameObjects, &editGameObjectsMutex);
 
@@ -364,7 +351,7 @@ namespace moonshine {
          */
         ubo.proj[1][1] *= -1;
 
-        Material material{};
+        MaterialData material{};
         DirLight light{};
         light.direction = glm::normalize(glm::vec3(0, 1, -1));
         light.ambient = glm::vec3(1, 1, 1) * 0.2f;

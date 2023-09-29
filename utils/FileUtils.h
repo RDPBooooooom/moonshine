@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <fstream>
+#include <minwindef.h>
+#include <libloaderapi.h>
 
 namespace moonshine {
 
@@ -32,6 +34,13 @@ namespace moonshine {
             file.close();
 
             return buffer;
+        }
+
+        static std::string getExecutablePath() {
+            char buffer[MAX_PATH];
+            GetModuleFileName(NULL, buffer, MAX_PATH);
+            std::string::size_type pos = std::string(buffer).find_last_of("\\/");
+            return std::string(buffer).substr(0, pos);
         }
     };
 
