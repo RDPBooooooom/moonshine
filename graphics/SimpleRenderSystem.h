@@ -26,7 +26,7 @@ namespace moonshine {
         std::unique_ptr<Pipeline> m_pipeline;
 
     public:
-        SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+        SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout materialSetLayout);
 
         ~SimpleRenderSystem();
 
@@ -42,7 +42,7 @@ namespace moonshine {
 
         void createPipeline(VkRenderPass pT);
 
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
+        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout materialSetLayout);
     };
 
 } // moonshine

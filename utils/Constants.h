@@ -13,6 +13,8 @@ namespace moonshine {
     static const uint32_t HEIGHT = 600;
 
     static const int MAX_FRAMES_IN_FLIGHT = 2;
+    
+    static const int MAX_MATERIALS = 1000;
 }
 
 #endif //MOONSHINE_CONSTANTS_H

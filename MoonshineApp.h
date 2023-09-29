@@ -61,6 +61,7 @@ namespace moonshine {
         Renderer m_renderer = Renderer(m_window, m_device);
 
         std::shared_ptr<DescriptorPool> globalPool{};
+        std::shared_ptr<DescriptorPool> materialPool{};
         VkDescriptorPool m_imGuiPool;
 
         std::mutex editGameObjectsMutex;

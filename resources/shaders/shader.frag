@@ -28,12 +28,13 @@ struct PointLight {
 };
 
 
-layout (binding = 1) uniform sampler2D texSampler;
-layout(binding = 2) uniform fragUBO {
+layout(set = 0, binding = 1) uniform fragUBO {
     Material material;
     vec3 viewPos;
     DirLight dirLight;
 };
+
+layout (set = 1, binding = 0) uniform sampler2D texSampler;
 
 layout(push_constant) uniform Push {
     mat4 transform; // projection * view * model

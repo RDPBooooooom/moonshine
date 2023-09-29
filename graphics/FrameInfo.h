@@ -17,6 +17,7 @@ namespace moonshine {
         VkCommandBuffer commandBuffer;
         Camera &camera;
         VkDescriptorSet globalDescriptorSet;
+        VkDescriptorSet materialDescriptorSet;
     };
    
 }

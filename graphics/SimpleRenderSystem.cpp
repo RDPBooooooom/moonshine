@@ -17,9 +17,9 @@ namespace moonshine {
     };
 
     SimpleRenderSystem::SimpleRenderSystem(Device &device, VkRenderPass renderPass,
-                                           VkDescriptorSetLayout globalSetLayout)
+                                           VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout materialSetLayout)
             : m_device{device} {
-        createPipelineLayout(globalSetLayout);
+        createPipelineLayout(globalSetLayout, materialSetLayout);
         createPipeline(renderPass);
     }
 
@@ -27,16 +27,18 @@ namespace moonshine {
         vkDestroyPipelineLayout(m_device.getVkDevice(), m_pipelineLayout, nullptr);
     }
 
-    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+    void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout materialSetLayout) {
         VkPushConstantRange pushConstantRange{};
         pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         pushConstantRange.offset = 0;
         pushConstantRange.size = sizeof(SimplePushConstantData);
 
+        std::vector<VkDescriptorSetLayout> layouts = {globalSetLayout, materialSetLayout};
+        
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        pipelineLayoutInfo.setLayoutCount = 1;
-        pipelineLayoutInfo.pSetLayouts = &globalSetLayout;
+        pipelineLayoutInfo.setLayoutCount = layouts.size();
+        pipelineLayoutInfo.pSetLayouts = layouts.data();
         pipelineLayoutInfo.pushConstantRangeCount = 0;
         pipelineLayoutInfo.pushConstantRangeCount = 1;
         pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
@@ -69,9 +71,11 @@ namespace moonshine {
         
         m_pipeline->bind(frmInfo.commandBuffer);
 
+        std::vector<VkDescriptorSet> descriptorSets = {frmInfo.globalDescriptorSet, frmInfo.materialDescriptorSet};
+        
         vkCmdBindDescriptorSets(frmInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 m_pipelineLayout, 0,
-                                1, &frmInfo.globalDescriptorSet, 0, nullptr);
+                                descriptorSets.size(), descriptorSets.data(), 0, nullptr);
 
         for (auto &obj: gameObjects) {
 

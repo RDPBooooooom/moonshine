@@ -42,7 +42,10 @@ namespace moonshine {
     void MoonshineApp::initVulkan() {
         globalPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_FRAMES_IN_FLIGHT)
+                .build();
+        
+        materialPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
+                .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_MATERIALS / 2)
                 .build();
 /*
             m_matrixUBONew = std::make_unique<UniformBuffer<UniformBufferObject>>(m_device);
@@ -172,10 +175,14 @@ namespace moonshine {
 
         auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
                 .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-                .addBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
-                .addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                .addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
                 .build();
         std::vector<VkDescriptorSet> globalDescriptorSets(MAX_FRAMES_IN_FLIGHT);
+        
+        auto materialSetLayout = DescriptorSetLayout::Builder(m_device)
+                .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                .build();
+        std::vector<VkDescriptorSet> materialDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
 
@@ -190,13 +197,24 @@ namespace moonshine {
 
             DescriptorWriter(*globalSetLayout, *globalPool)
                     .writeBuffer(0, &bufferInfo)
-                    .writeImage(1, &imageInfo)
-                    .writeBuffer(2, &fragBufferInfo)
+                    .writeBuffer(1, &fragBufferInfo)
                     .build(globalDescriptorSets[i]);
         }
 
+        for (int i = 0; i < materialDescriptorSets.size(); i++) {
+
+            VkDescriptorImageInfo imageInfo{};
+            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            imageInfo.imageView = m_image->getImageView();
+            imageInfo.sampler = m_sampler->getVkSampler();
+
+            DescriptorWriter(*materialSetLayout, *materialPool)
+                    .writeImage(0, &imageInfo)
+                    .build(materialDescriptorSets[i]);
+        }
+
         SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.getSwapChainRenderPass(),
-                                              globalSetLayout->getDescriptorSetLayout()};
+                                              globalSetLayout->getDescriptorSetLayout(), materialSetLayout->getDescriptorSetLayout()};
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
@@ -224,7 +242,8 @@ namespace moonshine {
                         Time::deltaTime,
                         commandBuffer,
                         m_camera,
-                        globalDescriptorSets[frameIndex]};
+                        globalDescriptorSets[frameIndex],
+                        materialDescriptorSets[frameIndex]};
 
                 simpleRenderSystem.renderGameObjects(frameInfo, gameObjects, &editGameObjectsMutex);
 
