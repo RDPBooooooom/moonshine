@@ -73,17 +73,15 @@ namespace moonshine {
         createInfo.enabledExtensionCount = static_cast<uint32_t>(glfwExtensions.size());
         createInfo.ppEnabledExtensionNames = glfwExtensions.data();
 
-        createInfo.enabledLayerCount = 0;
-
         uint32_t extensionCount = 0;
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-        std::cout << "available extensions:\n";
+        std::cout << "enabled extensions:\n";
 
-        for (const auto &extension: extensions) {
-            std::cout << '\t' << extension.extensionName << '\n';
+        for (const auto &extension: glfwExtensions) {
+            std::cout << '\t' << extension << '\n';
         }
 
         if (!checkGLFWCompatability(glfwExtensions, static_cast<uint32_t>(glfwExtensions.size()), extensions)) {
@@ -272,6 +270,9 @@ namespace moonshine {
             throw std::runtime_error("failed to create logical device!");
         }
 
+        m_graphicsQueueFamily = indices.graphicsFamily.value();
+        m_presentQueueFamily = indices.presentFamily.value();
+        
         vkGetDeviceQueue(m_vkDevice, indices.graphicsFamily.value(), 0, &m_vkGraphicsQueue);
         vkGetDeviceQueue(m_vkDevice, indices.presentFamily.value(), 0, &m_vkPresentQueue);
     }

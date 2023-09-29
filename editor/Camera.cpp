@@ -15,8 +15,9 @@ namespace moonshine {
 
         using std::placeholders::_1;
         std::function<void(bool)> handleMovementMode = std::bind(&Camera::handleMovementMode, this, _1);
-        m_registeredFunctions.push_back(inputHandler->registerKeyEvent(GLFW_MOUSE_BUTTON_RIGHT, handleMovementMode, true));
-        
+        m_registeredFunctions.push_back(
+                inputHandler->registerKeyEvent(GLFW_MOUSE_BUTTON_RIGHT, handleMovementMode, true));
+
         std::function<void(bool)> forward = std::bind(&Camera::moveForward, this, _1);
         m_registeredFunctions.push_back(inputHandler->registerKeyEvent(GLFW_KEY_W, forward));
 
@@ -42,6 +43,7 @@ namespace moonshine {
     }
 
     glm::mat4 Camera::getViewMat() {
+        m_transform.rotation = normalize(m_transform.rotation);
         glm::mat4 rotation = glm::mat4_cast(m_transform.rotation);
         glm::mat4 translation = glm::translate(glm::mat4(1.0f), -m_transform.position);
         glm::mat4 view = rotation * translation;
@@ -102,7 +104,7 @@ namespace moonshine {
     }
 
     float Camera::getPercentRotation(float distance, float totalDistance) {
-        return distance / totalDistance;
+        return distance / totalDistance * 100;
     }
 
 

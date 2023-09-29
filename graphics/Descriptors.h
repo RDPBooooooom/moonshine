@@ -24,17 +24,17 @@ namespace moonshine {
                     VkShaderStageFlags stageFlags,
                     uint32_t count = 1);
 
-            std::unique_ptr <DescriptorSetLayout> build() const;
+            std::unique_ptr<DescriptorSetLayout> build() const;
 
         private:
             Device &m_device;
-            std::unordered_map <uint32_t, VkDescriptorSetLayoutBinding> m_bindings{};
+            std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> m_bindings{};
         };
 
         DescriptorSetLayout(
                 Device
-        &device,
-        std::unordered_map <uint32_t, VkDescriptorSetLayoutBinding> bindings
+                &device,
+                std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings
         );
 
         ~DescriptorSetLayout();
@@ -48,7 +48,7 @@ namespace moonshine {
     private:
         Device &m_device;
         VkDescriptorSetLayout m_descriptorSetLayout;
-        std::unordered_map <uint32_t, VkDescriptorSetLayoutBinding> m_bindings;
+        std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> m_bindings;
 
         friend class DescriptorWriter;
     };
@@ -65,11 +65,11 @@ namespace moonshine {
 
             Builder &setMaxSets(uint32_t count);
 
-            std::unique_ptr <DescriptorPool> build() const;
+            std::unique_ptr<DescriptorPool> build() const;
 
         private:
             Device &m_device;
-            std::vector <VkDescriptorPoolSize> m_poolSizes{};
+            std::vector<VkDescriptorPoolSize> m_poolSizes{};
             uint32_t m_maxSets = 1000;
             VkDescriptorPoolCreateFlags m_poolFlags = 0;
         };
@@ -78,7 +78,7 @@ namespace moonshine {
                 Device &device,
                 uint32_t maxSets,
                 VkDescriptorPoolCreateFlags poolFlags,
-                const std::vector <VkDescriptorPoolSize> &poolSizes);
+                const std::vector<VkDescriptorPoolSize> &poolSizes);
 
         ~DescriptorPool();
 
@@ -89,9 +89,11 @@ namespace moonshine {
         bool allocateDescriptor(
                 const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const;
 
-        void freeDescriptors(std::vector <VkDescriptorSet> &descriptors) const;
+        void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
 
         void resetPool();
+
+        VkDescriptorPool getVkDiscriptorPool() { return m_descriptorPool; }
 
     private:
         Device &m_device;
@@ -115,9 +117,9 @@ namespace moonshine {
     private:
         DescriptorSetLayout &m_setLayout;
         DescriptorPool &m_pool;
-        std::vector <VkWriteDescriptorSet> m_writes;
+        std::vector<VkWriteDescriptorSet> m_writes;
     };
-    
+
 
 } // moonshine
 

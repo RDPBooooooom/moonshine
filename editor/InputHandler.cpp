@@ -4,6 +4,9 @@
 
 #include <iostream>
 #include "InputHandler.h"
+#include "Settings.h"
+#include "imgui.h"
+#include "../MoonshineApp.h"
 
 namespace moonshine {
 
@@ -12,6 +15,7 @@ namespace moonshine {
     }
 
     void InputHandler::onKeypress(int key, int scancode, int action, int mods) {
+        if(disabled) return;
         
         switch (action) {
             case GLFW_PRESS:
@@ -33,22 +37,34 @@ namespace moonshine {
                 break;
         }
     }
-    
+
     int InputHandler::registerKeyEvent(int key, const std::function<void(bool)> &callback) {
         return registerKeyEvent(key, callback, false);
     }
 
     int InputHandler::registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease) {
+        return registerKeyEvent(key, callback, triggerOnRelease, true);
+    }
+
+    int InputHandler::registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease,
+                                       bool triggerOnHold) {
         std::vector<KeyFunction> *linkedCallbacks = &m_registeredEvents[key];
+        std::vector<KeyFunction> *linkedCallbacksPressed = &m_registeredOnPressedEvents[key];
+        std::vector<KeyFunction> *linkedCallbacksReleased = &m_registeredOnReleasedEvents[key];
 
         KeyFunction newFunc{getNewFuncId(), callback};
 
-        linkedCallbacks->push_back(newFunc);
-
-        m_registeredEvents[key] = *linkedCallbacks;
+        if (triggerOnHold) {
+            linkedCallbacks->push_back(newFunc);
+            m_registeredEvents[key] = *linkedCallbacks;
+        } else {
+            linkedCallbacksPressed->push_back(newFunc);
+            m_registeredOnPressedEvents[key] = *linkedCallbacksPressed;
+        }
 
         if (triggerOnRelease) {
-            m_registeredOnReleasedEvents[key] = *linkedCallbacks;
+            linkedCallbacksReleased->push_back(newFunc);
+            m_registeredOnReleasedEvents[key] = *linkedCallbacksReleased;
         }
 
         return newFunc.id;
@@ -81,6 +97,13 @@ namespace moonshine {
                 m_registeredEvents[pair.first] = pair.second;
             }
         }
+        for (auto pair: m_registeredOnPressedEvents) {
+            auto item = std::find_if(pair.second.begin(), pair.second.end(), IdFinder(functionID));
+            if (item != pair.second.end()) {
+                pair.second.erase(item);
+                m_registeredOnPressedEvents[pair.first] = pair.second;
+            }
+        }
         for (auto pair: m_registeredOnReleasedEvents) {
             auto item = std::find_if(pair.second.begin(), pair.second.end(), IdFinder(functionID));
             if (item != pair.second.end()) {
@@ -88,15 +111,21 @@ namespace moonshine {
                 m_registeredOnReleasedEvents[pair.first] = pair.second;
             }
         }
-        
+
     }
 
     void InputHandler::addKey(int key) {
+        if(disabled) return;
+        
         m_pressedKeys.push_back(key);
+        m_freshlyPressedKeys.push_back(key);
     }
 
     void InputHandler::removeKey(int key) {
         auto item = std::find(m_pressedKeys.begin(), m_pressedKeys.end(), key);
+        
+        if(item == m_pressedKeys.end()) return;
+        
         m_removedKeys.push_back(*item);
         m_pressedKeys.erase(item);
     }
@@ -104,18 +133,8 @@ namespace moonshine {
     void InputHandler::triggerEvents() {
         updateCursorPos();
 
-        for (const auto &function: m_registeredMouseEvents) {
-            function.function(m_cursorPosition);
-        }
-        for (int key: m_pressedKeys) {
-            auto registeredFunctions = m_registeredEvents[key];
-
-            if (registeredFunctions.empty()) continue;
-
-            for (const auto &function: registeredFunctions) {
-                function.function(false);
-            }
-        }
+        // Do even if disabled, to make sure all events are triggered when not pressing the key anymore
+        // Since general use for this is mostly to stop doing something once it isn't pressed anymore.
         for (int key: m_removedKeys) {
             auto registeredFunctions = m_registeredOnReleasedEvents[key];
 
@@ -126,7 +145,33 @@ namespace moonshine {
             }
         }
         m_removedKeys.clear();
+        
+        if(disabled) return;
 
+        for (const auto &function: m_registeredMouseEvents) {
+            function.function(m_cursorPosition);
+        }
+        
+        for (int key: m_pressedKeys) {
+            auto registeredFunctions = m_registeredEvents[key];
+
+            if (registeredFunctions.empty()) continue;
+
+            for (const auto &function: registeredFunctions) {
+                function.function(false);
+            }
+        }
+
+        for (int key: m_freshlyPressedKeys) {
+            auto registeredFunctions = m_registeredOnPressedEvents[key];
+
+            if (registeredFunctions.empty()) continue;
+
+            for (const auto &function: registeredFunctions) {
+                function.function(false);
+            }
+        }
+        m_freshlyPressedKeys.clear();
     }
 
     void InputHandler::updateCursorPos() {
@@ -134,6 +179,18 @@ namespace moonshine {
         m_cursorPosition.oldY = m_cursorPosition.y;
 
         glfwGetCursorPos(m_window, &m_cursorPosition.x, &m_cursorPosition.y);
+
+        if (MoonshineApp::APP_SETTINGS.ENABLE_MOUSE_DEBUG) {
+            drawMouseDebug();
+        }
+    }
+
+    void InputHandler::drawMouseDebug() const {
+        // render your GUI
+        ImGui::Begin("Mouse Debugging");
+        ImGui::Text("Mouse: X: %f | Y: %f", m_cursorPosition.x, m_cursorPosition.y);
+        ImGui::Text("Old Mouse: X: %f | Y: %f", m_cursorPosition.oldX, m_cursorPosition.oldY);
+        ImGui::End();
     }
 
 } // moonshine

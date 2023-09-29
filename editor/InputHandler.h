@@ -31,11 +31,15 @@ namespace moonshine {
     private:
         GLFWwindow *m_window;
         std::vector<int> m_pressedKeys;
+        std::vector<int> m_freshlyPressedKeys;
         std::vector<int> m_removedKeys;
         std::map<int, std::vector<KeyFunction>> m_registeredEvents;
         std::map<int, std::vector<KeyFunction>> m_registeredOnReleasedEvents;
+        std::map<int, std::vector<KeyFunction>> m_registeredOnPressedEvents;
         std::vector<MouseFunction> m_registeredMouseEvents;
         CursorPosition m_cursorPosition{};
+        
+        bool disabled;
 
     private:
         void addKey(int key);
@@ -44,11 +48,13 @@ namespace moonshine {
 
         void updateCursorPos();
 
+        void drawMouseDebug() const;
+
     public:
         explicit InputHandler(GLFWwindow *window);
 
         void onKeypress(int key, int scancode, int action, int mods);
-        
+
         void onMousePress(int button, int action, int mods);
 
         int registerKeyEvent(int key, const std::function<void(bool)> &callback);
@@ -65,7 +71,16 @@ namespace moonshine {
 
         void triggerEvents();
 
-
+        int
+        registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease, bool triggerOnHold);
+    
+        void disable(){
+            disabled = true;
+        }
+        
+        void enable(){
+            disabled = false;
+        }
     };
 
 } // moonshine

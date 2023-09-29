@@ -39,12 +39,8 @@ struct Transform {
         model = glm::translate(model, position);  // Apply translation.
 
 // Apply rotation. Note that glm::rotate takes rotation in radians, not degrees.
-        model = glm::rotate(model, glm::radians(rotation.x),
-                            glm::vec3(1.0f, 0.0f, 0.0f));  // Apply rotation around x-axis.
-        model = glm::rotate(model, glm::radians(rotation.y),
-                            glm::vec3(0.0f, 1.0f, 0.0f));  // Apply rotation around y-axis.
-        model = glm::rotate(model, glm::radians(rotation.z),
-                            glm::vec3(0.0f, 0.0f, 1.0f));  // Apply rotation around z-axis.
+        rotation = normalize(rotation);
+        model *= glm::mat4_cast(rotation);
 
         model = glm::scale(model, scale);  // Apply scale.
         return model;
