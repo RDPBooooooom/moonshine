@@ -39,7 +39,7 @@ namespace moonshine {
         std::vector<MouseFunction> m_registeredMouseEvents;
         CursorPosition m_cursorPosition{};
         
-        bool disabled;
+        bool disabled = false;
 
     private:
         void addKey(int key);
