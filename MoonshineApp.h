@@ -46,7 +46,7 @@
 #include "external/imgui/imgui.h"
 #include "external/imgui/backends/imgui_impl_glfw.h"
 #include "external/imgui/backends/imgui_impl_vulkan.h"
-#include "moonshine/editor/Settings.h"
+#include "editor/Settings.h"
 
 namespace moonshine {
 

@@ -6,7 +6,7 @@
 #include "InputHandler.h"
 #include "Settings.h"
 #include "imgui.h"
-#include "moonshine/MoonshineApp.h"
+#include "../MoonshineApp.h"
 
 namespace moonshine {
 
