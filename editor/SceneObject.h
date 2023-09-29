@@ -14,11 +14,12 @@
 
 namespace moonshine {
     class SceneObject {
-
+        
     private:
         tinygltf::Model m_model;
         std::string m_name;
         Transform m_transform;
+        uint16_t m_materialIdx;
         std::vector<Vertex> m_vertices;
         std::vector<uint16_t> m_indices;
 
@@ -51,6 +52,14 @@ namespace moonshine {
         
         void setName(std::string name){
             m_name = name;
+        }
+        
+        uint16_t getMaterialIdx() const{
+            return m_materialIdx;
+        }
+        
+        void setMaterialIdx(uint16_t newIdx) {
+            m_materialIdx = newIdx;
         }
     };
 

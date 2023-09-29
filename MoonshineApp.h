@@ -75,6 +75,7 @@ namespace moonshine {
         std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBONew;
 */
         std::unique_ptr<TextureImage> m_image;
+        std::unique_ptr<TextureImage> m_imageTwo;
         std::unique_ptr<TextureSampler> m_sampler;
 
         Camera m_camera;

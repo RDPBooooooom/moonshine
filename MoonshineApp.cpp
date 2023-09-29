@@ -96,6 +96,9 @@ namespace moonshine {
         m_image = std::make_unique<TextureImage>(
                 (getExecutablePath() + "/resources/Models/Avocado/Avocado_baseColor.png").c_str(), &m_device,
                 m_device.getCommandPool());
+        m_imageTwo = std::make_unique<TextureImage>(
+                (getExecutablePath() + "/resources/textures/texture.jpg").c_str(), &m_device,
+                m_device.getCommandPool());
         m_sampler = std::make_unique<TextureSampler>(&m_device);
 
         std::cout << "opened Image and created Sampler \n";
@@ -105,6 +108,7 @@ namespace moonshine {
             gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
             gameObjects[i]->getTransform()->scale *= 20;
             gameObjects[i]->initBuffer(m_device);
+            gameObjects[i]->setMaterialIdx(i % 2);
         }
 
     }
@@ -188,11 +192,6 @@ namespace moonshine {
 
             auto bufferInfo = m_matrixUBO[i]->descriptorInfo();
 
-            VkDescriptorImageInfo imageInfo{};
-            imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = m_image->getImageView();
-            imageInfo.sampler = m_sampler->getVkSampler();
-
             auto fragBufferInfo = m_fragUBO[i]->descriptorInfo();
 
             DescriptorWriter(*globalSetLayout, *globalPool)
@@ -205,7 +204,7 @@ namespace moonshine {
 
             VkDescriptorImageInfo imageInfo{};
             imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            imageInfo.imageView = m_image->getImageView();
+            imageInfo.imageView = i % 2 > 0 ? m_image->getImageView() : m_imageTwo->getImageView();
             imageInfo.sampler = m_sampler->getVkSampler();
 
             DescriptorWriter(*materialSetLayout, *materialPool)
@@ -243,7 +242,7 @@ namespace moonshine {
                         commandBuffer,
                         m_camera,
                         globalDescriptorSets[frameIndex],
-                        materialDescriptorSets[frameIndex]};
+                        materialDescriptorSets};
 
                 simpleRenderSystem.renderGameObjects(frameInfo, gameObjects, &editGameObjectsMutex);
 

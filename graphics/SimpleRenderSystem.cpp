@@ -71,16 +71,20 @@ namespace moonshine {
         
         m_pipeline->bind(frmInfo.commandBuffer);
 
-        std::vector<VkDescriptorSet> descriptorSets = {frmInfo.globalDescriptorSet, frmInfo.materialDescriptorSet};
+        std::vector<VkDescriptorSet> descriptorSets = {frmInfo.globalDescriptorSet};
         
         vkCmdBindDescriptorSets(frmInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 m_pipelineLayout, 0,
-                                descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+                                1, descriptorSets.data(), 0, nullptr);
 
         for (auto &obj: gameObjects) {
+            
+            // Bind the correct material
+            VkDescriptorSet materialDescriptorSet = frmInfo.materialDescriptorSets[obj->getMaterialIdx()];
+            vkCmdBindDescriptorSets(frmInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    m_pipelineLayout, 1,
+                                    1, &materialDescriptorSet, 0, nullptr);
 
-            //obj.model->bind(commandBuffer);
-            //obj.model->draw(commandBuffer);
 
             SimplePushConstantData push{};
             push.modelMatrix = obj->getTransform()->getMatrix();
