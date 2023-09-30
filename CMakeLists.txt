@@ -10,7 +10,11 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         graphics/Material.cpp
         graphics/Material.h
         graphics/MaterialManager.cpp
-        graphics/MaterialManager.h)
+        graphics/MaterialManager.h
+        editor/ui/SceneGraph.cpp
+        editor/ui/SceneGraph.h
+        editor/ui/UIWindow.cpp
+        editor/ui/UIWindow.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)

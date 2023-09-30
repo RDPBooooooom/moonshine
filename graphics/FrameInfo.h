@@ -12,7 +12,7 @@ namespace moonshine {
 // lib
 
     struct FrameInfo {
-        int frameIndex;
+        uint32_t frameIndex;
         float frameTime;
         VkCommandBuffer commandBuffer;
         Camera &camera;

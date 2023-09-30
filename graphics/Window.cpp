@@ -10,10 +10,11 @@
 
 namespace moonshine {
 
-    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h}, m_window(createWindow(w, h, name)),
-                                                     m_inputHandler(m_window) {
+    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h}, m_window(createWindow(w, h, name)) {
         m_name = std::move(name);
 
+        m_inputHandler = std::make_shared<InputHandler>(m_window);
+        
         glfwSetWindowUserPointer(m_window, this);
         glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
         glfwSetKeyCallback(m_window, keyCallback);

@@ -25,6 +25,8 @@ namespace moonshine {
 
     MoonshineApp::MoonshineApp() : m_camera{Camera(&m_window)} {
         loadSettings();
+        
+        gameObjects = std::make_shared<std::vector<std::shared_ptr<SceneObject>>>();
     }
 
     void MoonshineApp::run() {
@@ -102,16 +104,17 @@ namespace moonshine {
 
         std::cout << "opened Image and created Sampler \n";
 
-        std::shared_ptr<SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/", "BarramundiFish.gltf");
+        std::shared_ptr <SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/",
+                                                                          "BarramundiFish.gltf");
         fox->getTransform()->position = glm::vec3(0, 2, 0);
         fox->init(m_device, m_materialManager);
-        gameObjects.push_back(fox);
+        gameObjects->push_back(fox);
 
         for (int i = 1; i < 6; ++i) {
-            gameObjects.push_back(std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
-            gameObjects[i]->getTransform()->position = glm::vec3(0 + i, 0, 0);
-            gameObjects[i]->getTransform()->scale *= 20;
-            gameObjects[i]->init(m_device, m_materialManager);
+            gameObjects->push_back(std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
+            gameObjects->at(i)->getTransform()->position = glm::vec3(0 + i, 0, 0);
+            gameObjects->at(i)->getTransform()->scale *= 20;
+            gameObjects->at(i)->init(m_device, m_materialManager);
         }
     }
 
@@ -202,6 +205,10 @@ namespace moonshine {
                                               globalSetLayout->getDescriptorSetLayout(),
                                               m_materialManager->getMaterialLayout()};
 
+        // Init UI
+        auto inputHandler = m_window.getInputHandler();
+        m_sceneGraph = std::make_unique<SceneGraph>(gameObjects, inputHandler);
+
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
             glfwPollEvents();
@@ -214,11 +221,11 @@ namespace moonshine {
             m_window.getInputHandler()->triggerEvents();
 
             editGameObjectsMutex.lock();
-            showSceneGraph();
+            m_sceneGraph->draw();
             showInspector();
             if (auto commandBuffer = m_renderer.beginFrame()) {
 
-                int frameIndex = m_renderer.getFrameIndex();
+                uint32_t frameIndex = m_renderer.getFrameIndex();
                 updateUniformBuffer(frameIndex);
 
                 m_renderer.beginSwapChainRenderPass(commandBuffer);
@@ -245,89 +252,24 @@ namespace moonshine {
         vkDeviceWaitIdle(m_device.getVkDevice());
     }
 
-    void MoonshineApp::showSceneGraph() {
-        ImGui::Begin("Scene Graph");
-
-        int index = 0;
-        for (auto &item: gameObjects) {
-            std::string uniqueName = item->getName() + "##" + std::to_string(index++);
-
-            bool isOpen = ImGui::TreeNode(uniqueName.c_str());
-            if (ImGui::BeginPopupContextItem()) {
-                if (ImGui::MenuItem("Select")) {
-                    selectedGameObject = item;
-                }
-                if (ImGui::MenuItem("Rename")) {
-                    openPopup = true;
-                    popupItem = item;
-                }
-
-                if (ImGui::MenuItem("Delete")) { /* Handle delete... */ }
-                ImGui::EndPopup();
-            }
-
-            if (isOpen) {
-                ImGui::TreePop();
-            }
-
-        }
-
-        showPopup(popupItem);
-        ImGui::End();
-
-    }
 
     void MoonshineApp::showInspector() {
         ImGui::Begin("Inspector");
-
-        if (selectedGameObject != nullptr) {
-            ImGui::Text(selectedGameObject->getName().c_str());
+        std::shared_ptr<SceneObject> selected = m_sceneGraph->getSelected();
+        if (selected != nullptr) {
+            ImGui::Text(selected->getName().c_str());
 
             ImGui::Text("Transform");
-            ImGui::InputFloat3("Position", glm::value_ptr(selectedGameObject->getTransform()->position));
-            glm::vec3 rotEulerAngles = eulerAngles(selectedGameObject->getTransform()->rotation);
+            ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position));
+            glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->getTransform()->rotation));
             if (ImGui::InputFloat3("Rotation", glm::value_ptr(rotEulerAngles))) {
-                selectedGameObject->getTransform()->rotation = glm::quat(rotEulerAngles);
+                selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
             }
-            ImGui::InputFloat3("Scale", glm::value_ptr(selectedGameObject->getTransform()->scale));
+            ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale));
         }
         ImGui::End();
     }
 
-    void MoonshineApp::showPopup(std::shared_ptr<SceneObject> &item) {
-        if (!item) return;
-
-        if (openPopup) {
-            ImGui::OpenPopup(("Rename " + item->getName()).c_str());
-            m_window.getInputHandler()->disable();
-            openPopup = false;
-        }
-
-        // Always center this window when appearing
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-
-        if (ImGui::BeginPopupModal(("Rename " + item->getName()).c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-            const int bufferSize = 256;
-            char text[bufferSize] = {};
-            std::string name = item->getName();
-            strncpy(text, name.c_str(), bufferSize - 1);
-            text[bufferSize - 1] = '\0'; // Ensure null-termination
-            ImGui::Text("Rename");
-            ImGui::SameLine();
-            ImGui::SetKeyboardFocusHere();
-            if (ImGui::InputText("##objectName", text, bufferSize,
-                                 ImGuiInputTextFlags_EnterReturnsTrue)) {
-                std::string nameStr(text);
-                item->setName(nameStr);
-                ImGui::CloseCurrentPopup();
-
-                popupItem = nullptr;
-                m_window.getInputHandler()->enable();
-            }
-            ImGui::EndPopup();
-        }
-    }
 
     void MoonshineApp::updateUniformBuffer(uint32_t currentImage) {
         static auto startTime = std::chrono::high_resolution_clock::now();

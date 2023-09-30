@@ -48,6 +48,7 @@
 #include "external/imgui/backends/imgui_impl_vulkan.h"
 #include "editor/Settings.h"
 #include "graphics/MaterialManager.h"
+#include "editor/ui/SceneGraph.h"
 
 namespace moonshine {
 
@@ -66,8 +67,7 @@ namespace moonshine {
         VkDescriptorPool m_imGuiPool;
 
         std::mutex editGameObjectsMutex;
-        std::vector<std::shared_ptr<SceneObject>> gameObjects;
-        std::shared_ptr<SceneObject> selectedGameObject;
+        std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>> gameObjects;
 
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
         std::vector<std::unique_ptr<Buffer>> m_fragUBO;
@@ -77,12 +77,10 @@ namespace moonshine {
 */
         std::unique_ptr<TextureImage> m_image;
         std::unique_ptr<TextureImage> m_imageTwo;
-        
+
+        std::unique_ptr<moonshine::SceneGraph> m_sceneGraph;
 
         Camera m_camera;
-
-        bool openPopup = false;
-        std::shared_ptr<SceneObject> popupItem = nullptr;
 
     public:
 
@@ -96,32 +94,33 @@ namespace moonshine {
         void initVulkan();
 
         void moveObject(bool isReleased) {
-            for (auto &i: gameObjects) {
+            for (auto &i: *gameObjects) {
                 i->getTransform()->position += glm::vec3(0, 0, 1) * Time::deltaTime;
             }
         }
 
         void moveObjectTwo(bool isReleased) {
-            for (auto &i: gameObjects) {
+            for (auto &i: *gameObjects) {
                 i->getTransform()->position += glm::vec3(0, 1, 0) * Time::deltaTime;
             }
         }
 
         void moveObjectThree(bool isReleased) {
-            for (auto &i: gameObjects) {
+            for (auto &i: *gameObjects) {
                 i->getTransform()->position += glm::vec3(1, 0, 0) * Time::deltaTime;
             }
         }
 
         void loadAvocado() {
-            size_t i = gameObjects.size();
-            std::shared_ptr<SceneObject> obj = std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf");
+            size_t i = gameObjects->size();
+            std::shared_ptr<SceneObject> obj = std::make_shared<SceneObject>("resources/Models/Avocado/",
+                                                                             "Avocado.gltf");
             obj->getTransform()->position = glm::vec3(0 + i, 0, 0);
             obj->getTransform()->scale *= 20;
             std::lock_guard<std::mutex> lock(editGameObjectsMutex);
             obj->init(m_device, m_materialManager);
 
-            gameObjects.push_back(obj);
+            gameObjects->push_back(obj);
         }
 
         void addGameObject(bool isReleased) {
@@ -147,8 +146,6 @@ namespace moonshine {
         void loadSettings();
 
         void createDockSpace();
-
-        void showSceneGraph();
 
         void showInspector();
 

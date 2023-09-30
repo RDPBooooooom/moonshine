@@ -11,7 +11,7 @@
 namespace moonshine {
 
     Camera::Camera(Window *window) : m_window{window} {
-        InputHandler *inputHandler = window->getInputHandler();
+        std::shared_ptr<InputHandler> inputHandler = window->getInputHandler();
 
         using std::placeholders::_1;
         std::function<void(bool)> handleMovementMode = std::bind(&Camera::handleMovementMode, this, _1);

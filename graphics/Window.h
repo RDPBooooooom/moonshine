@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vulkan/vulkan_core.h>
+#include <memory>
 #include "GLFW/glfw3.h"
 #include "../editor/InputHandler.h"
 
@@ -16,7 +17,7 @@ namespace moonshine {
 
     private:
         GLFWwindow *m_window;
-        InputHandler m_inputHandler;
+        std::shared_ptr<InputHandler> m_inputHandler;
 
         std::string m_name;
 
@@ -32,7 +33,7 @@ namespace moonshine {
 
         Window &operator=(const Window &) = delete;
 
-        InputHandler *getInputHandler() { return &m_inputHandler; }
+        std::shared_ptr<InputHandler> getInputHandler() { return m_inputHandler; }
 
         static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
 
