@@ -52,15 +52,6 @@ namespace moonshine {
             m_matrixUBONew = std::make_unique<UniformBuffer<UniformBufferObject>>(m_device);
             m_fragUBONew = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>(m_device);
 */
-        using std::placeholders::_1;
-        std::function<void(bool)> mvObject = std::bind(&MoonshineApp::moveObject, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_Q, mvObject);
-        std::function<void(bool)> mvObjectTwo = std::bind(&MoonshineApp::moveObjectTwo, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_E, mvObjectTwo);
-        std::function<void(bool)> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_R, mvObjectThree);
-        std::function<void(bool)> newGameObj = std::bind(&MoonshineApp::addGameObject, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj, false, false);
 
         m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < m_matrixUBO.size(); i++) {
@@ -100,22 +91,7 @@ namespace moonshine {
 //        m_imageTwo = std::make_unique<TextureImage>(
 //                (getExecutablePath() + "/resources/textures/texture.jpg").c_str(), &m_device,
 //                m_device.getCommandPool());
-
-
         std::cout << "opened Image and created Sampler \n";
-
-        std::shared_ptr <SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/",
-                                                                          "BarramundiFish.gltf");
-        fox->getTransform()->position = glm::vec3(0, 2, 0);
-        fox->init(m_device, m_materialManager);
-        gameObjects->push_back(fox);
-
-        for (int i = 1; i < 6; ++i) {
-            gameObjects->push_back(std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
-            gameObjects->at(i)->getTransform()->position = glm::vec3(0 + i, 0, 0);
-            gameObjects->at(i)->getTransform()->scale *= 20;
-            gameObjects->at(i)->init(m_device, m_materialManager);
-        }
     }
 
     void MoonshineApp::initImGui() {
@@ -171,7 +147,6 @@ namespace moonshine {
 
         ImGui_ImplVulkan_Init(&init_info, m_renderer.getSwapChainRenderPass());
 
-
         VkCommandBuffer commandBuffer = beginSingleTimeCommands(&m_device, m_device.getCommandPool());
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
         endSingleTimeCommands(&m_device, commandBuffer, m_device.getCommandPool());
@@ -180,6 +155,29 @@ namespace moonshine {
     }
 
     void MoonshineApp::mainLoop() {
+        using std::placeholders::_1;
+        std::function<void(bool)> mvObject = std::bind(&MoonshineApp::moveObject, this, _1);
+        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_Q, mvObject);
+        std::function<void(bool)> mvObjectTwo = std::bind(&MoonshineApp::moveObjectTwo, this, _1);
+        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_E, mvObjectTwo);
+        std::function<void(bool)> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this, _1);
+        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_R, mvObjectThree);
+        std::function<void(bool)> newGameObj = std::bind(&MoonshineApp::addGameObject, this, _1);
+        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj, false, false);
+
+        std::shared_ptr <SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/",
+                                                                          "BarramundiFish.gltf");
+        fox->getTransform()->position = glm::vec3(0, 2, 0);
+        fox->init(m_device, m_materialManager);
+        gameObjects->push_back(fox);
+
+        for (int i = 1; i < 6; ++i) {
+            gameObjects->push_back(std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
+            gameObjects->at(i)->getTransform()->position = glm::vec3(0 + i, 0, 0);
+            gameObjects->at(i)->getTransform()->scale *= 20;
+            gameObjects->at(i)->init(m_device, m_materialManager);
+        }
+
         Time::initTime();
 
         auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
@@ -266,6 +264,8 @@ namespace moonshine {
                 selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
             }
             ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale));
+            
+            m_materialManager->getMaterial(selected->getMaterialIdx())->drawGui();
         }
         ImGui::End();
     }

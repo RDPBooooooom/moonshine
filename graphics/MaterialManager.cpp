@@ -40,4 +40,9 @@ namespace moonshine {
         
         return size;
     }
+    
+    std::shared_ptr<Material> MaterialManager::getMaterial(const uint16_t matIdx) {
+        //TODO: Validation
+        return m_materials.at((size_t) matIdx);
+    }
 } // moonshine

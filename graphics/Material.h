@@ -18,6 +18,8 @@ namespace moonshine {
         std::string m_textureName;
         std::string m_pathToTexture;
 
+        VkDescriptorSet m_imGui_DS;
+
         std::shared_ptr<TextureSampler> m_sampler;
         std::unique_ptr<TextureImage> m_texture;
 
@@ -35,6 +37,8 @@ namespace moonshine {
         }
 
         void loadTexture(Device &device);
+
+        void drawGui();
     };
 
 } // moonshine

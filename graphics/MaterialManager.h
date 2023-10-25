@@ -36,6 +36,8 @@ namespace moonshine {
         }
         
         uint16_t createMaterial(std::string &name, std::string &textureName, std::string &pathToTexture);
+
+        std::shared_ptr<Material> getMaterial(const uint16_t matIdx);
     };
 
 } // moonshine
