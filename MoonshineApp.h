@@ -7,6 +7,7 @@
 #define GLFW_INCLUDE_VULKAN
 #define GLM_FORCE_RADIANS
 
+#include "net/LobbyConnector.h"
 #include <vulkan/vulkan_core.h>
 #include <vector>
 #include <stdexcept>
@@ -50,6 +51,7 @@
 #include "graphics/MaterialManager.h"
 #include "editor/ui/SceneGraph.h"
 
+
 namespace moonshine {
 
     class MoonshineApp {
@@ -61,6 +63,8 @@ namespace moonshine {
         Window m_window = Window(APP_NAME, WIDTH, HEIGHT);
         Device m_device = Device(m_window);
         Renderer m_renderer = Renderer(m_window, m_device);
+
+        std::shared_ptr<LobbyConnector> lobby;
 
         std::shared_ptr<DescriptorPool> globalPool{};
         std::shared_ptr<MaterialManager> m_materialManager;
@@ -124,7 +128,7 @@ namespace moonshine {
         }
 
         void addGameObject(bool isReleased) {
-            std::function<void()> handleLoadAvocado = std::bind(&MoonshineApp::loadAvocado, this);
+            std::function<void()> handleLoadAvocado = [this] { loadAvocado(); };
             std::thread t(handleLoadAvocado);
             t.detach();
         }
@@ -148,8 +152,6 @@ namespace moonshine {
         void createDockSpace();
 
         void showInspector();
-
-        void showPopup(std::shared_ptr<SceneObject> &item);
     };
 
 } // moonshine

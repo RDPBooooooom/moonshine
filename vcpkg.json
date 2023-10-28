@@ -1,0 +1,18 @@
+{
+  "name" : "moonshine",
+  "version-string" : "1.0.0",
+  "builtin-baseline" : "ff9b47f7c77a9a49a99c013a8895e60fca360467",
+  "dependencies" : [ {
+    "name" : "boost-vcpkg-helpers",
+    "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-json",
+    "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-bind",
+    "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-asio",
+    "version>=" : "1.83.0"
+  } ]
+}

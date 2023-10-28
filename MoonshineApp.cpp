@@ -30,6 +30,8 @@ namespace moonshine {
     }
 
     void MoonshineApp::run() {
+        lobby = std::make_shared<LobbyConnector>();
+        
         initVulkan();
         initImGui();
         mainLoop();

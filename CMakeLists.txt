@@ -3,6 +3,8 @@ project(moonshine)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(BOOST_JSON_STATIC_LINK, ON)
+
 set(IMGUI_DIR external/imgui/)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
@@ -14,7 +16,11 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/ui/SceneGraph.cpp
         editor/ui/SceneGraph.h
         editor/ui/UIWindow.cpp
-        editor/ui/UIWindow.h)
+        editor/ui/UIWindow.h
+        net/LobbyConnector.cpp
+        net/LobbyConnector.h
+        net/TcpConnection.cpp
+        net/TcpConnection.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
@@ -32,6 +38,9 @@ find_package(Git QUIET)
 #    endif ()
 #endif ()
 
+# Specify the required Boost version
+find_package(Boost 1.83.0 REQUIRED json)
+
 include_directories(external/stb/)
 
 # Add and link libraries
@@ -42,17 +51,29 @@ set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(external/tinygltf)
 
+if(MINGW)
+    target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
+endif()
+
 target_include_directories(${PROJECT_NAME}
         PUBLIC external/glfw/include
         PUBLIC external/glm/glm
+        PUBLIC ${Boost_INCLUDE_DIR}
         )
 
 target_link_directories(${PROJECT_NAME}
         PRIVATE external/glfw/src
         )
 
-target_link_libraries(${PROJECT_NAME} glfw)
-target_link_libraries(${PROJECT_NAME} glm)
+message(STATUS "Boost Libraries: ${Boost_INCLUDE_DIR}")
+message(STATUS "Boost Libraries: ${Boost_LIBRARIES}")
+
+
+
+target_link_libraries(${PROJECT_NAME} 
+        glfw
+        glm
+        ${Boost_LIBRARIES})
 
 
 # https://github.com/PacktPublishing/Learning-Vulkan/blob/master/Chapter%2003/HandShake/CMakeLists.txt
