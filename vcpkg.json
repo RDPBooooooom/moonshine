@@ -14,5 +14,8 @@
   }, {
     "name" : "boost-asio",
     "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-thread",
+    "version>=" : "1.83.0"
   } ]
 }

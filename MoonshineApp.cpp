@@ -30,8 +30,6 @@ namespace moonshine {
     }
 
     void MoonshineApp::run() {
-        lobby = std::make_shared<LobbyConnector>();
-        
         initVulkan();
         initImGui();
         mainLoop();
@@ -208,6 +206,7 @@ namespace moonshine {
         // Init UI
         auto inputHandler = m_window.getInputHandler();
         m_sceneGraph = std::make_unique<SceneGraph>(gameObjects, inputHandler);
+        lobby = std::make_shared<LobbyManager>();
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
@@ -220,6 +219,7 @@ namespace moonshine {
 
             m_window.getInputHandler()->triggerEvents();
 
+            lobby->draw();
             editGameObjectsMutex.lock();
             m_sceneGraph->draw();
             showInspector();

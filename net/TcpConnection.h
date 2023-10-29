@@ -11,6 +11,7 @@
 #include <boost/asio.hpp>
 #include <boost/json.hpp>
 #include <iostream>
+#include "../utils/SafeQueue.h"
 
 namespace moonshine {
 
@@ -23,8 +24,8 @@ namespace moonshine {
     public:
         typedef boost::shared_ptr<TcpConnection> pointer;
 
-        static pointer create(boost::asio::io_context &io_context) {
-            return pointer(new TcpConnection(io_context));
+        static pointer create(boost::asio::io_context &io_context, SafeQueue<boost::json::value> &queue) {
+            return pointer(new TcpConnection(io_context, queue));
         }
 
         tcp::socket &socket() {
@@ -51,15 +52,17 @@ namespace moonshine {
 
             reply_ = header + reply_; // Prepend header to message
 
+            std::cout << "Sent " << reply_ << std::endl;
+
             boost::asio::async_write(socket_, boost::asio::buffer(reply_),
                                      [this](const boost::system::error_code &error, size_t bytes_transferred) {
-                                         // TODO: Sending Json back
-                                         std::cout << "Send back called";
                                      });
         }
 
         void async_receive_json() {
+            std::cout << "Waiting ...";
             if (m_read_header) {
+                std::cout << " for header " << std::endl;
                 boost::asio::async_read(socket_, boost::asio::buffer(m_header_buffer),
                                         [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                             if (!error) {
@@ -68,24 +71,26 @@ namespace moonshine {
                                                 m_content_buffer.resize(m_expected_message_length);
                                                 m_read_header = false;
 
-                                                std::cout << "Received header: " << m_expected_message_length;
+                                                std::cout << "Received header: " << m_expected_message_length
+                                                          << std::endl;;
 
                                                 async_receive_json();  // Continue to read the message content
                                             } else {
                                                 std::cerr << "Error receiving header: " << error.message() << std::endl;
-                                                m_read_header = true;
-                                                async_receive_json();
                                             }
                                         });
             } else {
+                std::cout << " for body " << std::endl;
                 boost::asio::async_read(socket_, boost::asio::buffer(m_content_buffer),
                                         [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                             if (!error) {
                                                 std::string content_str(m_content_buffer.begin(),
                                                                         m_content_buffer.end());
-                                                //boost::json::value jv = boost::json::parse(content_str);
-                                                boost::json::value jv;
+
+                                                boost::json::value jv = boost::json::parse(content_str);
                                                 std::cout << "Received: " << boost::json::serialize(jv) << std::endl;
+
+                                                m_queue.push_back(jv);
 
                                                 // Reset the state for the next message
                                                 m_read_header = true;
@@ -93,16 +98,14 @@ namespace moonshine {
                                             } else {
                                                 std::cerr << "Error receiving content: " << error.message()
                                                           << std::endl;
-                                                m_read_header = true;
-                                                async_receive_json();
                                             }
                                         });
             }
         }
 
     private:
-        TcpConnection(boost::asio::io_context &io_context)
-                : socket_(io_context) {
+        TcpConnection(boost::asio::io_context &io_context, SafeQueue<boost::json::value> &queue)
+                : socket_(io_context), m_queue(queue) {
         }
 
         // Function to asynchronously send JSON data
@@ -114,6 +117,7 @@ namespace moonshine {
         std::array<char, 4> m_header_buffer; // 4 bytes for header
         std::vector<char> m_content_buffer;
         std::string reply_;
+        SafeQueue<boost::json::value> &m_queue;
     };
 
 } // moonshine

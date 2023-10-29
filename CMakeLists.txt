@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(BOOST_JSON_STATIC_LINK, ON)
 
+# Ignore New Boost version may have incorrect or missing dependencies and imported
+set(Boost_NO_WARN_NEW_VERSIONS 1)
+
 set(IMGUI_DIR external/imgui/)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
@@ -20,7 +23,10 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         net/LobbyConnector.cpp
         net/LobbyConnector.h
         net/TcpConnection.cpp
-        net/TcpConnection.h)
+        net/TcpConnection.h
+        editor/ui/LobbyManager.cpp
+        editor/ui/LobbyManager.h
+        utils/SafeQueue.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
@@ -39,7 +45,7 @@ find_package(Git QUIET)
 #endif ()
 
 # Specify the required Boost version
-find_package(Boost 1.83.0 REQUIRED json)
+find_package(Boost 1.83.0 REQUIRED json thread)
 
 include_directories(external/stb/)
 

@@ -50,6 +50,7 @@
 #include "editor/Settings.h"
 #include "graphics/MaterialManager.h"
 #include "editor/ui/SceneGraph.h"
+#include "editor/ui/LobbyManager.h"
 
 
 namespace moonshine {
@@ -64,7 +65,7 @@ namespace moonshine {
         Device m_device = Device(m_window);
         Renderer m_renderer = Renderer(m_window, m_device);
 
-        std::shared_ptr<LobbyConnector> lobby;
+        std::shared_ptr<LobbyManager> lobby;
 
         std::shared_ptr<DescriptorPool> globalPool{};
         std::shared_ptr<MaterialManager> m_materialManager;
