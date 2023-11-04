@@ -206,7 +206,7 @@ namespace moonshine {
         // Init UI
         auto inputHandler = m_window.getInputHandler();
         m_sceneGraph = std::make_unique<SceneGraph>(gameObjects, inputHandler);
-        lobby = std::make_shared<LobbyManager>();
+        lobby = std::make_shared<LobbyManager>(inputHandler);
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();

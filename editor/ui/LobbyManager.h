@@ -7,6 +7,7 @@
 
 #include "UIWindow.h"
 #include "../../net/LobbyConnector.h"
+#include "../InputHandler.h"
 
 namespace moonshine {
 
@@ -15,16 +16,24 @@ namespace moonshine {
     private:
         LobbyConnector connector;
 
-        std::unique_ptr<std::vector<LobbyConnector::Host>> currentHosts;
+        std::shared_ptr<InputHandler> m_inputHandler;
+
+        bool isHosting = false;
+        bool inSession = false;
         
+        bool openHostPrompt = false;
+        std::string lobbyName;
 
     public:
 
 
-        LobbyManager() = default;
+        explicit LobbyManager(std::shared_ptr<InputHandler>& inputHandler) : m_inputHandler(inputHandler){
+            
+        };
 
         void draw() override;
 
+        void showPopup();
     };
 
 } // moonshine

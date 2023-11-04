@@ -26,7 +26,11 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         net/TcpConnection.h
         editor/ui/LobbyManager.cpp
         editor/ui/LobbyManager.h
-        utils/SafeQueue.h)
+        utils/SafeQueue.h
+        net/Client.cpp
+        net/Client.h
+        net/Server.cpp
+        net/Server.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)

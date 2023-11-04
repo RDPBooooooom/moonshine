@@ -19,6 +19,8 @@ namespace moonshine {
         struct Host {
             int64_t id;
             std::string name;
+            std::string ipv4;
+            int64_t port;
         };
 
     private:
@@ -28,10 +30,10 @@ namespace moonshine {
         TcpConnection::pointer connection;
         bool m_isConnected = false;
         SafeQueue<boost::json::value> messageQueue;
-        
+
         bool threadStop = false;
         std::thread thread;
-        
+
         std::thread ioContextThread;
 
         std::mutex hostMutex;
@@ -44,16 +46,13 @@ namespace moonshine {
                     TcpConnection::create(io_service, messageQueue);
 
             currentHosts = std::make_unique<std::vector<Host>>();
-
-            std::function<void()> handleRequestsHandle = [this] { handleRequests(); };
-            thread = std::thread(handleRequestsHandle);
         }
 
         ~LobbyConnector() {
             if (thread.joinable()) {
                 thread.join();
             }
-            if(ioContextThread.joinable()){
+            if (ioContextThread.joinable()) {
                 ioContextThread.join();
             }
         }
@@ -61,6 +60,8 @@ namespace moonshine {
         void handleRequests() {
             while (isConnected() || !threadStop) {
                 messageQueue.wait();
+                if (!isConnected() || threadStop) continue;
+
                 boost::json::object jObj = messageQueue.pop_front().get_object();
                 std::cout << "Message found" << std::endl;
 
@@ -74,17 +75,22 @@ namespace moonshine {
                         Host host = {};
                         host.id = o["id"].get_int64();
                         host.name = o["name"].get_string();
+                        host.ipv4 = o["ip"].get_string();
+                        host.port = o["port"].get_int64();
 
                         currentHosts->push_back(host);
                     }
                     hostMutex.unlock();
+                } else if (std::equal(action.begin(), action.end(), "join")) {
+                    
                 }
             }
+            threadStop = false;
         }
 
         void drawHosts() {
             std::scoped_lock<std::mutex> lock(hostMutex);
-            
+
             static int item_current_idx = 0;
             if (ImGui::BeginListBox("Available Hosts", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
                 for (int n = 0; n < currentHosts->size(); n++) {
@@ -110,6 +116,7 @@ namespace moonshine {
 
         void receiveHosts();
 
+        void disconnect();
     };
 
 } // moonshine
