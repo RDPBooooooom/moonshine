@@ -38,6 +38,7 @@ namespace moonshine {
 
         std::mutex hostMutex;
         std::unique_ptr<std::vector<Host>> currentHosts;
+        int item_current_idx = 0;
 
     public:
 
@@ -90,8 +91,7 @@ namespace moonshine {
 
         void drawHosts() {
             std::scoped_lock<std::mutex> lock(hostMutex);
-
-            static int item_current_idx = 0;
+            
             if (ImGui::BeginListBox("Available Hosts", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
                 for (int n = 0; n < currentHosts->size(); n++) {
                     const bool is_selected = (item_current_idx == n);
@@ -112,11 +112,13 @@ namespace moonshine {
 
         void connect();
 
-        void registerAsHost(std::string name);
+        void registerAsHost(const std::string& name, int port);
 
         void receiveHosts();
 
         void disconnect();
+
+        LobbyConnector::Host getSelectedHost();
     };
 
 } // moonshine

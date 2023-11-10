@@ -6,16 +6,17 @@
 
 namespace moonshine {
 
-    void LobbyConnector::registerAsHost(std::string name) {
+    void LobbyConnector::registerAsHost(const std::string& name, int port) {
 
         boost::json::object object;
         object["action"] = "host";
         object["name"] = name;
+        object["port"] = port;
         connection->async_send_json(object);
     }
 
     void LobbyConnector::connect() {
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve("127.0.0.1", "12000");
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve("booooooom.ch", "12000");
         connection->start(endpoint_iterator);
 
         std::function<void()> handleRequestsHandle = [this] { handleRequests(); };
@@ -74,6 +75,12 @@ namespace moonshine {
                 // Handle exceptions as appropriate for your application
             }
         }
+    }
+
+    LobbyConnector::Host LobbyConnector::getSelectedHost() {
+        std::scoped_lock<std::mutex> lock(hostMutex);
+        
+        return currentHosts->at(item_current_idx);
     }
 
 } // moonshine

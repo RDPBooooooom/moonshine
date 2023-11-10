@@ -15,9 +15,9 @@
 
 namespace moonshine {
 
-    namespace net = boost::asio;
+    namespace asioNet = boost::asio;
     using boost::asio::ip::tcp;
-    using net::ip::tcp;
+    using asioNet::ip::tcp;
     using boost::system::error_code;
 
     class TcpConnection : public boost::enable_shared_from_this<TcpConnection> {

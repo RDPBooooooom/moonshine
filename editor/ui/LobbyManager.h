@@ -8,6 +8,8 @@
 #include "UIWindow.h"
 #include "../../net/LobbyConnector.h"
 #include "../InputHandler.h"
+#include "../../net/Server.h"
+#include "../../net/Client.h"
 
 namespace moonshine {
 
@@ -17,6 +19,8 @@ namespace moonshine {
         LobbyConnector connector;
 
         std::shared_ptr<InputHandler> m_inputHandler;
+        std::shared_ptr<net::Server> m_server;
+        std::shared_ptr<net::Client> m_client;
 
         bool isHosting = false;
         bool inSession = false;
@@ -28,12 +32,15 @@ namespace moonshine {
 
 
         explicit LobbyManager(std::shared_ptr<InputHandler>& inputHandler) : m_inputHandler(inputHandler){
-            
+            m_client = std::make_shared<net::Client>();
         };
 
         void draw() override;
 
         void showPopup();
+
+    private:
+        void start_hosting();
     };
 
 } // moonshine

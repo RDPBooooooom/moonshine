@@ -21,7 +21,7 @@ namespace moonshine {
             if (ImGui::Button("Connect", ImVec2(100, 20))) {
                 connector.connect();
                 if (isHosting) {
-                    connector.registerAsHost(lobbyName);
+                    connector.registerAsHost(lobbyName, m_server->get_port());
                     connector.receiveHosts();
                 }
             };
@@ -32,7 +32,8 @@ namespace moonshine {
             // Currently hosting a session 
             ImGui::SameLine();
             if (ImGui::Button("End Session", ImVec2(100, 20))) {
-                std::cout << "TODO: End Session";
+                m_server->stop();
+                isHosting = false;
             };
         } else if (connected && !inSession && !isHosting) {
             // Connected to the lobby server, but not hosting or in a session
@@ -42,15 +43,18 @@ namespace moonshine {
             };
             ImGui::SameLine();
             if (ImGui::Button("Join", ImVec2(100, 20))) {
-                std::cout << "Join selected Session";
                 inSession = true;
+                
+                LobbyConnector::Host selected = connector.getSelectedHost();
+                
+                m_client->connect(selected.ipv4, selected.port);
             };
             
         } else if (inSession) {
             // Currently connected to a host and therefor in a session
             ImGui::SameLine();
             if (ImGui::Button("Leave Session", ImVec2(100, 20))) {
-                std::cout << "TODO: Leave Session";
+                m_client->disconnect();
 
                 inSession = false;
             };
@@ -101,12 +105,7 @@ namespace moonshine {
             if (ImGui::InputText("##lobbyName", text, bufferSize, ImGuiInputTextFlags_EnterReturnsTrue)) {
                 lobbyName = text;
                 ImGui::CloseCurrentPopup();
-                m_inputHandler->enable();
-
-                connector.registerAsHost(lobbyName);
-                connector.receiveHosts();
-
-                isHosting = true;
+                start_hosting();
             };
             lobbyName = text;
 
@@ -120,16 +119,23 @@ namespace moonshine {
             ImGui::SetItemDefaultFocus();
             if (ImGui::Button("Start Hosting")) {
                 ImGui::CloseCurrentPopup();
-                m_inputHandler->enable();
-
-                connector.registerAsHost(lobbyName);
-                connector.receiveHosts();
-
-                isHosting = true;
+                start_hosting();
             }
 
             ImGui::EndPopup();
         }
+    }
+    
+    void LobbyManager::start_hosting(){
+        
+        m_inputHandler->enable();
+        
+        m_server = std::make_shared<net::Server>();
+
+        connector.registerAsHost(lobbyName, m_server->get_port());
+        connector.receiveHosts();
+
+        isHosting = true;
     }
 
 } // moonshine
