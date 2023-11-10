@@ -17,5 +17,20 @@
   }, {
     "name" : "boost-thread",
     "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-beast",
+    "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-outcome",
+    "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-property-tree",
+    "version>=" : "1.83.0"
+  }, {
+    "name" : "boost-iostreams",
+    "version>=" : "1.83.0#1"
+  }, {
+    "name" : "miniupnpc",
+    "version>=" : "2.2.5"
   } ]
 }

@@ -8,13 +8,17 @@
 namespace moonshine::net {
 
     void Client::connect(std::string ipv4, int64_t port) {
+        std::cout << "[Client] Connecting..." << std::endl;
         m_connection->start(m_resolver.resolve(ipv4, std::to_string(port)));
 
+        std::cout << "[Client] Connected!" << std::endl;
+        
         m_connection.get()->async_receive_json();
         if (m_ioContext.stopped()) {
             m_ioContext.restart();
         }
         m_ioContextThread = std::thread([ObjectPtr = &m_ioContext] { return ObjectPtr->run(); });
+        std::cout << "[Client] Context running" << std::endl;
     }
 
     void Client::disconnect() {

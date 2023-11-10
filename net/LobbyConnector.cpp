@@ -60,11 +60,11 @@ namespace moonshine {
                 threadStop = true;
 
                 std::cout << "Disconnected" << std::endl;
-                messageQueue.notifyToStop();
+                m_messageQueue.notifyToStop();
 
                 if (thread.joinable()) {
                     thread.join();
-                    messageQueue.clear();
+                    m_messageQueue.clear();
                 }
 
                 std::scoped_lock<std::mutex> lock(hostMutex);

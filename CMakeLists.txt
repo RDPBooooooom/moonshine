@@ -50,6 +50,8 @@ find_package(Git QUIET)
 
 # Specify the required Boost version
 find_package(Boost 1.83.0 REQUIRED json thread)
+find_package(miniupnpc CONFIG REQUIRED)
+
 
 include_directories(external/stb/)
 
@@ -61,29 +63,30 @@ set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(external/tinygltf)
 
-if(MINGW)
+if (MINGW)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
-endif()
+endif ()
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC external/glfw/include
         PUBLIC external/glm/glm
         PUBLIC ${Boost_INCLUDE_DIR}
-        )
+)
 
 target_link_directories(${PROJECT_NAME}
         PRIVATE external/glfw/src
-        )
+)
 
 message(STATUS "Boost Libraries: ${Boost_INCLUDE_DIR}")
 message(STATUS "Boost Libraries: ${Boost_LIBRARIES}")
 
 
-
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
         glfw
         glm
-        ${Boost_LIBRARIES})
+        ${Boost_LIBRARIES}
+        miniupnpc::miniupnpc
+)
 
 
 # https://github.com/PacktPublishing/Learning-Vulkan/blob/master/Chapter%2003/HandShake/CMakeLists.txt
@@ -152,16 +155,16 @@ endif ()
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${VULKAN_LIB_LIST})
 
 # Compiling Shaders to spir-v
-if(WIN32)
+if (WIN32)
     message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
     message(STATUS "Compiling shaders")
     add_custom_target(CompileShaders ALL
             COMMAND ${CMAKE_COMMAND} -E echo "Running compile.bat"
             COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR} cmd.exe /C compile.bat resources/shaders/ resources/shaders/
             COMMENT "Compiling shaders with compile.bat"
-            )
+    )
     add_dependencies(${PROJECT_NAME} CompileShaders)
-endif()
+endif ()
 
 add_custom_target(
         CopyResources ALL

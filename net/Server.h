@@ -8,6 +8,8 @@
 #include "boost/asio/io_context.hpp"
 #include "boost/asio/ip/tcp.hpp"
 #include "TcpConnection.h"
+#include <miniupnpc/miniupnpc.h>
+#include <miniupnpc/upnpcommands.h>
 
 using boost::asio::ip::tcp;
 
@@ -26,7 +28,14 @@ namespace moonshine::net {
 
         std::thread m_ioThread;
 
+        struct UPNPDev* m_deviceList;
+        struct UPNPUrls m_urls;
+        struct IGDdatas m_data;
+        
+        bool wasUpnpFreed = false;
+
     public:
+
         explicit Server() :
                 m_ioContext(),
                 m_acceptor(m_ioContext, tcp::endpoint(tcp::v4(), 0)),
@@ -35,9 +44,12 @@ namespace moonshine::net {
 
             start_accept();
             m_ioThread = std::thread([ObjectPtr = &m_ioContext] { return ObjectPtr->run(); });
+            
+            do_upnp();
         }
 
         ~Server() {
+            free_upnp();
             if (m_ioThread.joinable()) {
                 m_ioThread.join();
             }
@@ -55,7 +67,9 @@ namespace moonshine::net {
 
         void on_accept(TcpConnection::pointer new_connection,
                        const boost::system::error_code &error);
+        void do_upnp();
 
+        void free_upnp();
     };
 
 } // moonshine

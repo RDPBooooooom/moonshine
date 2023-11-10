@@ -29,7 +29,7 @@ namespace moonshine {
         tcp::resolver resolver;
         TcpConnection::pointer connection;
         bool m_isConnected = false;
-        SafeQueue<boost::json::value> messageQueue;
+        SafeQueue<boost::json::value> m_messageQueue;
 
         bool threadStop = false;
         std::thread thread;
@@ -44,7 +44,7 @@ namespace moonshine {
 
         LobbyConnector() : io_service(), resolver(io_service) {
             connection =
-                    TcpConnection::create(io_service, messageQueue);
+                    TcpConnection::create(io_service, m_messageQueue);
 
             currentHosts = std::make_unique<std::vector<Host>>();
         }
@@ -60,10 +60,10 @@ namespace moonshine {
 
         void handleRequests() {
             while (isConnected() || !threadStop) {
-                messageQueue.wait();
+                m_messageQueue.wait();
                 if (!isConnected() || threadStop) continue;
 
-                boost::json::object jObj = messageQueue.pop_front().get_object();
+                boost::json::object jObj = m_messageQueue.pop_front().get_object();
                 std::cout << "Message found" << std::endl;
 
                 boost::json::string action = jObj["action"].get_string();
