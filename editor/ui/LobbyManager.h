@@ -27,6 +27,8 @@ namespace moonshine {
 
         bool openHostPrompt = false;
         std::string lobbyName;
+        
+        float timeSinceLastReplication = 0.0f;
 
     public:
 

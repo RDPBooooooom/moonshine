@@ -4,6 +4,7 @@
 
 #include "LobbyManager.h"
 #include "imgui.h"
+#include "../Time.h"
 
 namespace moonshine {
 
@@ -139,7 +140,9 @@ namespace moonshine {
     }
 
     void LobbyManager::replicate() {
-        if(isHosting){
+        timeSinceLastReplication += Time::deltaTime;
+        if(isHosting && timeSinceLastReplication > 0.1f){
+            timeSinceLastReplication = 0;
             m_server->broadcast(Scene::getCurrentScene());
         }
     }
