@@ -25,8 +25,6 @@ namespace moonshine {
 
     MoonshineApp::MoonshineApp() : m_camera{Camera(&m_window)} {
         loadSettings();
-        
-        gameObjects = std::make_shared<std::vector<std::shared_ptr<SceneObject>>>();
     }
 
     void MoonshineApp::run() {
@@ -156,26 +154,21 @@ namespace moonshine {
 
     void MoonshineApp::mainLoop() {
         using std::placeholders::_1;
-        std::function<void(bool)> mvObject = std::bind(&MoonshineApp::moveObject, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_Q, mvObject);
-        std::function<void(bool)> mvObjectTwo = std::bind(&MoonshineApp::moveObjectTwo, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_E, mvObjectTwo);
-        std::function<void(bool)> mvObjectThree = std::bind(&MoonshineApp::moveObjectThree, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_R, mvObjectThree);
         std::function<void(bool)> newGameObj = std::bind(&MoonshineApp::addGameObject, this, _1);
         m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj, false, false);
 
-        std::shared_ptr <SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/",
-                                                                          "BarramundiFish.gltf");
+        std::shared_ptr<SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/",
+                                                                         "BarramundiFish.gltf");
         fox->getTransform()->position = glm::vec3(0, 2, 0);
         fox->init(m_device, m_materialManager);
-        gameObjects->push_back(fox);
+        Scene::getCurrentScene().add_object(fox);
 
         for (int i = 1; i < 6; ++i) {
-            gameObjects->push_back(std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
-            gameObjects->at(i)->getTransform()->position = glm::vec3(0 + i, 0, 0);
-            gameObjects->at(i)->getTransform()->scale *= 20;
-            gameObjects->at(i)->init(m_device, m_materialManager);
+            Scene::getCurrentScene().add_object(
+                    std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
+            Scene::getCurrentScene().get_at(i)->getTransform()->position = glm::vec3(0 + i, 0, 0);
+            Scene::getCurrentScene().get_at(i)->getTransform()->scale *= 20;
+            Scene::getCurrentScene().get_at(i)->init(m_device, m_materialManager);
         }
 
         Time::initTime();
@@ -205,8 +198,8 @@ namespace moonshine {
 
         // Init UI
         auto inputHandler = m_window.getInputHandler();
-        m_sceneGraph = std::make_unique<SceneGraph>(gameObjects, inputHandler);
-        lobby = std::make_shared<LobbyManager>(inputHandler);
+        m_sceneGraph = std::make_unique<SceneGraph>(inputHandler);
+        m_lobby = std::make_shared<LobbyManager>(inputHandler);
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
@@ -219,34 +212,39 @@ namespace moonshine {
 
             m_window.getInputHandler()->triggerEvents();
 
-            lobby->draw();
-            editGameObjectsMutex.lock();
+            m_lobby->draw();
+
             m_sceneGraph->draw();
             showInspector();
-            if (auto commandBuffer = m_renderer.beginFrame()) {
 
-                uint32_t frameIndex = m_renderer.getFrameIndex();
-                updateUniformBuffer(frameIndex);
+            {
+                std::unique_lock<std::mutex> sceneLock = Scene::getCurrentScene().getLock();
+                if (auto commandBuffer = m_renderer.beginFrame()) {
 
-                m_renderer.beginSwapChainRenderPass(commandBuffer);
+                    uint32_t frameIndex = m_renderer.getFrameIndex();
+                    updateUniformBuffer(frameIndex);
 
-                FrameInfo frameInfo{
-                        frameIndex,
-                        Time::deltaTime,
-                        commandBuffer,
-                        m_camera,
-                        globalDescriptorSets[frameIndex],
-                        m_materialManager->getDescriptorSet()};
+                    m_renderer.beginSwapChainRenderPass(commandBuffer);
 
-                simpleRenderSystem.renderGameObjects(frameInfo, gameObjects, &editGameObjectsMutex);
+                    FrameInfo frameInfo{
+                            frameIndex,
+                            Time::deltaTime,
+                            commandBuffer,
+                            m_camera,
+                            globalDescriptorSets[frameIndex],
+                            m_materialManager->getDescriptorSet()};
 
-                ImGui::Render();
-                ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+                    simpleRenderSystem.renderGameObjects(frameInfo, Scene::getCurrentScene());
 
-                m_renderer.endSwapChainRenderPass(commandBuffer);
-                m_renderer.endFrame();
+                    ImGui::Render();
+                    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
+                    m_renderer.endSwapChainRenderPass(commandBuffer);
+                    m_renderer.endFrame();
+                }
             }
-            editGameObjectsMutex.unlock();
+            
+            m_lobby->replicate();
         }
 
         vkDeviceWaitIdle(m_device.getVkDevice());
@@ -257,17 +255,28 @@ namespace moonshine {
         ImGui::Begin("Inspector");
         std::shared_ptr<SceneObject> selected = m_sceneGraph->getSelected();
         if (selected != nullptr) {
+            bool isDirty = false;
+            
             ImGui::Text(selected->getName().c_str());
 
             ImGui::Text("Transform");
-            ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position));
+            if (ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))){
+                isDirty = true;
+            }
             glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->getTransform()->rotation));
             if (ImGui::InputFloat3("Rotation", glm::value_ptr(rotEulerAngles))) {
                 selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
+                isDirty = true;
             }
-            ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale));
-            
+            if (ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale))){
+                isDirty = true;
+            }
+
             m_materialManager->getMaterial(selected->getMaterialIdx())->drawGui();
+            
+            if(isDirty){
+                m_lobby->replicate(selected);
+            }
         }
         ImGui::End();
     }

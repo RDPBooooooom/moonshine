@@ -14,7 +14,7 @@
 namespace moonshine {
 
     class LobbyManager : UIWindow {
-        
+
     private:
         LobbyConnector connector;
 
@@ -24,14 +24,14 @@ namespace moonshine {
 
         bool isHosting = false;
         bool inSession = false;
-        
+
         bool openHostPrompt = false;
         std::string lobbyName;
 
     public:
 
 
-        explicit LobbyManager(std::shared_ptr<InputHandler>& inputHandler) : m_inputHandler(inputHandler){
+        explicit LobbyManager(std::shared_ptr<InputHandler> &inputHandler) : m_inputHandler(inputHandler) {
             m_client = std::make_shared<net::Client>();
         };
 
@@ -39,8 +39,13 @@ namespace moonshine {
 
         void showPopup();
 
+        void replicate();
+
+        void replicate(std::shared_ptr<SceneObject> &object);
+
     private:
         void start_hosting();
+
     };
 
 } // moonshine

@@ -5,36 +5,40 @@
 #include <string>
 #include "SceneGraph.h"
 #include "imgui.h"
+#include "../Scene.h"
 
 namespace moonshine {
-
 
     void SceneGraph::draw() {
 
         ImGui::Begin("Scene Graph");
 
         int index = 0;
-        for (auto &item: *m_gameObjects) {
-            std::string uniqueName = item->getName() + "##" + std::to_string(index++);
+        Scene &current = Scene::getCurrentScene();
+        {
+            auto lock = current.getLock();
+            for (auto &item: current) {
+                std::string uniqueName = item->getName() + "##" + std::to_string(index++);
 
-            bool isOpen = ImGui::TreeNode(uniqueName.c_str());
-            if (ImGui::BeginPopupContextItem()) {
-                if (ImGui::MenuItem("Select")) {
-                    m_selectedGameObject = item;
+                bool isOpen = ImGui::TreeNode(uniqueName.c_str());
+                if (ImGui::BeginPopupContextItem()) {
+                    if (ImGui::MenuItem("Select")) {
+                        m_selectedGameObject = item;
+                    }
+                    if (ImGui::MenuItem("Rename")) {
+                        m_openPopup = true;
+                        m_popupItem = item;
+                    }
+
+                    if (ImGui::MenuItem("Delete")) { /* Handle delete... */ }
+                    ImGui::EndPopup();
                 }
-                if (ImGui::MenuItem("Rename")) {
-                    m_openPopup = true;
-                    m_popupItem = item;
+
+                if (isOpen) {
+                    ImGui::TreePop();
                 }
 
-                if (ImGui::MenuItem("Delete")) { /* Handle delete... */ }
-                ImGui::EndPopup();
             }
-
-            if (isOpen) {
-                ImGui::TreePop();
-            }
-
         }
 
         showPopup(m_popupItem);
@@ -78,9 +82,7 @@ namespace moonshine {
         }
     }
 
-    SceneGraph::SceneGraph(std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>> &gameObjects,
-                           std::shared_ptr<InputHandler> &inputHandler) : m_gameObjects{gameObjects},
-                                                                          m_inputHandler{inputHandler} {
+    SceneGraph::SceneGraph(std::shared_ptr<InputHandler> &inputHandler) : m_inputHandler{inputHandler} {
     }
 
 

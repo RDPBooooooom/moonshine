@@ -13,6 +13,7 @@
 #include "TextureSampler.h"
 #include "Buffer.h"
 #include "FrameInfo.h"
+#include "../editor/Scene.h"
 
 namespace moonshine {
 
@@ -26,7 +27,8 @@ namespace moonshine {
         std::unique_ptr<Pipeline> m_pipeline;
 
     public:
-        SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout materialSetLayout);
+        SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
+                           VkDescriptorSetLayout materialSetLayout);
 
         ~SimpleRenderSystem();
 
@@ -35,8 +37,7 @@ namespace moonshine {
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
         void
-        renderGameObjects(FrameInfo &frmInfo, std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>> gameObjects,
-                          std::mutex *toLock);
+        renderGameObjects(FrameInfo &frmInfo, Scene &scene);
 
     private:
 

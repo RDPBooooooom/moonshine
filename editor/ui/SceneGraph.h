@@ -16,14 +16,12 @@ namespace moonshine {
     private:
         std::shared_ptr<SceneObject> m_selectedGameObject;
         std::shared_ptr<InputHandler> m_inputHandler;
-        std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>> m_gameObjects;
 
         bool m_openPopup = false;
         std::shared_ptr<SceneObject> m_popupItem = nullptr;
 
     public:
-        SceneGraph(std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>>& gameObjects,
-                   std::shared_ptr<InputHandler>& inputHandler);
+        SceneGraph(std::shared_ptr<InputHandler>& inputHandler);
 
         void draw() override;
 

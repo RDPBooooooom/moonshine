@@ -138,4 +138,16 @@ namespace moonshine {
         isHosting = true;
     }
 
+    void LobbyManager::replicate() {
+        if(isHosting){
+            m_server->broadcast(Scene::getCurrentScene());
+        }
+    }
+    
+    void LobbyManager::replicate(std::shared_ptr<SceneObject> &object) {
+        if(inSession){
+            m_client->send(object);
+        }
+    }
+
 } // moonshine

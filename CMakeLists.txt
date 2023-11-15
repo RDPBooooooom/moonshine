@@ -30,7 +30,11 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         net/Client.cpp
         net/Client.h
         net/Server.cpp
-        net/Server.h)
+        net/Server.h
+        editor/Scene.cpp
+        editor/Scene.h
+        editor/RequestResolver.cpp
+        editor/RequestResolver.h)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)

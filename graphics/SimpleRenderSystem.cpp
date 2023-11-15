@@ -8,6 +8,7 @@
 #include <mutex>
 #include "SimpleRenderSystem.h"
 #include "../utils/Constants.h"
+#include "../editor/Scene.h"
 
 namespace moonshine {
 
@@ -67,7 +68,7 @@ namespace moonshine {
     }
 
     void SimpleRenderSystem::renderGameObjects(
-            FrameInfo &frmInfo, std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>> gameObjects, std::mutex *toLock) {
+            FrameInfo &frmInfo, Scene &scene) {
         
         m_pipeline->bind(frmInfo.commandBuffer);
 
@@ -77,7 +78,7 @@ namespace moonshine {
                                 m_pipelineLayout, 0,
                                 1, descriptorSets.data(), 0, nullptr);
 
-        for (auto &obj: *gameObjects) {
+        for (auto &obj: scene) {
             
             // Bind the correct material
             VkDescriptorSet materialDescriptorSet = frmInfo.materialDescriptorSets[obj->getMaterialIdx()];

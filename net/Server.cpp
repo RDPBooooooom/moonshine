@@ -4,27 +4,26 @@
 
 #include "Server.h"
 
-
 namespace moonshine::net {
 
     void Server::start_accept() {
         TcpConnection::pointer new_connection =
                 TcpConnection::create(m_ioContext, m_messageQueue);
 
-        std::cout << "[Server] Waiting..." << std::endl;;
+        std::cout << "[SERVER] Waiting for connections..." << std::endl;
 
         m_acceptor.async_accept(new_connection->socket(),
                                 bind(&Server::on_accept, this, new_connection,
                                      boost::asio::placeholders::error));
     }
 
-    void Server::on_accept(TcpConnection::pointer new_connection, const error_code &error) {
+    void Server::on_accept(TcpConnection::pointer &new_connection, const error_code &error) {
         if (!error) {
-            std::cout << "[Server] New Connection by " << new_connection->socket().remote_endpoint().address() << ":"
+            std::cout << "[SERVER] New Connection by " << new_connection->socket().remote_endpoint().address() << ":"
                       << new_connection->socket().remote_endpoint().port() << std::endl;
-            
+
             new_connection->start();
-            
+
             m_clients.lock();
             m_connectedClients.push_back(new_connection);
             m_clients.unlock();
@@ -38,7 +37,7 @@ namespace moonshine::net {
         m_clients.lock();
 
         free_upnp();
-        
+
         // Close the connection
         for (const auto &item: m_connectedClients) {
             item->socket().close();
@@ -52,25 +51,37 @@ namespace moonshine::net {
         if (m_ioThread.joinable()) {
             m_ioThread.join();
         }
-        
+
+    }
+
+    void Server::handleRequests() {
+        while (!threadStop) {
+            m_messageQueue.wait();
+            if (threadStop) continue;
+
+            boost::json::object jObj = m_messageQueue.pop_front().get_object();
+            std::cout << "[SERVER] Message received" << std::endl;
+            resolver.resolve(jObj);
+        }
+        threadStop = false;
     }
 
     void Server::do_upnp() {
         int error = 0;
 
-        m_deviceList = upnpDiscover(2000, NULL, NULL, 0, 0, 2, &error);
+        m_deviceList = upnpDiscover(2000, nullptr, nullptr, 0, 0, 2, &error);
         char lanIP[16];
-        
+
         if (m_deviceList) {
             if (UPNP_GetValidIGD(m_deviceList, &m_urls, &m_data, lanIP, sizeof(lanIP)) == 1) {
                 std::cout << m_urls.controlURL << std::endl;
                 std::cout << m_data.presentationurl << std::endl;
-                
+
                 std::string port = std::to_string(get_port());
                 // Expire after 4 hours
                 if (UPNP_AddPortMapping(m_urls.controlURL, m_data.first.servicetype,
                                         port.c_str(), port.c_str(), lanIP, "Moonshine P2P Server Host",
-                                        "TCP", NULL, "14400") != UPNPCOMMAND_SUCCESS) {
+                                        "TCP", nullptr, "14400") != UPNPCOMMAND_SUCCESS) {
                     // Handle error
                     std::cout << "[SERVER] error when mapping" << std::endl;
                 }
@@ -81,17 +92,17 @@ namespace moonshine::net {
             std::cout << "[SERVER] No device found for upnp" << std::endl;
         }
     }
-    
-    void Server::free_upnp(){
 
-        if(wasUpnpFreed) return;
-        
-        
+    void Server::free_upnp() {
+
+        if (wasUpnpFreed) return;
+
+
         std::string port = std::to_string(get_port());
-        
+
         int result = UPNP_DeletePortMapping(m_urls.controlURL, m_data.first.servicetype,
-                                            port.c_str(), "TCP", NULL);
-        if(result != UPNPCOMMAND_SUCCESS) {
+                                            port.c_str(), "TCP", nullptr);
+        if (result != UPNPCOMMAND_SUCCESS) {
             // Handle the error
             std::cout << "[SERVER] unable to delete mapping";
             return;
@@ -101,6 +112,30 @@ namespace moonshine::net {
         freeUPNPDevlist(m_deviceList);
 
         wasUpnpFreed = true;
+    }
+
+    void Server::broadcast(Scene &scene) {
+        auto lock = scene.getLock();
+        
+        boost::json::array objects;
+        
+        int i = 0;
+        for(auto obj : scene){
+            boost::json::object jObj = obj->getTransform()->serialize();
+            jObj["action"] = "updateObject";
+            jObj["objectId"] = i;
+            objects.push_back(jObj);
+            i++;
+        }
+
+        boost::json::object message;
+        message["action"] = "updateScene";
+        message["sceneObjects"] = objects;
+        
+        std::scoped_lock<std::mutex> clientLock(m_clients);
+        for(auto client : m_connectedClients){
+            client->async_send_json(message);
+        }
     }
 
 } // moonshine

@@ -52,7 +52,7 @@ namespace moonshine {
 
             reply_ = header + reply_; // Prepend header to message
 
-            std::cout << "Sent " << reply_ << std::endl;
+            //std::cout << "Sent " << reply_ << std::endl;
 
             boost::asio::async_write(socket_, boost::asio::buffer(reply_),
                                      [this](const boost::system::error_code &error, size_t bytes_transferred) {
@@ -60,9 +60,9 @@ namespace moonshine {
         }
 
         void async_receive_json() {
-            std::cout << "Waiting ...";
+            //std::cout << "Waiting ...";
             if (m_read_header) {
-                std::cout << " for header " << std::endl;
+                //std::cout << " for header " << std::endl;
                 boost::asio::async_read(socket_, boost::asio::buffer(m_header_buffer),
                                         [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                             if (!error) {
@@ -71,8 +71,8 @@ namespace moonshine {
                                                 m_content_buffer.resize(m_expected_message_length);
                                                 m_read_header = false;
 
-                                                std::cout << "Received header: " << m_expected_message_length
-                                                          << std::endl;;
+                                                //std::cout << "Received header: " << m_expected_message_length
+                                                //          << std::endl;;
 
                                                 async_receive_json();  // Continue to read the message content
                                             } else {
@@ -80,7 +80,7 @@ namespace moonshine {
                                             }
                                         });
             } else {
-                std::cout << " for body " << std::endl;
+                //std::cout << " for body " << std::endl;
                 boost::asio::async_read(socket_, boost::asio::buffer(m_content_buffer),
                                         [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                             if (!error) {
@@ -88,7 +88,7 @@ namespace moonshine {
                                                                         m_content_buffer.end());
 
                                                 boost::json::value jv = boost::json::parse(content_str);
-                                                std::cout << "Received: " << boost::json::serialize(jv) << std::endl;
+                                                //std::cout << "Received: " << boost::json::serialize(jv) << std::endl;
 
                                                 m_queue.push_back(jv);
 

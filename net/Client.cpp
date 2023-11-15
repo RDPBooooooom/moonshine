@@ -3,7 +3,7 @@
 //
 
 #include "Client.h"
-
+#include "../editor/Scene.h"
 
 namespace moonshine::net {
 
@@ -29,6 +29,8 @@ namespace moonshine::net {
 
                 // Stop the IO context to allow the thread to finish
                 m_ioContext.stop();
+                
+                threadStop = true;
 
                 // Join the thread if it's running
                 if (m_ioContextThread.joinable()) {
@@ -38,10 +40,10 @@ namespace moonshine::net {
                 std::cout << "[Client] Disconnected" << std::endl;
                 m_messageQueue.notifyToStop();
 
-                /*if (thread.joinable()) {
-                    thread.join();
+                if (m_receiveThread.joinable()) {
+                    m_receiveThread.join();
                     m_messageQueue.clear();
-                }*/
+                }
                 
             }
             catch (const std::exception &e) {
@@ -49,6 +51,27 @@ namespace moonshine::net {
                 // Handle exceptions as appropriate for your application
             }
         }
+    }
+
+    void Client::handleRequests() {
+        while (!threadStop) {
+            m_messageQueue.wait();
+            if (threadStop) continue;
+
+            boost::json::object jObj = m_messageQueue.pop_front().get_object();
+            //std::cout << "[Client] Message received" << std::endl;
+            resolver.resolve(jObj);
+        }
+        threadStop = false;
+    }
+
+    void Client::send(std::shared_ptr<SceneObject> &object) {
+        boost::json::object jObj = object->getTransform()->serialize();
+        jObj["action"] = "updateObject";
+        //TODO: Use unique ID
+        jObj["objectId"] = Scene::getCurrentScene().get_object_index(object).value();
+        m_connection->async_send_json(jObj);
+        std::cout << "[Client] Message sent" << std::endl;
     }
 } // moonshine
 // net
