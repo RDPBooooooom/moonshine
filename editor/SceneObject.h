@@ -7,23 +7,31 @@
 
 #include <memory>
 #include <utility>
-#include "../external/tinygltf/tiny_gltf.h"
 #include "Transform.h"
 #include "../utils/VkUtils.h"
 #include "../graphics/GpuBuffer.h"
 #include "../graphics/MaterialManager.h"
 
 namespace moonshine {
+    struct GltfData{
+        std::vector<Vertex> m_vertices;
+        std::vector<uint16_t> m_indices;
+
+        std::string m_path;
+        std::string m_name;
+        std::string m_matName;
+        std::string m_texName;
+    };
+    
     class SceneObject {
-        
+
     private:
-        tinygltf::Model m_model;
         std::string m_name;
         Transform m_transform;
         uint16_t m_materialIdx;
         std::vector<Vertex> m_vertices;
         std::vector<uint16_t> m_indices;
-        
+
         std::string m_matName;
         std::string m_texName;
         std::string m_path;
@@ -32,41 +40,44 @@ namespace moonshine {
         std::unique_ptr<GpuBuffer<uint16_t>> m_indexBuffer;
     public:
         
-        explicit SceneObject(std::string filepath, std::string filename);
+        SceneObject(std::string filepath, std::string filename);
+
+        explicit SceneObject(GltfData &data);
 
         void init(Device &device, std::shared_ptr<MaterialManager> &materialManager);
-        
-        VkBuffer getVertBuffer(){
+
+        VkBuffer getVertBuffer() {
             return m_vertexBuffer->getBuffer();
         }
 
-        size_t getIndexSize(){
+        size_t getIndexSize() {
             return m_indices.size();
         }
-        
-        VkBuffer getIndexBuffer(){
+
+        VkBuffer getIndexBuffer() {
             return m_indexBuffer->getBuffer();
         }
-        
-        Transform* getTransform(){
+
+        Transform *getTransform() {
             return &m_transform;
         }
 
-        std::basic_string<char> getName(){
+        std::basic_string<char> getName() {
             return m_name;
         }
-        
-        void setName(std::string name){
+
+        void setName(std::string name) {
             m_name = name;
         }
-        
-        uint16_t getMaterialIdx() const{
+
+        uint16_t getMaterialIdx() const {
             return m_materialIdx;
         }
-        
+
         void setMaterialIdx(uint16_t newIdx) {
             m_materialIdx = newIdx;
         }
+
     };
 
 }

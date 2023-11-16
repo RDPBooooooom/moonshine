@@ -1,17 +1,27 @@
 ﻿//
-// Created by marvin on 22.06.2023.
+// Created by marvin on 16.11.2023.
 //
 
-#include "SceneObject.h"
+#include "GltfLoader.h"
+#include "ModelLoader.h"
+#include "Scene.h"
 
 namespace moonshine {
-    SceneObject::SceneObject(std::string filepath, std::string filename) {
-     /*   ModelLoader::loadASCIIModel(m_model, (filepath + filename).c_str());
+    int GltfLoader::nr_loaded_objects = 0;
+    
+    std::vector<std::shared_ptr<SceneObject>> GltfLoader::load_gltf(std::string filepath, std::string filename) {
+
+        tinygltf::Model m_model;
+        GltfData data = {};
+        std::vector<std::shared_ptr<SceneObject>> loadedObjects;
+
+        ModelLoader::loadASCIIModel(m_model, (filepath + filename).c_str());
 
         // Iterate over all meshes in the model
         for (const auto &mesh: m_model.meshes) {
             // Iterate over all primitives in the mesh
             for (const auto &primitive: mesh.primitives) {
+                nr_loaded_objects++;
                 // Check if the primitive has POSITION attribute
                 if (primitive.attributes.find("POSITION") != primitive.attributes.end()) {
                     const auto &accessor = m_model.accessors[primitive.attributes.at("POSITION")];
@@ -27,12 +37,12 @@ namespace moonshine {
 
                         // Cast the raw buffer data to float and print the vertex positions
                         const auto *positions = reinterpret_cast<const float *>(&buffer.data[byteOffset]);
-                        m_vertices.resize(byteLength / sizeof(float) / 3);
+                        data.m_vertices.resize(byteLength / sizeof(float) / 3);
                         for (size_t i = 0; i < byteLength / sizeof(float); i += 3) {
                             auto vertex = Vertex{};
                             //std::cout << "Vertex position: (" << positions[i] << ", " << positions[i + 1] << ", " << positions[i + 2] << ")\n";
                             vertex.pos = glm::vec3(positions[i], positions[i + 1], positions[i + 2]);
-                            m_vertices[i / 3] = (vertex);
+                            data.m_vertices[i / 3] = (vertex);
                         }
                     }
                 }
@@ -54,7 +64,7 @@ namespace moonshine {
                         for (size_t i = 0; i < accessor.count; ++i) {
                             glm::vec3 normal(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]);
                             //std::cout << "Normals position: (" << normal.x << ", " << normal.y << ", " << normal.z << ")\n";
-                            m_vertices[i].normal = normal;
+                            data.m_vertices[i].normal = normal;
                         }
                     }
                 }
@@ -75,7 +85,7 @@ namespace moonshine {
                         // Each normal is a vec3, so there are 3 floats per normal
                         for (size_t i = 0; i < accessor.count; ++i) {
                             glm::vec2 uv(normals[i * 2], normals[i * 2 + 1]);
-                            m_vertices[i].texCoord = uv;
+                            data.m_vertices[i].texCoord = uv;
                         }
                     }
                 }
@@ -97,10 +107,10 @@ namespace moonshine {
                         size_t byteLength = bufferView.byteLength;
 
                         const auto *indices_uint16 = reinterpret_cast<const uint16_t *>(indices);
-                        m_indices.resize(byteLength / sizeof(uint16_t));
+                        data.m_indices.resize(byteLength / sizeof(uint16_t));
                         for (size_t i = 0; i < byteLength / sizeof(uint16_t); ++i) {
                             //std::cout << "Index: (" << indices_uint16[i] << ")\n";
-                            m_indices[i] = indices_uint16[i];
+                            data.m_indices[i] = indices_uint16[i];
                         }
                     } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
                         // handle indices as unsigned ints
@@ -114,40 +124,28 @@ namespace moonshine {
                     auto mat = m_model.materials[primitive.material];
                     int textureIndex = mat.pbrMetallicRoughness.baseColorTexture.index;
 
-                    m_matName = mat.name;
-                    m_texName = m_model.images[textureIndex].uri;
-                    m_path = filepath;
+                    if (mat.name.empty()) {
+                        data.m_matName = "Mat: " + std::to_string(primitive.material);
+                    } else {
+                        data.m_matName = mat.name;
+                    }
 
+                    data.m_texName = m_model.images[textureIndex].uri;
+                    data.m_path = filepath;
                 }
+
+                if (mesh.name.empty()) {
+                    data.m_name = "Obj: " + std::to_string(nr_loaded_objects);
+                } else {
+                    data.m_name = mesh.name;
+                }
+
+                auto object = std::make_shared<SceneObject>(data);
+                loadedObjects.push_back(object);
             }
-
-            m_name = mesh.name;
         }
-*/
-        //std::cout << "Managed to load gltf 2.0 => creating buffers next \n";
 
+
+        return loadedObjects;
     }
-
-    void SceneObject::init(Device &device, std::shared_ptr<MaterialManager> &materialManager) {
-        m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(m_vertices, device,
-                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-
-        //std::cout << "Finished vertex buffer => creating index buffer next \n";
-
-        m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(m_indices, device,
-                                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-
-        //std::cout << "finished index buffer \n";
-
-        m_materialIdx = materialManager->createMaterial(m_name, m_texName, m_path);
-    }
-
-    SceneObject::SceneObject(GltfData &data) {
-        m_name = data.m_name;
-        m_texName = data.m_texName;
-        m_matName = data.m_matName;
-        m_indices = data.m_indices;
-        m_vertices = data.m_vertices;
-        m_path = data.m_path;
-    }
-}
+} // moonshine

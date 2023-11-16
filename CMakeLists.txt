@@ -40,7 +40,9 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         # Add Im Gui File Dialog
         external/ImGuiFileDialog/ImGuiFileDialog.h
         external/ImGuiFileDialog/ImGuiFileDialog.cpp
-        )
+        editor/GltfLoader.cpp
+        editor/GltfLoader.h
+)
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)

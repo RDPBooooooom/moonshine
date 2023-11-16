@@ -33,7 +33,7 @@ namespace moonshine {
     }
     
     void Material::drawGui(){
-        ImGui::Text("Material");
+        ImGui::SeparatorText("Material");
         ImGui::BeginDisabled();
         ImGui::Text(m_name.c_str());
         ImGui::Image(ImTextureID(m_imGui_DS), ImVec2(100, 100));
