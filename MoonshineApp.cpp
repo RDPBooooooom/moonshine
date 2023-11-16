@@ -200,6 +200,7 @@ namespace moonshine {
         auto inputHandler = m_window.getInputHandler();
         m_sceneGraph = std::make_unique<SceneGraph>(inputHandler);
         m_lobby = std::make_shared<LobbyManager>(inputHandler);
+        m_workspaceManager = std::make_unique<WorkspaceManager>(inputHandler);
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
@@ -212,6 +213,7 @@ namespace moonshine {
 
             m_window.getInputHandler()->triggerEvents();
 
+            m_workspaceManager->draw();
             m_lobby->draw();
 
             m_sceneGraph->draw();

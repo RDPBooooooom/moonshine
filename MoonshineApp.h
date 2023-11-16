@@ -52,6 +52,7 @@
 #include "editor/ui/SceneGraph.h"
 #include "editor/ui/LobbyManager.h"
 #include "editor/Scene.h"
+#include "editor/ui/WorkspaceManager.h"
 
 
 namespace moonshine {
@@ -84,6 +85,7 @@ namespace moonshine {
         std::unique_ptr<TextureImage> m_imageTwo;
 
         std::unique_ptr<moonshine::SceneGraph> m_sceneGraph;
+        std::unique_ptr<WorkspaceManager> m_workspaceManager;
 
         Camera m_camera;
 

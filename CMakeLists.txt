@@ -34,7 +34,13 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/Scene.cpp
         editor/Scene.h
         editor/RequestResolver.cpp
-        editor/RequestResolver.h)
+        editor/RequestResolver.h
+        editor/ui/WorkspaceManager.cpp
+        editor/ui/WorkspaceManager.h
+        # Add Im Gui File Dialog
+        external/ImGuiFileDialog/ImGuiFileDialog.h
+        external/ImGuiFileDialog/ImGuiFileDialog.cpp
+        )
 
 # DOWNLOAD ALL THE SUBMODULES
 find_package(Git QUIET)
