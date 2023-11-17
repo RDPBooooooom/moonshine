@@ -100,25 +100,6 @@ namespace moonshine {
 
         void initVulkan();
 
-        void loadAvocado() {
-            size_t i = Scene::getCurrentScene().get_size();
-            std::shared_ptr<SceneObject> obj = std::make_shared<SceneObject>("resources/Models/Avocado/",
-                                                                             "Avocado.gltf");
-            obj->getTransform()->position = glm::vec3(0 + i, 0, 0);
-            obj->getTransform()->scale *= 20;
-            {
-                auto lock = Scene::getCurrentScene().getLock();
-                obj->init(m_device, m_materialManager);
-            }
-            Scene::getCurrentScene().add_object(obj);
-        }
-
-        void addGameObject(bool isReleased) {
-            std::function<void()> handleLoadAvocado = [this] { loadAvocado(); };
-            std::thread t(handleLoadAvocado);
-            t.detach();
-        }
-
         void mainLoop();
 
 

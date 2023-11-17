@@ -42,6 +42,10 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         external/ImGuiFileDialog/ImGuiFileDialog.cpp
         editor/GltfLoader.cpp
         editor/GltfLoader.h
+        editor/Mesh.h
+        editor/ModelLoader.cpp
+        editor/Node.cpp
+        editor/Node.h
 )
 
 # DOWNLOAD ALL THE SUBMODULES

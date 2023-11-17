@@ -153,23 +153,6 @@ namespace moonshine {
     }
 
     void MoonshineApp::mainLoop() {
-        using std::placeholders::_1;
-        std::function<void(bool)> newGameObj = std::bind(&MoonshineApp::addGameObject, this, _1);
-        m_window.getInputHandler()->registerKeyEvent(GLFW_KEY_T, newGameObj, false, false);
-
-        /*std::shared_ptr<SceneObject> fox = std::make_shared<SceneObject>("resources/Models/Fish/",
-                                                                         "BarramundiFish.gltf");
-        fox->getTransform()->position = glm::vec3(0, 2, 0);
-        fox->init(m_device, m_materialManager);
-        Scene::getCurrentScene().add_object(fox);*/
-
-        /*for (int i = 1; i < 6; ++i) {
-            Scene::getCurrentScene().add_object(
-                    std::make_shared<SceneObject>("resources/Models/Avocado/", "Avocado.gltf"));
-            Scene::getCurrentScene().get_at(i)->getTransform()->position = glm::vec3(0 + i, 0, 0);
-            Scene::getCurrentScene().get_at(i)->getTransform()->scale *= 20;
-            Scene::getCurrentScene().get_at(i)->init(m_device, m_materialManager);
-        }*/
 
         Time::initTime();
 
@@ -274,7 +257,11 @@ namespace moonshine {
                 isDirty = true;
             }
 
-            m_materialManager->getMaterial(selected->getMaterialIdx())->drawGui();
+            for (const auto &node: selected->get_nodes()){
+                for (const auto &mesh: node->get_sub_meshes()){
+                    m_materialManager->getMaterial(mesh.m_materialIdx)->drawGui();
+                }
+            }
             
             if(isDirty){
                 m_lobby->replicate(selected);

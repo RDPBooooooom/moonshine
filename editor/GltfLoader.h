@@ -7,6 +7,8 @@
 
 #include <algorithm>
 #include "SceneObject.h"
+#include "ModelLoader.h"
+#include "Node.h"
 
 namespace moonshine {
     
@@ -16,6 +18,8 @@ namespace moonshine {
         static int nr_loaded_objects;
     public:
         static std::vector<std::shared_ptr<SceneObject>> load_gltf(std::string filepath, std::string filename);
+        
+        static std::vector<std::shared_ptr<Node>> getSubmeshes(tinygltf::Model &model, tinygltf::Node &node, std::shared_ptr<Node> parent, std::string &path);
     };
 
 } // moonshine
