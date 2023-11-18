@@ -13,7 +13,7 @@
 
 struct Transform {
     glm::vec3 position;
-    glm::quat rotation = glm::quat(0, 0, 0, 1);
+    glm::quat rotation = glm::quat(1, 0, 0, 0);
     glm::vec3 scale = glm::vec3(1, 1, 1);
 
     glm::vec3 getForward() {

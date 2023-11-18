@@ -17,10 +17,10 @@ namespace moonshine {
 
         for (const auto &scene: m_model.scenes) {
             for (const auto &nodeIndex: scene.nodes) {
-                std::cout << "Node: " << nodeIndex;
+                std::cout << "Node: " << nodeIndex << std::endl;
                 std::vector<std::shared_ptr<Node>> nodeList;
                 nr_loaded_objects++;
-                
+
                 auto node = m_model.nodes[nodeIndex];
 
                 nodeList = getSubmeshes(m_model, node, nullptr, filepath);
@@ -36,23 +36,25 @@ namespace moonshine {
                 loadedObjects.push_back(object);
             }
         }
-        
+
         return loadedObjects;
     }
 
-    std::vector<std::shared_ptr<Node>> GltfLoader::getSubmeshes(tinygltf::Model &model, tinygltf::Node &node, std::shared_ptr<Node> parent, std::string &path) {
-        
+    std::vector<std::shared_ptr<Node>>
+    GltfLoader::getSubmeshes(tinygltf::Model &model, tinygltf::Node &node, std::shared_ptr<Node> parent,
+                             std::string &path) {
+
         std::cout << "get mesh for node: " << node.name << std::endl;
         std::vector<GltfData> meshes;
 
         Transform transform = {};
-        if(!node.translation.empty()){
+        if (!node.translation.empty()) {
             transform.position = glm::vec3(node.translation[0], node.translation[1], node.translation[2]);
         }
-        if(!node.rotation.empty()){
-            transform.rotation = glm::quat(glm::vec3(node.rotation[0], node.rotation[1], node.rotation[2]));
+        if (!node.rotation.empty()) {
+            transform.rotation = glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
         }
-        if(!node.scale.empty()){
+        if (!node.scale.empty()) {
             transform.scale = glm::vec3(node.scale[0], node.scale[1], node.scale[2]);
         }
 
@@ -60,124 +62,133 @@ namespace moonshine {
         std::vector<std::shared_ptr<Node>> nodes;
         nodes.push_back(moonshineNode);
 
-        for (const auto &item: node.children){
+        for (const auto &item: node.children) {
             std::cout << "Child => ";
             std::vector<std::shared_ptr<Node>> subMeshes = getSubmeshes(model, model.nodes[item], moonshineNode, path);
-            nodes.insert(nodes.end(), std::make_move_iterator(subMeshes.begin()), std::make_move_iterator(subMeshes.end()));
+            nodes.insert(nodes.end(), std::make_move_iterator(subMeshes.begin()),
+                         std::make_move_iterator(subMeshes.end()));
         }
-        
-        if(node.mesh < 0) return nodes;
-        
+
+        if (node.mesh < 0) return nodes;
+
         auto mesh = model.meshes[node.mesh];
         for (const auto &primitive: mesh.primitives) {
-            std::cout << "Primitive (via indices: " << primitive.indices;
+            std::cout << "Primitive (via indices): " << primitive.indices << std::endl;
             GltfData data = {};
-            
-            const auto &accessor = model.accessors[primitive.indices];
-            const auto &bufferView = model.bufferViews[accessor.bufferView];
-            const auto &buffer = model.buffers[bufferView.buffer];
-            const size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
-            const uint8_t *indices = &buffer.data[byteOffset];
 
-            if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
-                // handle indices as unsigned bytes
-                const auto *indices_uint8 = reinterpret_cast<const uint8_t *>(indices);
-                //std::cout << "[Indices Import] Unsigned byte - Currently not supported - Fix it Marvin! \n";
-                // ... use indices_uint8 ...
-            } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
-                // handle indices as unsigned shorts
-                size_t byteLength = bufferView.byteLength;
+            // Indices 
+            {
+                const auto &accessor = model.accessors[primitive.indices];
+                const auto &bufferView = model.bufferViews[accessor.bufferView];
+                const auto &buffer = model.buffers[bufferView.buffer];
+                const size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
+                const size_t stride = bufferView.byteStride ? bufferView.byteStride : sizeof(float);
+                const uint8_t *indices = &buffer.data[byteOffset];
 
-                const auto *indices_uint16 = reinterpret_cast<const uint16_t *>(indices);
-                data.m_indices.resize(byteLength / sizeof(uint16_t));
-                std::cout << "indices size: " << std::to_string(data.m_indices.size()) << std::endl;
-                for (size_t i = 0; i < byteLength / sizeof(uint16_t); ++i) {
-                    //std::cout << "Index: (" << indices_uint16[i] << ")\n";
-                    data.m_indices[i] = indices_uint16[i];
+                std::cout << "ByteStride: " << bufferView.byteStride;
+
+                if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
+                    // handle indices as unsigned bytes
+                    const auto *indices_uint8 = reinterpret_cast<const uint8_t *>(indices);
+                    std::cout << "[Indices Import] Unsigned byte - Currently not supported - Fix it Marvin! \n";
+                    // ... use indices_uint8 ...
+                } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
+                    // handle indices as unsigned shorts
+
+                    const auto *indices_uint16 = reinterpret_cast<const uint16_t *>(indices);
+                    data.m_indices.resize(accessor.count);
+
+                    std::cout << "indices size: " << std::to_string(data.m_indices.size()) << std::endl;
+                    for (size_t indiceIndex = 0; indiceIndex < accessor.count; ++indiceIndex) {
+
+                        size_t bufferIndex = indiceIndex * stride / sizeof(float);
+
+                        data.m_indices[indiceIndex] = indices_uint16[bufferIndex];
+                    }
+                } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
+                    // handle indices as unsigned ints
+                    const auto *indices_uint32 = reinterpret_cast<const uint32_t *>(indices);
+                    std::cout << "[Indices Import] Unsigned int - Currently not supported - Fix it Marvin! \n";
+                    // ... use indices_uint32 ...
                 }
-            } else if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
-                // handle indices as unsigned ints
-                const auto *indices_uint32 = reinterpret_cast<const uint32_t *>(indices);
-                //std::cout << "[Indices Import] Unsigned int - Currently not supported - Fix it Marvin! \n";
-                // ... use indices_uint32 ...
             }
 
             for (const auto &attributes: primitive.attributes) {
-                if (std::equal(attributes.first.begin(), attributes.first.end(), "POSITION")) {
-                    const auto &accessor = model.accessors[attributes.second];
-                    const auto &bufferView = model.bufferViews[accessor.bufferView];
-                    const auto &buffer = model.buffers[bufferView.buffer];
 
+                const auto &accessor = model.accessors[attributes.second];
+                const auto &bufferView = model.bufferViews[accessor.bufferView];
+                const auto &buffer = model.buffers[bufferView.buffer];
+
+                if (data.m_vertices.empty()) {
+                    std::cout << "resize: " << std::to_string(data.m_indices.size()) << std::endl;
+                    data.m_vertices.resize(accessor.count);
+                }
+
+                size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
+
+                if (std::equal(attributes.first.begin(), attributes.first.end(), "POSITION")) {
                     // Check if accessor type and component type are correct for a vertex position (should be a vector of 3 floats)
                     if (accessor.type == TINYGLTF_TYPE_VEC3 &&
                         accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
                         // Get the byte offset and size of the POSITION data
-                        size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
-                        size_t byteLength = bufferView.byteLength;
+
+                        size_t stride = bufferView.byteStride ? bufferView.byteStride : sizeof(float) * 3;
 
                         // Cast the raw buffer data to float and print the vertex positions
                         const auto *positions = reinterpret_cast<const float *>(&buffer.data[byteOffset]);
 
-                        if (data.m_vertices.empty()) {
-                            std::cout << "vertices size (by position): " << std::to_string(data.m_indices.size()) << std::endl;
-                            data.m_vertices.resize(byteLength / sizeof(float) / 3);
-                        }
+                        for (size_t vertexIndex = 0; vertexIndex < accessor.count; ++vertexIndex) {
+                            // Calculate the index into the bufferFloats array
+                            size_t bufferIndex = vertexIndex * stride / sizeof(float);
 
-                        for (size_t i = 0; i < byteLength / sizeof(float); i += 3) {
-                            glm::vec3 pos = glm::vec3(positions[i], positions[i + 1], positions[i + 2]);
-                            data.m_vertices[i / 3].pos = pos;
+                            // Access the vertex position data
+                            glm::vec3 pos = glm::vec3(positions[bufferIndex],
+                                                      positions[bufferIndex + 1],
+                                                      positions[bufferIndex + 2]);
+
+                            // Assign the position to the vertex in your mesh data structure
+                            data.m_vertices[vertexIndex].pos = pos;
                         }
                     }
                 } else if (std::equal(attributes.first.begin(), attributes.first.end(), "NORMAL")) {
-                    const auto &accessor = model.accessors[attributes.second];
-                    const auto &bufferView = model.bufferViews[accessor.bufferView];
-                    const auto &buffer = model.buffers[bufferView.buffer];
-
                     // Check if accessor type and component type are correct for a normal (should be a vector of 3 floats)
                     if (accessor.type == TINYGLTF_TYPE_VEC3 &&
                         accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
-                        // Get the byte offset and size of the POSITION data
-                        size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
-                        size_t byteLength = bufferView.byteLength;
+
+                        size_t stride = bufferView.byteStride ? bufferView.byteStride : sizeof(float) * 3;
 
                         // Cast the raw buffer data to float and print the vertex positions
                         const auto *normals = reinterpret_cast<const float *>(&buffer.data[byteOffset]);
 
-                        if (data.m_vertices.empty()) {
-                            std::cout << "vertices size (by normals): " << std::to_string(data.m_indices.size()) << std::endl;
-                            data.m_vertices.resize(byteLength / sizeof(float) / 3);
-                        }
-
                         // Each normal is a vec3, so there are 3 floats per normal
-                        for (size_t i = 0; i < accessor.count; ++i) {
-                            glm::vec3 normal(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]);
-                            data.m_vertices[i].normal = normal;
+                        for (size_t normalIndex = 0; normalIndex < accessor.count; ++normalIndex) {
+
+                            size_t bufferIndex = normalIndex * stride / sizeof(float);
+
+                            glm::vec3 normal(normals[bufferIndex],
+                                             normals[bufferIndex + 1],
+                                             normals[bufferIndex + 2]);
+                            data.m_vertices[normalIndex].normal = normal;
                         }
                     }
                 } else if (std::equal(attributes.first.begin(), attributes.first.end(), "TEXCOORD_0")) {
-                    const auto &accessor = model.accessors[attributes.second];
-                    const auto &bufferView = model.bufferViews[accessor.bufferView];
-                    const auto &buffer = model.buffers[bufferView.buffer];
-
                     // Check if accessor type and component type are correct for an uv (should be a vector of 2 floats)
                     if (accessor.type == TINYGLTF_TYPE_VEC2 &&
                         accessor.componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
-                        // Get the byte offset and size of the POSITION data
-                        size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
-                        size_t byteLength = bufferView.byteLength;
+
+                        size_t stride = bufferView.byteStride ? bufferView.byteStride : sizeof(float) * 2;
 
                         // Cast the raw buffer data to float and print the vertex positions
                         const auto *uvs = reinterpret_cast<const float *>(&buffer.data[byteOffset]);
 
-                        if (data.m_vertices.empty()) {
-                            std::cout << "vertices size (by uv): " << std::to_string(data.m_indices.size()) << std::endl;
-                            data.m_vertices.resize(accessor.count);
-                        }
-
                         // Each normal is a vec3, so there are 3 floats per normal
-                        for (size_t i = 0; i < accessor.count; ++i) {
-                            glm::vec2 uv(uvs[i * 2], uvs[i * 2 + 1]);
-                            data.m_vertices[i].texCoord = uv;
+                        for (size_t uvIndex = 0; uvIndex < accessor.count; ++uvIndex) {
+
+                            size_t bufferIndex = uvIndex * stride / sizeof(float);
+
+                            glm::vec2 uv(uvs[bufferIndex],
+                                         uvs[bufferIndex + 1]);
+                            data.m_vertices[uvIndex].texCoord = uv;
                         }
                     }
                 }
@@ -200,9 +211,9 @@ namespace moonshine {
             data.m_name = mesh.name;
             meshes.push_back(data);
         }
-        
+
         moonshineNode->set_gltf_data(meshes);
-        
+
         return nodes;
     }
 } // moonshine
