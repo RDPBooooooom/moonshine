@@ -377,6 +377,8 @@ namespace moonshine {
                 // we now dock our windows into the docking node we made above
                 ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
                 ImGui::DockBuilderDockWindow("Scene Graph", dock_id_left);
+                ImGui::DockBuilderDockWindow("Workspace", dock_id_down);
+                ImGui::DockBuilderDockWindow("Lobby manager", dock_id_down);
                 ImGui::DockBuilderFinish(dockspace_id);
             }
         }
