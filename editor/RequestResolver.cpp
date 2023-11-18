@@ -5,23 +5,37 @@
 #include "RequestResolver.h"
 #include "Scene.h"
 #include <iostream>
+#include <boost/uuid/string_generator.hpp>
+#include "EngineSystems.h"
 
 namespace moonshine {
     void RequestResolver::resolve(boost::json::object jObj) {
-        
+
         boost::json::string action = jObj["action"].get_string();
         if (std::equal(action.begin(), action.end(), "updateObject")) {
-            int64_t uniqueId = jObj["objectId"].as_int64();
+            boost::uuids::string_generator gen;
+            boost::uuids::uuid id = gen(jObj["objectId"].get_string().c_str());
             Scene &scene = Scene::getCurrentScene();
             {
                 scene.getLock();
-                //TODO: Change once uniqueId is implemented
-                scene.get_at(uniqueId)->getTransform()->deserialize(jObj);
+                auto sceneObject = scene.get_by_id_unlocked(id);
+                if (sceneObject != nullptr){
+                    sceneObject->getTransform()->deserialize(jObj);
+                }
             }
-        } else if (std::equal(action.begin(), action.end(), "updateScene")){
-            for(auto obj : jObj["sceneObjects"].as_array()){
+        } else if (std::equal(action.begin(), action.end(), "updateScene")) {
+            for (auto obj: jObj["sceneObjects"].as_array()) {
                 resolve(obj.as_object());
             }
+        } else if (std::equal(action.begin(), action.end(), "addObject")) {
+
+            boost::json::string path = jObj["path"].get_string();
+            boost::json::string name = jObj["name"].get_string();
+            boost::uuids::string_generator gen;
+            boost::uuids::uuid id = gen(jObj["objectId"].get_string().c_str());
+
+            std::shared_ptr<WorkspaceManager> wkspaceMngr = EngineSystems::getInstance().get_workspace_manager();
+            wkspaceMngr->import_object(wkspaceMngr->get_workspace_path() + "\\" + path.c_str(), name.c_str(), id);
         }
     }
 } // moonshine

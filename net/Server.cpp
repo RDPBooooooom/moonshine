@@ -123,7 +123,7 @@ namespace moonshine::net {
         for(auto obj : scene){
             boost::json::object jObj = obj->getTransform()->serialize();
             jObj["action"] = "updateObject";
-            jObj["objectId"] = i;
+            jObj["objectId"] = obj->get_id_as_string();
             objects.push_back(jObj);
             i++;
         }
@@ -133,6 +133,18 @@ namespace moonshine::net {
         message["sceneObjects"] = objects;
         
         std::scoped_lock<std::mutex> clientLock(m_clients);
+        for(auto client : m_connectedClients){
+            client->async_send_json(message);
+        }
+    }
+
+    void Server::broadcast(std::string &path, std::string &name, std::string &uuid) {
+        boost::json::object message;
+        message["action"] = "addObject";
+        message["objectId"] = uuid;
+        message["path"] = path;
+        message["name"] = name;
+
         for(auto client : m_connectedClients){
             client->async_send_json(message);
         }

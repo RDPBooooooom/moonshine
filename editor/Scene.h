@@ -34,7 +34,9 @@ namespace moonshine {
 
         std::shared_ptr<SceneObject> get_at(int index);
 
-        std::shared_ptr<SceneObject> get_by_id(int64_t);
+        std::shared_ptr<SceneObject> get_by_id(boost::uuids::uuid uuid);
+
+        std::shared_ptr<SceneObject> get_by_id_unlocked(boost::uuids::uuid uuid);
 
         std::optional<size_t> get_object_index(const std::shared_ptr<SceneObject>& object) {
             std::unique_lock<std::mutex> lock(editGameObjectsMutex);
@@ -74,6 +76,7 @@ namespace moonshine {
         auto end() const {
             return gameObjects->cend();
         }
+
     };
 } // moonspace
 

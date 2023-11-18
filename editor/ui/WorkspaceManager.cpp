@@ -7,6 +7,8 @@
 #include "../../external/ImGuiFileDialog/ImGuiFileDialog.h"
 #include "../GltfLoader.h"
 #include "../Scene.h"
+#include "../../utils/FileUtils.h"
+#include "../EngineSystems.h"
 
 namespace moonshine {
     void WorkspaceManager::draw() {
@@ -16,7 +18,8 @@ namespace moonshine {
         ImGui::SeparatorText(m_workspacePath.c_str());
 
         if (ImGui::Button("Import")) {
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseImport", "Choose a file to import", ".gltf", m_workspacePath + "/",
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseImport", "Choose a file to import", ".gltf",
+                                                    m_workspacePath + "/",
                                                     1,
                                                     nullptr, ImGuiFileDialogFlags_Modal);
         }
@@ -26,9 +29,7 @@ namespace moonshine {
                 std::string path = ImGuiFileDialog::Instance()->GetCurrentPath();
                 std::string file = ImGuiFileDialog::Instance()->GetCurrentFileName();
 
-                std::function<void()> importObject = [this, path, file] { import_object(path, file); };
-                std::thread thread(importObject);
-                thread.detach();
+                import_object(path, file);
             }
             ImGuiFileDialog::Instance()->Close();
         }
@@ -77,15 +78,61 @@ namespace moonshine {
         }
     }
 
-    void WorkspaceManager::import_object(std::string path, std::string file) {
-        std::vector<std::shared_ptr<SceneObject>> toLoad = GltfLoader::load_gltf(path + "/", file);
+    void WorkspaceManager::import_object_gltf(std::string path, std::string file) {
+        std::vector<std::shared_ptr<SceneObject>> toLoad = GltfLoader::load_gltf(path + "/", file,
+                                                                                 boost::uuids::uuid());
+
+        std::string pathInWorkspace = FileUtils::get_relative_path(path, m_workspacePath);
 
         for (const auto &item: toLoad) {
             {
+                EngineSystems::getInstance().get_lobby_manager()->replicateAdd(pathInWorkspace, file,
+                                                                               item->get_id_as_string());
+
                 auto lock = Scene::getCurrentScene().getLock();
                 item->init(m_device, m_materialManager);
             }
             Scene::getCurrentScene().add_object(item);
         }
     }
+
+    void WorkspaceManager::import_object(std::string path, std::string file) {
+        std::function<void()> importObject = [this, path, file] { import_object_gltf(path, file); };
+        std::thread thread(importObject);
+        thread.detach();
+    }
+
+    const std::string &WorkspaceManager::get_workspace_path() const {
+        return m_workspacePath;
+    }
+
+    void WorkspaceManager::import_object(std::string path, std::string file, boost::uuids::uuid uuid) {
+
+        if (Scene::getCurrentScene().get_by_id(uuid) != nullptr) {
+            return;
+        }
+
+        std::function<void()> importObject = [this, path, file, uuid] { import_object_gltf(path, file, uuid); };
+        std::thread thread(importObject);
+        thread.detach();
+    }
+
+    void WorkspaceManager::import_object_gltf(std::string path, std::string file, boost::uuids::uuid uuid) {
+        std::vector<std::shared_ptr<SceneObject>> toLoad = GltfLoader::load_gltf(path + "/", file, uuid);
+
+        std::string pathInWorkspace = FileUtils::get_relative_path(path, m_workspacePath);
+        
+        for (const auto &item: toLoad) {
+            {
+                EngineSystems::getInstance().get_lobby_manager()->replicateAdd(pathInWorkspace, file,
+                                                                               item->get_id_as_string());
+
+                auto lock = Scene::getCurrentScene().getLock();
+                item->init(m_device, m_materialManager);
+            }
+            Scene::getCurrentScene().add_object(item);
+        }
+    }
+
+
 } // moonshine

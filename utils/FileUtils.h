@@ -42,6 +42,18 @@ namespace moonshine {
             std::string::size_type pos = std::string(buffer).find_last_of("\\/");
             return std::string(buffer).substr(0, pos);
         }
+
+        static std::string get_relative_path(const std::string& filePath, const std::string& workspacePath) {
+            // Check if the file path actually starts with the workspace path
+            if (filePath.substr(0, workspacePath.size()) == workspacePath) {
+                // Return the substring of filePath that comes after workspacePath
+                // Adding 1 to remove the leading '/' or '\' character
+                return filePath.substr(workspacePath.size() + 1);
+            } else {
+                // The filePath does not start with the workspacePath, return the original filePath
+                return filePath;
+            }
+        }
     };
 
 } // moonshine

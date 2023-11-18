@@ -67,8 +67,6 @@ namespace moonshine {
         Device m_device = Device(m_window);
         Renderer m_renderer = Renderer(m_window, m_device);
 
-        std::shared_ptr<LobbyManager> m_lobby;
-
         std::shared_ptr<DescriptorPool> globalPool{};
         std::shared_ptr<MaterialManager> m_materialManager;
         VkDescriptorPool m_imGuiPool;
@@ -85,7 +83,6 @@ namespace moonshine {
         std::unique_ptr<TextureImage> m_imageTwo;
 
         std::unique_ptr<moonshine::SceneGraph> m_sceneGraph;
-        std::unique_ptr<WorkspaceManager> m_workspaceManager;
 
         Camera m_camera;
 

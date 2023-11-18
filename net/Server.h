@@ -69,6 +69,7 @@ namespace moonshine::net {
 
         void stop();
         void broadcast(moonshine::Scene &scene);
+        void broadcast(std::string &path, std::string &name, std::string &uuid);
 
     private:
 

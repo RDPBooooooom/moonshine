@@ -9,6 +9,7 @@
 #include "editor/Settings.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui_internal.h"
+#include "editor/EngineSystems.h"
 
 
 namespace moonshine {
@@ -182,8 +183,10 @@ namespace moonshine {
         // Init UI
         auto inputHandler = m_window.getInputHandler();
         m_sceneGraph = std::make_unique<SceneGraph>(inputHandler);
-        m_lobby = std::make_shared<LobbyManager>(inputHandler);
-        m_workspaceManager = std::make_unique<WorkspaceManager>(m_device, m_materialManager, inputHandler);
+        EngineSystems::getInstance().set_lobby_manager(std::make_shared<LobbyManager>(inputHandler));
+
+        EngineSystems::getInstance().set_workspace_manager(
+                std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler));
 
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
@@ -196,8 +199,8 @@ namespace moonshine {
 
             m_window.getInputHandler()->triggerEvents();
 
-            m_workspaceManager->draw();
-            m_lobby->draw();
+            EngineSystems::getInstance().get_workspace_manager()->draw();
+            EngineSystems::getInstance().get_lobby_manager()->draw();
 
             m_sceneGraph->draw();
             showInspector();
@@ -228,8 +231,8 @@ namespace moonshine {
                     m_renderer.endFrame();
                 }
             }
-            
-            m_lobby->replicate();
+
+            EngineSystems::getInstance().get_lobby_manager()->replicate();
         }
 
         vkDeviceWaitIdle(m_device.getVkDevice());
@@ -241,11 +244,12 @@ namespace moonshine {
         std::shared_ptr<SceneObject> selected = m_sceneGraph->getSelected();
         if (selected != nullptr) {
             bool isDirty = false;
-            
+
             ImGui::Text(selected->getName().c_str());
+            ImGui::Text(selected->get_id_as_string().c_str());
 
             ImGui::SeparatorText("Transform");
-            if (ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))){
+            if (ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))) {
                 isDirty = true;
             }
             glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->getTransform()->rotation));
@@ -253,18 +257,18 @@ namespace moonshine {
                 selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
                 isDirty = true;
             }
-            if (ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale))){
+            if (ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale))) {
                 isDirty = true;
             }
 
-            for (const auto &node: selected->get_nodes()){
-                for (const auto &mesh: node->get_sub_meshes()){
+            for (const auto &node: selected->get_nodes()) {
+                for (const auto &mesh: node->get_sub_meshes()) {
                     m_materialManager->getMaterial(mesh.m_materialIdx)->drawGui();
                 }
             }
-            
-            if(isDirty){
-                m_lobby->replicate(selected);
+
+            if (isDirty) {
+                EngineSystems::getInstance().get_lobby_manager()->replicate(selected);
             }
         }
         ImGui::End();
@@ -375,10 +379,10 @@ namespace moonshine {
                                                                  &dockspace_id);
 
                 // we now dock our windows into the docking node we made above
-                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
-                ImGui::DockBuilderDockWindow("Scene Graph", dock_id_left);
                 ImGui::DockBuilderDockWindow("Workspace", dock_id_down);
                 ImGui::DockBuilderDockWindow("Lobby manager", dock_id_down);
+                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
+                ImGui::DockBuilderDockWindow("Scene Graph", dock_id_left);
                 ImGui::DockBuilderFinish(dockspace_id);
             }
         }

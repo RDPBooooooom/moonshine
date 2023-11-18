@@ -45,6 +45,8 @@ namespace moonshine::net {
         
         void send(std::shared_ptr<SceneObject> &object);
         
+        void send(std::string &path, std::string &name, std::string &uuid);
+        
     private:
         void handleRequests();
 

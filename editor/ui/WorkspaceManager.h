@@ -10,6 +10,7 @@
 #include "../InputHandler.h"
 #include "../../graphics/Device.h"
 #include "../../graphics/MaterialManager.h"
+#include <boost/uuid/uuid.hpp>
 
 namespace moonshine {
 
@@ -22,12 +23,18 @@ namespace moonshine {
         std::shared_ptr<MaterialManager> m_materialManager;
 
         std::string m_workspacePath;
+        
+    public:
+        const std::string &get_workspace_path() const;
+
+    private:
         bool m_workspaceModalActive = false;
 
 
         void drawInitModal();
 
-        void import_object(std::string path, std::string file);
+        void import_object_gltf(std::string path, std::string file);
+        void import_object_gltf(std::string path, std::string file, boost::uuids::uuid uuid);
 
     public:
 
@@ -38,7 +45,9 @@ namespace moonshine {
         }
 
         void draw();
-
+        
+        void import_object(std::string path, std::string file);
+        void import_object(std::string path, std::string file, boost::uuids::uuid uuid);
     };
 
 } // moonshine

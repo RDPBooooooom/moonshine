@@ -45,6 +45,8 @@ namespace moonshine {
 
         void replicate(std::shared_ptr<SceneObject> &object);
 
+        void replicateAdd(std::string path, std::string name, std::string uuid);
+        
     private:
         void start_hosting();
 

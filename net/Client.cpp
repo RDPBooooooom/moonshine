@@ -2,6 +2,7 @@
 // Created by marvin on 04.11.2023.
 //
 
+#include <boost/uuid/string_generator.hpp>
 #include "Client.h"
 #include "../editor/Scene.h"
 
@@ -68,8 +69,17 @@ namespace moonshine::net {
     void Client::send(std::shared_ptr<SceneObject> &object) {
         boost::json::object jObj = object->getTransform()->serialize();
         jObj["action"] = "updateObject";
-        //TODO: Use unique ID
-        jObj["objectId"] = Scene::getCurrentScene().get_object_index(object).value();
+        jObj["objectId"] = object->get_id_as_string();
+        m_connection->async_send_json(jObj);
+        std::cout << "[Client] Message sent" << std::endl;
+    }
+
+    void Client::send(std::string &path, std::string &name, std::string &uuid) {
+        boost::json::object jObj;
+        jObj["action"] = "addObject";
+        jObj["objectId"] = uuid;
+        jObj["path"] = path;
+        jObj["name"] = name;
         m_connection->async_send_json(jObj);
         std::cout << "[Client] Message sent" << std::endl;
     }

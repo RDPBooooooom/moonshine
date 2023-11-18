@@ -32,5 +32,8 @@
   }, {
     "name" : "miniupnpc",
     "version>=" : "2.2.5"
+  }, {
+    "name" : "boost-uuid",
+    "version>=" : "1.83.0"
   } ]
 }

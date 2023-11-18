@@ -46,6 +46,7 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/ModelLoader.cpp
         editor/Node.cpp
         editor/Node.h
+        editor/EngineSystems.h
 )
 
 # DOWNLOAD ALL THE SUBMODULES
@@ -65,7 +66,7 @@ find_package(Git QUIET)
 #endif ()
 
 # Specify the required Boost version
-find_package(Boost 1.83.0 REQUIRED json thread)
+find_package(Boost 1.83.0 REQUIRED json thread random)
 find_package(miniupnpc CONFIG REQUIRED)
 
 
@@ -102,6 +103,7 @@ target_link_libraries(${PROJECT_NAME}
         glm
         ${Boost_LIBRARIES}
         miniupnpc::miniupnpc
+        bcrypt # required for boost random
 )
 
 

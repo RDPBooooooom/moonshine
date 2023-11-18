@@ -8,7 +8,7 @@
 namespace moonshine {
     int GltfLoader::nr_loaded_objects = 0;
 
-    std::vector<std::shared_ptr<SceneObject>> GltfLoader::load_gltf(std::string filepath, std::string filename) {
+    std::vector<std::shared_ptr<SceneObject>> GltfLoader::load_gltf(std::string filepath, std::string filename, boost::uuids::uuid uuid) {
 
         tinygltf::Model m_model;
         std::vector<std::shared_ptr<SceneObject>> loadedObjects;
@@ -31,8 +31,14 @@ namespace moonshine {
                 } else {
                     name = node.name;
                 }
-
-                auto object = std::make_shared<SceneObject>(name, nodeList);
+                
+                std::shared_ptr<SceneObject> object;
+                if(uuid.is_nil()){
+                    object = std::make_shared<SceneObject>(name, nodeList);
+                } else{
+                    object = std::make_shared<SceneObject>(name, nodeList, uuid);
+                }
+                
                 loadedObjects.push_back(object);
             }
         }
