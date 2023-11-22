@@ -30,7 +30,7 @@ namespace moonshine {
                         m_popupItem = item;
                     }
 
-                    if (ImGui::MenuItem("Delete")) { /* Handle delete... */ }
+                    if (ImGui::MenuItem("Delete")) { /* TODO: Handle delete... */ }
                     ImGui::EndPopup();
                 }
 
