@@ -8,6 +8,7 @@
 #include "Pipeline.h"
 #include "../utils/FileUtils.h"
 #include "iostream"
+#include "../editor/EngineSystems.h"
 
 namespace moonshine {
 
@@ -36,10 +37,10 @@ namespace moonshine {
                 configInfo.renderPass != VK_NULL_HANDLE &&
                 "Cannot create graphics pipeline: no renderPass provided in configInfo");
 
-        std::cout << "Reading vertex shader code \n";
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, "Reading vertex shader code");
         auto vertShaderCode = FileUtils::readFile(vertFilepath); // "resources/shaders/shader.vert.spv"
 
-        std::cout << "Reading fragment shader code \n";
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, "Reading fragment shader code");
         auto fragShaderCode = FileUtils::readFile(fragFilepath); // "resources/shaders/shader.frag.spv"
 
         m_vertShaderModule = createShaderModule(vertShaderCode);

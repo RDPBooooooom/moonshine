@@ -111,7 +111,6 @@ namespace moonshine {
             lobbyName = text;
 
             if (ImGui::Button("Cancel")) {
-                std::cout << "Cancel";
                 ImGui::CloseCurrentPopup();
                 m_inputHandler->enable();
             }

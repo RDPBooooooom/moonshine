@@ -3,6 +3,7 @@
 //
 
 #include "LobbyConnector.h"
+#include "../editor/EngineSystems.h"
 
 namespace moonshine {
 
@@ -59,7 +60,7 @@ namespace moonshine {
                 m_isConnected = false;
                 threadStop = true;
 
-                std::cout << "Disconnected" << std::endl;
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("Disconnected"));
                 m_messageQueue.notifyToStop();
 
                 if (thread.joinable()) {

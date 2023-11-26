@@ -17,7 +17,6 @@ namespace moonshine {
 
         for (const auto &scene: m_model.scenes) {
             for (const auto &nodeIndex: scene.nodes) {
-                std::cout << "Node: " << nodeIndex << std::endl;
                 std::vector<std::shared_ptr<Node>> nodeList;
                 nr_loaded_objects++;
 
@@ -49,8 +48,6 @@ namespace moonshine {
     std::vector<std::shared_ptr<Node>>
     GltfLoader::getSubmeshes(tinygltf::Model &model, tinygltf::Node &node, std::shared_ptr<Node> parent,
                              std::string &path) {
-
-        std::cout << "get mesh for node: " << node.name << std::endl;
         std::vector<GltfData> meshes;
 
         Transform transform = {};
@@ -69,7 +66,6 @@ namespace moonshine {
         nodes.push_back(moonshineNode);
 
         for (const auto &item: node.children) {
-            std::cout << "Child => ";
             std::vector<std::shared_ptr<Node>> subMeshes = getSubmeshes(model, model.nodes[item], moonshineNode, path);
             nodes.insert(nodes.end(), std::make_move_iterator(subMeshes.begin()),
                          std::make_move_iterator(subMeshes.end()));
@@ -79,7 +75,6 @@ namespace moonshine {
 
         auto mesh = model.meshes[node.mesh];
         for (const auto &primitive: mesh.primitives) {
-            std::cout << "Primitive (via indices): " << primitive.indices << std::endl;
             GltfData data = {};
 
             // Indices 
@@ -90,8 +85,6 @@ namespace moonshine {
                 const size_t byteOffset = accessor.byteOffset + bufferView.byteOffset;
                 const size_t stride = bufferView.byteStride ? bufferView.byteStride : sizeof(float);
                 const uint8_t *indices = &buffer.data[byteOffset];
-
-                std::cout << "ByteStride: " << bufferView.byteStride;
 
                 if (accessor.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
                     // handle indices as unsigned bytes
@@ -104,7 +97,6 @@ namespace moonshine {
                     const auto *indices_uint16 = reinterpret_cast<const uint16_t *>(indices);
                     data.m_indices.resize(accessor.count);
 
-                    std::cout << "indices size: " << std::to_string(data.m_indices.size()) << std::endl;
                     for (size_t indiceIndex = 0; indiceIndex < accessor.count; ++indiceIndex) {
 
                         size_t bufferIndex = indiceIndex * stride / sizeof(float);
@@ -126,7 +118,6 @@ namespace moonshine {
                 const auto &buffer = model.buffers[bufferView.buffer];
 
                 if (data.m_vertices.empty()) {
-                    std::cout << "resize: " << std::to_string(data.m_indices.size()) << std::endl;
                     data.m_vertices.resize(accessor.count);
                 }
 
@@ -201,7 +192,6 @@ namespace moonshine {
             }
 
             if (primitive.material > -1) {
-                std::cout << "access material with index:" << std::to_string(primitive.material) << std::endl;
                 auto mat = model.materials[primitive.material];
                 int textureIndex = mat.pbrMetallicRoughness.baseColorTexture.index;
 

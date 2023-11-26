@@ -3,6 +3,7 @@
 //
 
 #include "Server.h"
+#include "../editor/EngineSystems.h"
 
 namespace moonshine::net {
 
@@ -10,7 +11,7 @@ namespace moonshine::net {
         TcpConnection::pointer new_connection =
                 TcpConnection::create(m_ioContext, m_messageQueue);
 
-        std::cout << "[SERVER] Waiting for connections..." << std::endl;
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, "[SERVER] Waiting for connections...");
 
         m_acceptor.async_accept(new_connection->socket(),
                                 bind(&Server::on_accept, this, new_connection,
@@ -19,8 +20,12 @@ namespace moonshine::net {
 
     void Server::on_accept(TcpConnection::pointer &new_connection, const error_code &error) {
         if (!error) {
-            std::cout << "[SERVER] New Connection by " << new_connection->socket().remote_endpoint().address() << ":"
-                      << new_connection->socket().remote_endpoint().port() << std::endl;
+
+            EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                            std::string("[SERVER] New Connection by ") +
+                                                            new_connection->socket().remote_endpoint().address().to_string() +
+                                                            std::string(":") +
+                                                            std::to_string(new_connection->socket().remote_endpoint().port()));
 
             new_connection->start();
 
@@ -60,7 +65,7 @@ namespace moonshine::net {
             if (threadStop) continue;
 
             boost::json::object jObj = m_messageQueue.pop_front().get_object();
-            std::cout << "[SERVER] Message received" << std::endl;
+            EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, "[SERVER] Message received");
             resolver.resolve(jObj);
         }
         threadStop = false;
@@ -74,8 +79,8 @@ namespace moonshine::net {
 
         if (m_deviceList) {
             if (UPNP_GetValidIGD(m_deviceList, &m_urls, &m_data, lanIP, sizeof(lanIP)) == 1) {
-                std::cout << m_urls.controlURL << std::endl;
-                std::cout << m_data.presentationurl << std::endl;
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, m_urls.controlURL);
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, m_data.presentationurl);
 
                 std::string port = std::to_string(get_port());
                 // Expire after 4 hours
@@ -83,13 +88,15 @@ namespace moonshine::net {
                                         port.c_str(), port.c_str(), lanIP, "Moonshine P2P Server Host",
                                         "TCP", nullptr, "14400") != UPNPCOMMAND_SUCCESS) {
                     // Handle error
-                    std::cout << "[SERVER] error when mapping" << std::endl;
+                    EngineSystems::getInstance().get_logger()->error(LoggerType::Networking,
+                                                                     "[SERVER] error when mapping");
                 }
                 // Remember to free the URLs and device list when done
             }
         } else {
             // Handle error if no devices were found
-            std::cout << "[SERVER] No device found for upnp" << std::endl;
+            EngineSystems::getInstance().get_logger()->error(LoggerType::Networking,
+                                                             "[SERVER] No device found for upnp");
         }
     }
 
@@ -103,8 +110,10 @@ namespace moonshine::net {
         int result = UPNP_DeletePortMapping(m_urls.controlURL, m_data.first.servicetype,
                                             port.c_str(), "TCP", nullptr);
         if (result != UPNPCOMMAND_SUCCESS) {
+
             // Handle the error
-            std::cout << "[SERVER] unable to delete mapping";
+            EngineSystems::getInstance().get_logger()->error(LoggerType::Networking,
+                                                             "[SERVER] unable to delete mapping");
             return;
         }
 
@@ -116,11 +125,11 @@ namespace moonshine::net {
 
     void Server::broadcast(Scene &scene) {
         auto lock = scene.getLock();
-        
+
         boost::json::array objects;
-        
+
         int i = 0;
-        for(auto obj : scene){
+        for (auto obj: scene) {
             boost::json::object jObj = obj->getTransform()->serialize();
             jObj["action"] = "updateObject";
             jObj["objectId"] = obj->get_id_as_string();
@@ -131,9 +140,9 @@ namespace moonshine::net {
         boost::json::object message;
         message["action"] = "updateScene";
         message["sceneObjects"] = objects;
-        
+
         std::scoped_lock<std::mutex> clientLock(m_clients);
-        for(auto client : m_connectedClients){
+        for (auto client: m_connectedClients) {
             client->async_send_json(message);
         }
     }
@@ -145,7 +154,7 @@ namespace moonshine::net {
         message["path"] = path;
         message["name"] = name;
 
-        for(auto client : m_connectedClients){
+        for (auto client: m_connectedClients) {
             client->async_send_json(message);
         }
     }

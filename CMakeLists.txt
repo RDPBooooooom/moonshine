@@ -11,6 +11,11 @@ set(Boost_NO_WARN_NEW_VERSIONS 1)
 set(IMGUI_DIR external/imgui/)
 include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
+set(IMGUI_FILE_DIR external/ImGuiFileDialog/)
+include_directories(${IMGUI_FILE_DIR} ${IMGUI_FILE_DIR})
+
+set(spdlog_DIR "external/spdlog/cmake-build-release")
+
 add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/Buffer.cpp graphics/Buffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h graphics/Renderer.cpp graphics/Renderer.h graphics/SwapChain.cpp graphics/SwapChain.h graphics/SimpleRenderSystem.cpp graphics/SimpleRenderSystem.h graphics/Descriptors.cpp graphics/Descriptors.h graphics/FrameInfo.h "graphics/UniformBuffer.h" ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
         graphics/Material.cpp
         graphics/Material.h
@@ -47,6 +52,7 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/Node.cpp
         editor/Node.h
         editor/EngineSystems.h
+        editor/logging/Logger.h
 )
 
 # DOWNLOAD ALL THE SUBMODULES
@@ -68,6 +74,10 @@ find_package(Git QUIET)
 # Specify the required Boost version
 find_package(Boost 1.83.0 REQUIRED json thread random)
 find_package(miniupnpc CONFIG REQUIRED)
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
 
 
 include_directories(external/stb/)
@@ -104,6 +114,7 @@ target_link_libraries(${PROJECT_NAME}
         ${Boost_LIBRARIES}
         miniupnpc::miniupnpc
         bcrypt # required for boost random
+        spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )
 
 

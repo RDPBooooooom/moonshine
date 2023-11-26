@@ -5,21 +5,21 @@
 #include <boost/uuid/string_generator.hpp>
 #include "Client.h"
 #include "../editor/Scene.h"
+#include "../editor/EngineSystems.h"
 
 namespace moonshine::net {
 
     void Client::connect(std::string ipv4, int64_t port) {
-        std::cout << "[Client] Connecting..." << std::endl;
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, "[Client] Connecting...");
         m_connection->start(m_resolver.resolve(ipv4, std::to_string(port)));
 
-        std::cout << "[Client] Connected!" << std::endl;
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, "[Client] Connected!");
         
         m_connection.get()->async_receive_json();
         if (m_ioContext.stopped()) {
             m_ioContext.restart();
         }
         m_ioContextThread = std::thread([ObjectPtr = &m_ioContext] { return ObjectPtr->run(); });
-        std::cout << "[Client] Context running" << std::endl;
     }
 
     void Client::disconnect() {
@@ -38,7 +38,7 @@ namespace moonshine::net {
                     m_ioContextThread.join();
                 }
 
-                std::cout << "[Client] Disconnected" << std::endl;
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, "[Client] Disconnected");
                 m_messageQueue.notifyToStop();
 
                 if (m_receiveThread.joinable()) {
@@ -48,7 +48,7 @@ namespace moonshine::net {
                 
             }
             catch (const std::exception &e) {
-                std::cerr << "[Client] An error occurred during disconnection: " << e.what() << std::endl;
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] An error occurred during disconnection: ") + e.what());
                 // Handle exceptions as appropriate for your application
             }
         }
@@ -60,7 +60,6 @@ namespace moonshine::net {
             if (threadStop) continue;
 
             boost::json::object jObj = m_messageQueue.pop_front().get_object();
-            //std::cout << "[Client] Message received" << std::endl;
             resolver.resolve(jObj);
         }
         threadStop = false;
@@ -71,7 +70,7 @@ namespace moonshine::net {
         jObj["action"] = "updateObject";
         jObj["objectId"] = object->get_id_as_string();
         m_connection->async_send_json(jObj);
-        std::cout << "[Client] Message sent" << std::endl;
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] Message sent"));
     }
 
     void Client::send(std::string &path, std::string &name, std::string &uuid) {
@@ -81,7 +80,7 @@ namespace moonshine::net {
         jObj["path"] = path;
         jObj["name"] = name;
         m_connection->async_send_json(jObj);
-        std::cout << "[Client] Message sent" << std::endl;
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] Message sent"));
     }
 } // moonshine
 // net

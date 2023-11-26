@@ -13,6 +13,7 @@
 #include "Device.h"
 #include "../utils/VkValidationLayerUtils.h"
 #include "GLFW/glfw3.h"
+#include "../editor/EngineSystems.h"
 
 namespace moonshine {
 
@@ -78,17 +79,20 @@ namespace moonshine {
         std::vector<VkExtensionProperties> extensions(extensionCount);
         vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-        std::cout << "enabled extensions:\n";
+        std::string message = std::string("enabled extensions:\n");
 
         for (const auto &extension: glfwExtensions) {
-            std::cout << '\t' << extension << '\n';
+            message.append(std::string("\t") + std::string(extension) + std::string("\n"));
         }
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, message);
 
         if (!checkGLFWCompatability(glfwExtensions, static_cast<uint32_t>(glfwExtensions.size()), extensions)) {
+            EngineSystems::getInstance().get_logger()->critical(LoggerType::Rendering, "missing required extension!");
             throw std::runtime_error("missing required extension!");
         }
 
         if (vkCreateInstance(&createInfo, nullptr, &m_vkInstance) != VK_SUCCESS) {
+            EngineSystems::getInstance().get_logger()->critical(LoggerType::Rendering, "failed to create instance!");
             throw std::runtime_error("failed to create instance!");
         }
     }
@@ -122,7 +126,8 @@ namespace moonshine {
                                         std::vector<VkExtensionProperties> availableExtensions) {
 
         if (glfwExtensions.empty()) {
-            std::cout << "required extensions not available";
+            EngineSystems::getInstance().get_logger()->critical(LoggerType::Rendering,
+                                                                "required extensions not available");
             return false;
         }
 
@@ -131,10 +136,13 @@ namespace moonshine {
             if (std::find_if(availableExtensions.begin(), availableExtensions.end(),
                              compare(currentExtension)) ==
                 availableExtensions.end()) {
-                std::cout << "required extensions not supported: " << currentExtension << '\n';
+                EngineSystems::getInstance().get_logger()->critical(LoggerType::Rendering,
+                                                                    std::string("required extensions not supported: ") +
+                                                                    currentExtension);
                 return false;
             }
-            std::cout << "Found " << currentExtension << '\n';
+            EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering,
+                                                             std::string("Found ") + currentExtension);
         }
 
         return true;
@@ -272,7 +280,7 @@ namespace moonshine {
 
         m_graphicsQueueFamily = indices.graphicsFamily.value();
         m_presentQueueFamily = indices.presentFamily.value();
-        
+
         vkGetDeviceQueue(m_vkDevice, indices.graphicsFamily.value(), 0, &m_vkGraphicsQueue);
         vkGetDeviceQueue(m_vkDevice, indices.presentFamily.value(), 0, &m_vkPresentQueue);
     }
@@ -293,7 +301,8 @@ namespace moonshine {
     }
 
     void
-    Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
+    Device::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+                         VkBuffer &buffer,
                          VkDeviceMemory &bufferMemory) {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -304,7 +313,7 @@ namespace moonshine {
         if (vkCreateBuffer(m_vkDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create vertex buffer!");
         }
-        
+
 
         VkMemoryRequirements memRequirements;
         vkGetBufferMemoryRequirements(m_vkDevice, buffer, &memRequirements);
@@ -374,13 +383,13 @@ namespace moonshine {
                 return i;
             }
         }
-        
+
         throw std::runtime_error("failed to find suitable memory type!");
     }
 
     VkFormat Device::findSupportedFormat(
             const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
-        for (VkFormat format : candidates) {
+        for (VkFormat format: candidates) {
             VkFormatProperties props;
             vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format, &props);
 

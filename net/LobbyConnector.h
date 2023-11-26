@@ -64,7 +64,6 @@ namespace moonshine {
                 if (!isConnected() || threadStop) continue;
 
                 boost::json::object jObj = m_messageQueue.pop_front().get_object();
-                std::cout << "Message found" << std::endl;
 
                 boost::json::string action = jObj["action"].get_string();
                 if (std::equal(action.begin(), action.end(), "updateHosts")) {
@@ -82,9 +81,7 @@ namespace moonshine {
                         currentHosts->push_back(host);
                     }
                     hostMutex.unlock();
-                } else if (std::equal(action.begin(), action.end(), "join")) {
-                    
-                }
+                } 
             }
             threadStop = false;
         }

@@ -47,11 +47,6 @@ namespace moonshine {
 
         m_materialManager = std::make_unique<MaterialManager>(&m_device);
 
-/*
-            m_matrixUBONew = std::make_unique<UniformBuffer<UniformBufferObject>>(m_device);
-            m_fragUBONew = std::make_unique<UniformBuffer<FragmentUniformBufferObject>>(m_device);
-*/
-
         m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < m_matrixUBO.size(); i++) {
             m_matrixUBO[i] = std::make_unique<Buffer>(
@@ -65,7 +60,7 @@ namespace moonshine {
             m_matrixUBO[i]->map();
         }
 
-        std::cout << "UBO created \n";
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, "UBO created");
 
         m_fragUBO.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < m_matrixUBO.size(); i++) {
@@ -80,17 +75,7 @@ namespace moonshine {
             m_fragUBO[i]->map();
         }
 
-        std::cout << "FRAG UBO created \n";
-
-        //m_image = std::make_unique<TextureImage>("../resources/textures/texture.jpg", &m_device,
-        //                                         m_vkCommandPool);
-//        m_image = std::make_unique<TextureImage>(
-//                (getExecutablePath() + "/resources/Models/Avocado/Avocado_baseColor.png").c_str(), &m_device,
-//                m_device.getCommandPool());
-//        m_imageTwo = std::make_unique<TextureImage>(
-//                (getExecutablePath() + "/resources/textures/texture.jpg").c_str(), &m_device,
-//                m_device.getCommandPool());
-        std::cout << "opened Image and created Sampler \n";
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, "FRAG UBO created");
     }
 
     void MoonshineApp::initImGui() {

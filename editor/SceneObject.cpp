@@ -5,6 +5,7 @@
 #include "SceneObject.h"
 #include "Node.h"
 #include <boost/uuid/uuid_generators.hpp>
+#include "EngineSystems.h"
 
 namespace moonshine {
 
@@ -15,12 +16,13 @@ namespace moonshine {
                 mesh.m_vertexBuffer = std::make_unique<GpuBuffer<Vertex>>(mesh.m_vertices, device,
                                                                           VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 
-                std::cout << "Finished vertex buffer => creating index buffer next \n";
+                auto logger = EngineSystems::getInstance().get_logger();
+                logger->debug(LoggerType::Rendering, "Finished vertex buffer => creating index buffer next");
 
                 mesh.m_indexBuffer = std::make_unique<GpuBuffer<uint16_t>>(mesh.m_indices, device,
                                                                            VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 
-                std::cout << "finished index buffer \n";
+                logger->debug(LoggerType::Rendering,  "finished index buffer");
 
                 mesh.m_materialIdx = materialManager->createMaterial(m_name, mesh.m_texName, mesh.m_path);
             }

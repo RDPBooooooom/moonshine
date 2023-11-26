@@ -53,8 +53,6 @@ namespace moonshine {
     void SimpleRenderSystem::createPipeline(VkRenderPass renderPass) {
         assert(m_pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
-        std::cout << "Creating pipeline \n";
-
         PipelineConfigInfo pipelineConfig{};
         Pipeline::defaultPipelineConfigInfo(pipelineConfig);
 

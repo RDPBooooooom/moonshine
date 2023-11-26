@@ -8,6 +8,7 @@
 #define TINYGLTF_NO_INCLUDE_STB_IMAGE_WRITE
 
 #include "ModelLoader.h"
+#include "EngineSystems.h"
 
 
 namespace moonshine {
@@ -18,21 +19,21 @@ namespace moonshine {
         std::string warn;
         tinygltf::TinyGLTF loader;
 
+        auto logger = EngineSystems::getInstance().get_logger();
         bool res = loader.LoadASCIIFromFile(&model, &err, &warn, filepath);
         if (!warn.empty()) {
-            std::cout << "WARN: " << warn << std::endl;
+            logger->warn(LoggerType::Editor, warn);
         }
 
         if (!err.empty()) {
-            std::cout << "ERR: " << err << std::endl;
+            logger->error(LoggerType::Editor, err);
         }
 
         if (!res)
-            std::cout << "Failed to load glTF: " << filepath << std::endl;
+            logger->error(LoggerType::Editor, std::string("Failed to load glTF: ") + filepath);
         else
-            std::cout << "Loaded glTF: " << filepath << std::endl;
+            logger->info(LoggerType::Editor, std::string("Loaded glTF: ") + filepath);
 
         return res;
-
     }
 }
