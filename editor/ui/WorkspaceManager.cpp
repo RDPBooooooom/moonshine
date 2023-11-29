@@ -9,6 +9,7 @@
 #include "../Scene.h"
 #include "../../utils/FileUtils.h"
 #include "../EngineSystems.h"
+#include "../../MoonshineApp.h"
 
 namespace moonshine {
     void WorkspaceManager::draw() {
@@ -42,6 +43,8 @@ namespace moonshine {
             m_workspaceModalActive = true;
             ImGui::OpenPopup("Select workspace");
             m_inputHandler->disable();
+            
+            m_workspacePath = MoonshineApp::APP_SETTINGS.LATEST_WORKSPACE;
         }
 
         // Always center this window when appearing
@@ -52,7 +55,7 @@ namespace moonshine {
 
             if (ImGui::Button("Select folder")) {
                 ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose a workspace directory ", nullptr,
-                                                        ".", 1,
+                                                        m_workspacePath, 1,
                                                         nullptr, ImGuiFileDialogFlags_Modal);
             }
             ImGui::SameLine();
@@ -71,6 +74,7 @@ namespace moonshine {
                     m_workspaceModalActive = false;
                     m_inputHandler->enable();
                     ImGui::CloseCurrentPopup();
+                    MoonshineApp::APP_SETTINGS.LATEST_WORKSPACE = m_workspacePath;
                 }
             }
 

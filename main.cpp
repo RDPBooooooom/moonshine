@@ -1,9 +1,11 @@
 ﻿#include "MoonshineApp.h"
 
 int main() {
-    moonshine::MoonshineApp app{};
 
     try {
+        moonshine::MoonshineApp::loadSettings();
+        
+        moonshine::MoonshineApp app{};
         app.run();
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;

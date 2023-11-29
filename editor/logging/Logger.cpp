@@ -3,6 +3,7 @@
 //
 #include "Logger.h"
 #include "imgui.h"
+#include "../../MoonshineApp.h"
 
 void moonshine::Logger::draw() {
     preDraw();
@@ -61,4 +62,44 @@ ImU32 moonshine::Logger::get_color_by_level(std::atomic<int> &log_level) {
             return IM_COL32(37, 35, 38, 50);
     }
 }
+
+moonshine::Logger::Logger() {
+    m_log_queue = std::make_shared<SafeQueue<LogEntry>>();
+
+    auto rendering_ui_sink = std::make_shared<UILogger_mt>(m_log_queue);
+    rendering_ui_sink->set_level(MoonshineApp::APP_SETTINGS.RENDERING_LOG_LEVEL_UI);
+
+    auto networking_ui_sink = std::make_shared<UILogger_mt>(m_log_queue);
+    networking_ui_sink->set_level(MoonshineApp::APP_SETTINGS.NETWORKING_LOG_LEVEL_UI);
+
+    auto editor_ui_sink = std::make_shared<UILogger_mt>(m_log_queue);
+    editor_ui_sink->set_level(MoonshineApp::APP_SETTINGS.EDITOR_LOG_LEVEL_UI);
+
+    // Create the 'empty' loggers and add the shared UILogger sink to each
+    auto renderingLogger = std::make_shared<spdlog::logger>("Rendering", rendering_ui_sink);
+    auto networkingLogger = std::make_shared<spdlog::logger>("Networking", networking_ui_sink);
+    auto editorLogger = std::make_shared<spdlog::logger>("Editor", editor_ui_sink);
+
+    auto rendering_console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    rendering_console_sink->set_level(MoonshineApp::APP_SETTINGS.RENDERING_LOG_LEVEL_CONSOLE);
+    renderingLogger->sinks().push_back(rendering_console_sink);
+
+    auto networking_console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    networking_console_sink->set_level(MoonshineApp::APP_SETTINGS.NETWORKING_LOG_LEVEL_CONSOLE);
+    networkingLogger->sinks().push_back(networking_console_sink);
+
+    auto editor_console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    editor_console_sink->set_level(MoonshineApp::APP_SETTINGS.EDITOR_LOG_LEVEL_CONSOLE);
+    editorLogger->sinks().push_back(editor_console_sink);
+
+    // Set the log level for each logger
+    renderingLogger->set_level(spdlog::level::debug);
+    networkingLogger->set_level(spdlog::level::debug);
+    editorLogger->set_level(spdlog::level::debug);
+
+    // Register the loggers
+    loggers[LoggerType::Rendering] = renderingLogger;
+    loggers[LoggerType::Networking] = networkingLogger;
+    loggers[LoggerType::Editor] = editorLogger;
+};
 

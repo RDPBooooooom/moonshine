@@ -37,7 +37,52 @@ namespace moonshine {
 
 
     void MoonshineApp::loadSettings() {
-        APP_SETTINGS.ENABLE_MOUSE_DEBUG = true;
+        try {
+
+            std::ifstream settings_file("settings.json");
+            if (settings_file.is_open()) {
+                // File exists, read the settings
+                std::string json_data((std::istreambuf_iterator<char>(settings_file)),
+                                      std::istreambuf_iterator<char>());
+                try {
+                    MoonshineApp::APP_SETTINGS = Settings::deserialize(json_data);
+                    EngineSystems::getInstance().get_logger()->info(LoggerType::Editor,
+                                                                    "Found and loaded settings.json");
+                } catch (const boost::json::system_error &jse) {
+                    MoonshineApp::APP_SETTINGS = Settings{}; // The standard values are set from the struct initialization here.
+                    EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
+                                                                     "Error while loading json. The file is probably in a wrong state! Loaded with standard settings");
+                }
+            } else {
+                // File does not exist, set default settings and write them to the file
+                MoonshineApp::APP_SETTINGS = Settings{}; // The standard values are set from the struct initialization here.
+                saveSettings();
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Editor,
+                                                                "No settings file found, init with standard settings.json");
+            }
+
+            settings_file.close();
+        } catch (const std::ifstream::failure &ife) {
+            MoonshineApp::APP_SETTINGS = Settings{};
+            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
+                                                             "Error while reading settings.json file. Loaded with standard settings");
+
+        }
+    }
+
+    void MoonshineApp::saveSettings() {
+        std::string json_data = Settings::serialize(MoonshineApp::APP_SETTINGS);
+
+        std::ofstream output_file("settings.json");
+        if (output_file.is_open()) {
+            output_file << json_data;
+            output_file.close();
+            EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
+                                                             "Saved settings.json");
+        } else {
+            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
+                                                             "Unable to save settings.json. Settings will not persist!");
+        }
     }
 
     void MoonshineApp::initVulkan() {
@@ -173,13 +218,6 @@ namespace moonshine {
         EngineSystems::getInstance().set_workspace_manager(
                 std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler));
 
-        auto log = EngineSystems::getInstance().get_logger();
-        log->debug(LoggerType::Editor, "debug");
-        log->info(LoggerType::Editor, "info");
-        log->warn(LoggerType::Editor, "warn");
-        log->error(LoggerType::Editor, "error");
-        log->critical(LoggerType::Editor, "critical");
-        
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
             glfwPollEvents();
@@ -372,7 +410,7 @@ namespace moonshine {
                 ImGui::DockBuilderDockWindow("Workspace", dock_id_down);
                 ImGui::DockBuilderDockWindow("Lobby manager", dock_id_down);
                 ImGui::DockBuilderDockWindow("Logs", dock_id_down);
-                
+
                 ImGui::DockBuilderFinish(dockspace_id);
             }
         }

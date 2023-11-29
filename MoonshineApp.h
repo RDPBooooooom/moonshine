@@ -92,6 +92,9 @@ namespace moonshine {
 
         void run();
 
+        static void loadSettings();
+
+        static void saveSettings();
 
     private:
 
@@ -107,15 +110,16 @@ namespace moonshine {
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplGlfw_Shutdown();
             ImGui::DestroyContext();
+
+            saveSettings();
         }
 
         void initImGui();
 
-        void loadSettings();
-
         void createDockSpace();
 
         void showInspector();
+
     };
 
 } // moonshine
