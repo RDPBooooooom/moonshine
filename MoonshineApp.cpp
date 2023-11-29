@@ -173,6 +173,13 @@ namespace moonshine {
         EngineSystems::getInstance().set_workspace_manager(
                 std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler));
 
+        auto log = EngineSystems::getInstance().get_logger();
+        log->debug(LoggerType::Editor, "debug");
+        log->info(LoggerType::Editor, "info");
+        log->warn(LoggerType::Editor, "warn");
+        log->error(LoggerType::Editor, "error");
+        log->critical(LoggerType::Editor, "critical");
+        
         while (!m_window.shouldClose()) {
             Time::calcDeltaTime();
             glfwPollEvents();
@@ -186,6 +193,7 @@ namespace moonshine {
 
             EngineSystems::getInstance().get_workspace_manager()->draw();
             EngineSystems::getInstance().get_lobby_manager()->draw();
+            EngineSystems::getInstance().get_logger()->draw();
 
             m_sceneGraph->draw();
             showInspector();
@@ -300,11 +308,6 @@ namespace moonshine {
 
         m_fragUBO[currentImage]->writeToBuffer(&fragUBO);
         m_fragUBO[currentImage]->flush();
-
-        /*memcpy(m_matrixUBONew->getMappedUniformBuffer(currentImage), &ubo, sizeof(ubo));
-        m_matrixUBONew->flush(currentImage, VK_WHOLE_SIZE, 0);
-        memcpy(m_fragUBONew->getMappedUniformBuffer(currentImage), &fragUBO, sizeof(fragUBO));
-        m_fragUBONew->flush(currentImage, VK_WHOLE_SIZE, 0);*/
     }
 
     void MoonshineApp::createDockSpace() {
@@ -356,18 +359,20 @@ namespace moonshine {
                 // split the dockspace into 2 nodes -- DockBuilderSplitNode takes in the following args in the following order
                 //   window ID to split, direction, fraction (between 0 and 1), the final two setting let's choose which id we want (which ever one we DON'T set as NULL, will be returned by the function)
                 //                                                              out_id_at_dir is the id of the node in the direction we specified earlier, out_id_at_opposite_dir is in the opposite direction
-                auto dock_id_left = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.2f, nullptr,
+                auto dock_id_left = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.25f, nullptr,
                                                                 &dockspace_id);
                 auto dock_id_down = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Down, 0.25f, nullptr,
                                                                 &dockspace_id);
-                auto dock_id_right = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.15f, nullptr,
+                auto dock_id_right = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.25f, nullptr,
                                                                  &dockspace_id);
 
                 // we now dock our windows into the docking node we made above
+                ImGui::DockBuilderDockWindow("Scene Graph", dock_id_left);
+                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
                 ImGui::DockBuilderDockWindow("Workspace", dock_id_down);
                 ImGui::DockBuilderDockWindow("Lobby manager", dock_id_down);
-                ImGui::DockBuilderDockWindow("Inspector", dock_id_right);
-                ImGui::DockBuilderDockWindow("Scene Graph", dock_id_left);
+                ImGui::DockBuilderDockWindow("Logs", dock_id_down);
+                
                 ImGui::DockBuilderFinish(dockspace_id);
             }
         }

@@ -53,6 +53,11 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/Node.h
         editor/EngineSystems.h
         editor/logging/Logger.h
+        editor/logging/UILogger.h
+        editor/logging/LoggerType.h
+        editor/logging/LogMessage.h
+        editor/logging/LoggerType.cpp
+        editor/logging/Logger.cpp
 )
 
 # DOWNLOAD ALL THE SUBMODULES
