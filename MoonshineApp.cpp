@@ -219,6 +219,7 @@ namespace moonshine {
                 std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler));
 
         while (!m_window.shouldClose()) {
+            EngineSystems::getInstance().get_statistics()->startFrame();
             Time::calcDeltaTime();
             glfwPollEvents();
 
@@ -232,6 +233,7 @@ namespace moonshine {
             EngineSystems::getInstance().get_workspace_manager()->draw();
             EngineSystems::getInstance().get_lobby_manager()->draw();
             EngineSystems::getInstance().get_logger()->draw();
+            EngineSystems::getInstance().get_statistics()->draw();
 
             m_sceneGraph->draw();
             showInspector();
@@ -264,6 +266,7 @@ namespace moonshine {
             }
 
             EngineSystems::getInstance().get_lobby_manager()->replicate();
+            EngineSystems::getInstance().get_statistics()->endFrame();
         }
 
         vkDeviceWaitIdle(m_device.getVkDevice());

@@ -5,6 +5,7 @@
 #ifndef MOONSHINE_LOBBYCONNECTOR_H
 #define MOONSHINE_LOBBYCONNECTOR_H
 
+#include <winsock2.h>
 #include "TcpConnection.h"
 #include "imgui.h"
 #include <boost/asio.hpp>
@@ -58,50 +59,9 @@ namespace moonshine {
             }
         }
 
-        void handleRequests() {
-            while (isConnected() || !threadStop) {
-                m_messageQueue.wait();
-                if (!isConnected() || threadStop) continue;
+        void handleRequests();
 
-                boost::json::object jObj = m_messageQueue.pop_front().get_object();
-
-                boost::json::string action = jObj["action"].get_string();
-                if (std::equal(action.begin(), action.end(), "updateHosts")) {
-                    boost::json::array hosts = jObj["hosts"].as_array();
-                    hostMutex.lock();
-                    currentHosts->clear();
-                    for (boost::json::value v: hosts) {
-                        boost::json::object o = v.get_object();
-                        Host host = {};
-                        host.id = o["id"].get_int64();
-                        host.name = o["name"].get_string();
-                        host.ipv4 = o["ip"].get_string();
-                        host.port = o["port"].get_int64();
-
-                        currentHosts->push_back(host);
-                    }
-                    hostMutex.unlock();
-                } 
-            }
-            threadStop = false;
-        }
-
-        void drawHosts() {
-            std::scoped_lock<std::mutex> lock(hostMutex);
-            
-            if (ImGui::BeginListBox("Available Hosts", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
-                for (int n = 0; n < currentHosts->size(); n++) {
-                    const bool is_selected = (item_current_idx == n);
-                    if (ImGui::Selectable(currentHosts->at(n).name.c_str(), is_selected))
-                        item_current_idx = n;
-
-                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-                    if (is_selected)
-                        ImGui::SetItemDefaultFocus();
-                }
-                ImGui::EndListBox();
-            }
-        }
+        void drawHosts();
 
         bool isConnected() const {
             return m_isConnected;

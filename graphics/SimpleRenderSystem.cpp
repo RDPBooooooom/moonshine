@@ -2,13 +2,11 @@
 // Created by marvin on 28.07.2023.
 //
 
+#include <winsock2.h>
 #include <stdexcept>
-#include "iostream"
-#include <chrono>
-#include <mutex>
 #include "SimpleRenderSystem.h"
 #include "../utils/Constants.h"
-#include "../editor/Scene.h"
+#include "../editor/EngineSystems.h"
 
 namespace moonshine {
 
@@ -114,6 +112,9 @@ namespace moonshine {
                                          VK_INDEX_TYPE_UINT16);
 
                     vkCmdDrawIndexed(frmInfo.commandBuffer, static_cast<uint32_t>(submesh.m_indices.size()), 1, 0, 0, 0);
+
+                    EngineSystems::getInstance().get_statistics()->increment_draw_call();
+                    EngineSystems::getInstance().get_statistics()->add_vertex_count(submesh.m_vertices.size());
                 }
             }
         }

@@ -58,6 +58,8 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/logging/LogMessage.h
         editor/logging/LoggerType.cpp
         editor/logging/Logger.cpp
+        editor/ui/StatisticsManager.cpp
+        editor/ui/StatisticsManager.h
 )
 
 # DOWNLOAD ALL THE SUBMODULES

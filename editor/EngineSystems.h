@@ -9,6 +9,7 @@
 #include "ui/WorkspaceManager.h"
 #include "ui/LobbyManager.h"
 #include "logging/Logger.h"
+#include "ui/StatisticsManager.h"
 
 namespace moonshine {
 
@@ -17,6 +18,7 @@ namespace moonshine {
         // Private Constructor
         EngineSystems() {
             m_logger = std::make_shared<Logger>();
+            m_statistics = std::make_shared<StatisticsManager>();
         }
 
         // Private Copy constructor and copy assignment operator to prevent copying
@@ -28,6 +30,7 @@ namespace moonshine {
         std::shared_ptr<WorkspaceManager> m_workspaceManager;
         std::shared_ptr<LobbyManager> m_lobbyManager;
         std::shared_ptr<Logger> m_logger;
+        std::shared_ptr<StatisticsManager> m_statistics;
 
     public:
         // Static method to get the instance of the class
@@ -54,6 +57,10 @@ namespace moonshine {
         
         const std::shared_ptr<Logger> &get_logger() const{
             return m_logger;
+        };
+
+        const std::shared_ptr<StatisticsManager> &get_statistics() const{
+            return m_statistics;
         };
     };
 

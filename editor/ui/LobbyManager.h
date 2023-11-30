@@ -5,8 +5,9 @@
 #ifndef MOONSHINE_LOBBYMANAGER_H
 #define MOONSHINE_LOBBYMANAGER_H
 
-#include "UIWindow.h"
+#include <winsock2.h>
 #include "../../net/LobbyConnector.h"
+#include "UIWindow.h"
 #include "../InputHandler.h"
 #include "../../net/Server.h"
 #include "../../net/Client.h"
