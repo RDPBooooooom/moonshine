@@ -9,6 +9,7 @@
 #include "TcpConnection.h"
 #include "../editor/RequestResolver.h"
 #include "../editor/SceneObject.h"
+#include "../editor/ui/net/UIManager.h"
 
 using boost::asio::ip::tcp;
 
@@ -46,6 +47,8 @@ namespace moonshine::net {
         void send(std::shared_ptr<SceneObject> &object);
         
         void send(std::string &path, std::string &name, std::string &uuid);
+        
+        void send(std::string &label, element_locker locker);
         
     private:
         void handleRequests();

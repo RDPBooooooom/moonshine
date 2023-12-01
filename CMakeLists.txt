@@ -60,6 +60,10 @@ add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineA
         editor/logging/Logger.cpp
         editor/ui/StatisticsManager.cpp
         editor/ui/StatisticsManager.h
+        editor/ui/net/InputFloat3.cpp
+        editor/ui/net/InputFloat3.h
+        editor/ui/net/UIManager.cpp
+        editor/ui/net/UIManager.h
 )
 
 # DOWNLOAD ALL THE SUBMODULES

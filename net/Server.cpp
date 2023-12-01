@@ -159,5 +159,16 @@ namespace moonshine::net {
         }
     }
 
+    void Server::broadcast(std::string &label, element_locker locker) {
+        boost::json::object message;
+        message["action"] = "lockUI";
+        message["label"] = label;
+        message["locker"] = boost::json::to_value(locker);
+        
+        for (auto client: m_connectedClients) {
+            client->async_send_json(message);
+        }
+    }
+
 } // moonshine
 // net

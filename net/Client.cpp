@@ -6,6 +6,7 @@
 #include "Client.h"
 #include "../editor/Scene.h"
 #include "../editor/EngineSystems.h"
+#include "../editor/ui/net/UIManager.h"
 
 namespace moonshine::net {
 
@@ -70,7 +71,7 @@ namespace moonshine::net {
         jObj["action"] = "updateObject";
         jObj["objectId"] = object->get_id_as_string();
         m_connection->async_send_json(jObj);
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] Message sent"));
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] UpdateObject message sent"));
     }
 
     void Client::send(std::string &path, std::string &name, std::string &uuid) {
@@ -80,7 +81,16 @@ namespace moonshine::net {
         jObj["path"] = path;
         jObj["name"] = name;
         m_connection->async_send_json(jObj);
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] Message sent"));
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] AddObject message sent"));
+    }
+
+    void Client::send(std::string &label, element_locker locker) {
+        boost::json::object jObj;
+        jObj["action"] = "lockUI";
+        jObj["label"] = label;
+        jObj["locker"] = boost::json::to_value(locker);
+        m_connection->async_send_json(jObj);
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] lockUi Message sent"));
     }
 } // moonshine
 // net

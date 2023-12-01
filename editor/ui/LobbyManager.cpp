@@ -160,5 +160,14 @@ namespace moonshine {
             m_server->broadcast(path, name, uuid);
         }
     }
+    
+    void LobbyManager::replicateUi(std::string &label, element_locker locker){
+        if(inSession){
+            m_client->send(label, locker);
+        }
+        if(isHosting){
+            m_server->broadcast(label, locker);
+        }
+    }
 
 } // moonshine

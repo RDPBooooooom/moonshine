@@ -39,11 +39,11 @@ namespace moonshine {
         ImGui::Begin("Stats");
 
         if (ImGui::CollapsingHeader("Rendering##Stats", ImGuiTreeNodeFlags_None)) {
-            ImGui::Text((std::string("Draw calls:") + std::to_string(last.draw_calls)).c_str());
-            ImGui::Text((std::string("Vertex count:") + std::to_string(last.vertex_count)).c_str());
+            ImGui::Text((std::string("Draw calls: ") + std::to_string(last.draw_calls)).c_str());
+            ImGui::Text((std::string("Vertex count: ") + std::to_string(last.vertex_count)).c_str());
 
-            ImGui::Text((std::string("Avg. frame time (ms):") + std::to_string(last.frame_time_avg)).c_str());
-            ImGui::Text((std::string("FPS:") + std::to_string(last.frame_count)).c_str());
+            ImGui::Text((std::string("Avg. frame time (ms): ") + std::to_string(last.frame_time_avg)).c_str());
+            ImGui::Text((std::string("FPS: ") + std::to_string(last.frame_count)).c_str());
         }
         
         ImGui::End();

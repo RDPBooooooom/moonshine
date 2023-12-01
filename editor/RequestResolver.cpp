@@ -19,7 +19,7 @@ namespace moonshine {
             {
                 scene.getLock();
                 auto sceneObject = scene.get_by_id_unlocked(id);
-                if (sceneObject != nullptr){
+                if (sceneObject != nullptr) {
                     sceneObject->getTransform()->deserialize(jObj);
                 }
             }
@@ -36,6 +36,14 @@ namespace moonshine {
 
             std::shared_ptr<WorkspaceManager> wkspaceMngr = EngineSystems::getInstance().get_workspace_manager();
             wkspaceMngr->import_object(wkspaceMngr->get_workspace_path() + "\\" + path.c_str(), name.c_str(), id);
+        } else if (std::equal(action.begin(), action.end(), "lockUI")) {
+            std::shared_ptr<UIManager> uiMngr = EngineSystems::getInstance().get_ui_manager();
+
+            EngineSystems::getInstance().get_logger()->debug(LoggerType::Networking, boost::json::serialize(jObj));
+            
+            std::string label = jObj["label"].get_string().c_str();
+            element_locker locker = boost::json::from_value(jObj["locker"]);
+            uiMngr->register_field(label, locker, EngineSystems::getInstance().get_lobby_manager()->isHost());
         }
     }
 } // moonshine

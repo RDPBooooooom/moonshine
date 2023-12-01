@@ -10,6 +10,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "imgui_internal.h"
 #include "editor/EngineSystems.h"
+#include "editor/ui/net/InputFloat3.h"
 
 
 namespace moonshine {
@@ -265,6 +266,7 @@ namespace moonshine {
             }
 
             EngineSystems::getInstance().get_lobby_manager()->replicate();
+            EngineSystems::getInstance().get_ui_manager()->update();
             EngineSystems::getInstance().get_statistics()->endFrame();
         }
 
@@ -282,9 +284,13 @@ namespace moonshine {
             ImGui::Text(selected->get_id_as_string().c_str());
 
             ImGui::SeparatorText("Transform");
-            if (ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))) {
+            if (net::ui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))) {
                 isDirty = true;
             }
+            /*
+            if (ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))) {
+                isDirty = true;
+            }*/
             glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->getTransform()->rotation));
             if (ImGui::InputFloat3("Rotation", glm::value_ptr(rotEulerAngles))) {
                 selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
