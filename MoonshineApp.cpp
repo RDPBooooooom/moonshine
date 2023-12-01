@@ -25,7 +25,6 @@ namespace moonshine {
     }
 
     MoonshineApp::MoonshineApp() : m_camera{Camera(&m_window)} {
-        loadSettings();
     }
 
     void MoonshineApp::run() {
@@ -413,6 +412,7 @@ namespace moonshine {
                 ImGui::DockBuilderDockWindow("Workspace", dock_id_down);
                 ImGui::DockBuilderDockWindow("Lobby manager", dock_id_down);
                 ImGui::DockBuilderDockWindow("Logs", dock_id_down);
+                ImGui::DockBuilderDockWindow("Stats", dock_id_down);
 
                 ImGui::DockBuilderFinish(dockspace_id);
             }

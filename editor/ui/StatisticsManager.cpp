@@ -2,6 +2,7 @@
 // Created by marvin on 30.11.2023.
 //
 
+#include <string>
 #include "StatisticsManager.h"
 #include "imgui.h"
 
@@ -18,7 +19,7 @@ namespace moonshine {
         current.frame_time_total += std::chrono::duration<double, std::milli>(frame_end - frame_start).count();
 
         current.frame_count++;
-        
+
         if (frame_end - last_update >= std::chrono::seconds(1)) {
 
             current.frame_time_avg = current.frame_time_total / current.frame_count; // ms/frame
@@ -27,23 +28,24 @@ namespace moonshine {
             last = current;
             current = {};
         }
-        
+
         // Only used latest frame for draw_calls and vertex_count
         current.vertex_count = 0;
         current.draw_calls = 0;
     }
 
     void StatisticsManager::draw() {
-        ImGui::Begin("Stats");
-        ImGui::BeginDisabled();
 
-        ImGui::InputInt("Draw calls:", &last.draw_calls);
-        ImGui::InputInt("Vertex count:", reinterpret_cast<int *>(&last.vertex_count));
+        ImGui::Begin("Stats");
+
+        if (ImGui::CollapsingHeader("Rendering##Stats", ImGuiTreeNodeFlags_None)) {
+            ImGui::Text((std::string("Draw calls:") + std::to_string(last.draw_calls)).c_str());
+            ImGui::Text((std::string("Vertex count:") + std::to_string(last.vertex_count)).c_str());
+
+            ImGui::Text((std::string("Avg. frame time (ms):") + std::to_string(last.frame_time_avg)).c_str());
+            ImGui::Text((std::string("FPS:") + std::to_string(last.frame_count)).c_str());
+        }
         
-        ImGui::InputDouble("Avg. frame time (ms):", &last.frame_time_avg);
-        ImGui::InputInt("FPS:", &last.frame_count);
-        
-        ImGui::EndDisabled();
         ImGui::End();
     }
 
