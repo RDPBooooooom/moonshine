@@ -4,6 +4,7 @@
 
 #include "LobbyConnector.h"
 #include "../editor/EngineSystems.h"
+#include "../MoonshineApp.h"
 
 namespace moonshine {
 
@@ -17,7 +18,7 @@ namespace moonshine {
     }
 
     void LobbyConnector::connect() {
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve("booooooom.ch", "12000");
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve(MoonshineApp::APP_SETTINGS.LOBBY_SERVER_ADDRESS, MoonshineApp::APP_SETTINGS.LOBBY_SERVER_PORT);
         connection->start(endpoint_iterator);
 
         std::function<void()> handleRequestsHandle = [this] { handleRequests(); };

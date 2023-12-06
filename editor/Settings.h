@@ -21,6 +21,9 @@ struct Settings {
 
     std::string LATEST_WORKSPACE = ".";
 
+    std::string LOBBY_SERVER_ADDRESS = "booooooom.ch";
+    std::string LOBBY_SERVER_PORT = "12000";
+
     static std::string to_string(spdlog::level::level_enum log_level) {
         static std::map<spdlog::level::level_enum, std::string> level_map = {
                 {spdlog::level::trace,    "trace"},
@@ -34,15 +37,15 @@ struct Settings {
         return level_map[log_level];
     }
 
-    static spdlog::level::level_enum to_enum(const std::string& log_level) {
+    static spdlog::level::level_enum to_enum(const std::string &log_level) {
         static std::map<std::string, spdlog::level::level_enum> level_map = {
-                {"trace",     spdlog::level::trace},
-                {"debug",     spdlog::level::debug},
-                {"info",      spdlog::level::info},
-                {"warn",      spdlog::level::warn},
-                {"err",       spdlog::level::err},
-                {"critical",  spdlog::level::critical},
-                {"off",       spdlog::level::off}
+                {"trace",    spdlog::level::trace},
+                {"debug",    spdlog::level::debug},
+                {"info",     spdlog::level::info},
+                {"warn",     spdlog::level::warn},
+                {"err",      spdlog::level::err},
+                {"critical", spdlog::level::critical},
+                {"off",      spdlog::level::off}
         };
 
         return level_map[log_level];
@@ -50,64 +53,97 @@ struct Settings {
 
     static std::string serialize(const Settings &settings) {
         boost::json::object settings_json = {
-                {"ENABLE_MOUSE_DEBUG", settings.ENABLE_MOUSE_DEBUG},
+                {"ENABLE_MOUSE_DEBUG",   settings.ENABLE_MOUSE_DEBUG},
                 {"LOGGING",
-                                       {
-                                               {"EDITOR",
-                                                       {
-                                                               {"LOG_LEVEL_CONSOLE", to_string(
-                                                                       settings.EDITOR_LOG_LEVEL_CONSOLE)},
-                                                               {"LOG_LEVEL_UI", to_string(
-                                                                       settings.EDITOR_LOG_LEVEL_UI)}
+                                         {
+                                                 {"EDITOR",
+                                                         {
+                                                                 {"LOG_LEVEL_CONSOLE", to_string(
+                                                                         settings.EDITOR_LOG_LEVEL_CONSOLE)},
+                                                                 {"LOG_LEVEL_UI", to_string(
+                                                                         settings.EDITOR_LOG_LEVEL_UI)}
+                                                         }
+                                                 }, {"NETWORKING",
+                                                            {
+                                                                    {"LOG_LEVEL_CONSOLE", to_string(
+                                                                            settings.NETWORKING_LOG_LEVEL_CONSOLE)},
+                                                                    {"LOG_LEVEL_UI", to_string(
+                                                                            settings.NETWORKING_LOG_LEVEL_UI)}
+                                                            }
+                                                    }, {"RENDERING",
+                                                               {
+                                                                       {"LOG_LEVEL_CONSOLE", to_string(
+                                                                               settings.RENDERING_LOG_LEVEL_CONSOLE)},
+                                                                       {"LOG_LEVEL_UI", to_string(
+                                                                               settings.RENDERING_LOG_LEVEL_UI)}
+                                                               }
                                                        }
-                                               }, {"NETWORKING",
-                                                          {
-                                                                  {"LOG_LEVEL_CONSOLE", to_string(
-                                                                          settings.NETWORKING_LOG_LEVEL_CONSOLE)},
-                                                                  {"LOG_LEVEL_UI", to_string(
-                                                                          settings.NETWORKING_LOG_LEVEL_UI)}
-                                                          }
-                                                  }, {"RENDERING",
-                                                             {
-                                                                     {"LOG_LEVEL_CONSOLE", to_string(
-                                                                             settings.RENDERING_LOG_LEVEL_CONSOLE)},
-                                                                     {"LOG_LEVEL_UI", to_string(
-                                                                             settings.RENDERING_LOG_LEVEL_UI)}
-                                                             }
-                                                     }
-                                       }
+                                         }
                 },
-                {"LATEST_WORKSPACE",   settings.LATEST_WORKSPACE}
+                {"LATEST_WORKSPACE",     settings.LATEST_WORKSPACE},
+                {"LOBBY_SERVER_ADDRESS", settings.LOBBY_SERVER_ADDRESS},
+                {"LOBBY_SERVER_PORT",    settings.LOBBY_SERVER_PORT}
         };
         return boost::json::serialize(settings_json);
     }
 
-    static Settings deserialize(const std::string& json_data) {
+    static Settings deserialize(const std::string &json_data) {
         Settings settings = {};
         boost::json::object settings_json = boost::json::parse(json_data).as_object();
 
-        settings.ENABLE_MOUSE_DEBUG = settings_json["ENABLE_MOUSE_DEBUG"].as_bool();
+        load_bool(settings.ENABLE_MOUSE_DEBUG, settings_json, "ENABLE_MOUSE_DEBUG");
 
-        boost::json::object log_settings = settings_json["LOGGING"].as_object();
+        if (settings_json.contains("LOGGING")) {
+            boost::json::object log_settings = settings_json["LOGGING"].as_object();
 
-        // Editor settings
-        boost::json::object editor_settings = log_settings["EDITOR"].as_object();
-        settings.EDITOR_LOG_LEVEL_CONSOLE = to_enum(editor_settings["LOG_LEVEL_CONSOLE"].as_string().c_str());
-        settings.EDITOR_LOG_LEVEL_UI = to_enum(editor_settings["LOG_LEVEL_UI"].as_string().c_str());
+            if (log_settings.contains("EDITOR")) {
+                // Editor settings
+                boost::json::object editor_settings = log_settings["EDITOR"].as_object();
+                load_enum(settings.EDITOR_LOG_LEVEL_CONSOLE, editor_settings, "LOG_LEVEL_CONSOLE");
+                load_enum(settings.EDITOR_LOG_LEVEL_UI, editor_settings, "LOG_LEVEL_UI");
+            }
 
-        // Networking settings
-        boost::json::object networking_settings = log_settings["NETWORKING"].as_object();
-        settings.NETWORKING_LOG_LEVEL_CONSOLE = to_enum(networking_settings["LOG_LEVEL_CONSOLE"].as_string().c_str());
-        settings.NETWORKING_LOG_LEVEL_UI = to_enum(networking_settings["LOG_LEVEL_UI"].as_string().c_str());
+            if (log_settings.contains("NETWORKING")) {
+                // Networking settings
+                boost::json::object networking_settings = log_settings["NETWORKING"].as_object();
+                load_enum(settings.NETWORKING_LOG_LEVEL_CONSOLE, networking_settings, "LOG_LEVEL_CONSOLE");
+                load_enum(settings.NETWORKING_LOG_LEVEL_UI, networking_settings, "LOG_LEVEL_UI");
+            }
 
-        // Rendering settings
-        boost::json::object rendering_settings = log_settings["RENDERING"].as_object();
-        settings.RENDERING_LOG_LEVEL_CONSOLE = to_enum(rendering_settings["LOG_LEVEL_CONSOLE"].as_string().c_str());
-        settings.RENDERING_LOG_LEVEL_UI = to_enum(rendering_settings["LOG_LEVEL_UI"].as_string().c_str());
+            if (log_settings.contains("RENDERING")) {
+                // Rendering settings
+                boost::json::object rendering_settings = log_settings["RENDERING"].as_object();
+                load_enum(settings.RENDERING_LOG_LEVEL_CONSOLE, rendering_settings, "LOG_LEVEL_CONSOLE");
+                load_enum(settings.RENDERING_LOG_LEVEL_UI, rendering_settings, "LOG_LEVEL_UI");
+            }
+        }
 
-        settings.LATEST_WORKSPACE = settings_json["LATEST_WORKSPACE"].as_string().c_str();
+        load_string(settings.LATEST_WORKSPACE, settings_json, "LATEST_WORKSPACE");
+
+        load_string(settings.LOBBY_SERVER_ADDRESS, settings_json, "LOBBY_SERVER_ADDRESS");
+        load_string(settings.LOBBY_SERVER_PORT, settings_json, "LOBBY_SERVER_PORT");
 
         return settings;
+    }
+
+    static void load_bool(bool &setting, boost::json::object &settings_json, std::string setting_name) {
+        if (settings_json.contains(setting_name)) {
+            setting = settings_json[setting_name].as_bool();
+        }
+    }
+
+    static void load_string(std::string &setting, boost::json::object &settings_json, std::string setting_name) {
+        if (settings_json.contains(setting_name)) {
+            setting = settings_json[setting_name].as_string().c_str();
+        }
+    }
+
+    static void
+    load_enum(spdlog::level::level_enum &setting, boost::json::object &settings_json, std::string setting_name) {
+        if (settings_json.contains(setting_name)) {
+            setting = to_enum(
+                    settings_json[setting_name].as_string().c_str());
+        }
     }
 };
 
