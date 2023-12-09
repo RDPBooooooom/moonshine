@@ -284,19 +284,17 @@ namespace moonshine {
             ImGui::Text(selected->get_id_as_string().c_str());
 
             ImGui::SeparatorText("Transform");
-            if (net::ui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))) {
+            if (net::ui::InputFloat3(("Position##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(selected->getTransform()->position))) {
                 isDirty = true;
             }
-            /*
-            if (ImGui::InputFloat3("Position", glm::value_ptr(selected->getTransform()->position))) {
-                isDirty = true;
-            }*/
+
             glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->getTransform()->rotation));
-            if (ImGui::InputFloat3("Rotation", glm::value_ptr(rotEulerAngles))) {
+            if (net::ui::InputFloat3(("Rotation##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(rotEulerAngles))) {
                 selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
                 isDirty = true;
             }
-            if (ImGui::InputFloat3("Scale", glm::value_ptr(selected->getTransform()->scale))) {
+
+            if (net::ui::InputFloat3(("Scale##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(selected->getTransform()->scale))) {
                 isDirty = true;
             }
 

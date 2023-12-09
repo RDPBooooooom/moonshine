@@ -14,7 +14,7 @@ namespace boost::json {
     }
 
     value to_string(std::chrono::high_resolution_clock::time_point tp) {
-        auto sec = std::chrono::duration_cast<std::chrono::milliseconds >(tp.time_since_epoch()).count();
+        auto sec = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
         return value(sec);
     }
 
@@ -54,12 +54,14 @@ namespace moonshine {
 
         if (since_last_updated > 0.4f) {
             since_last_updated = 0;
-            
+
             auto lock = std::scoped_lock<std::mutex>(uiMap);
+            auto end = std::chrono::system_clock::now();
+
             for (std::pair<const std::basic_string<char>, element_locker> &item: uiElements) {
-                auto duration_since_update = std::chrono::duration_cast<std::chrono::duration<float>>(
-                        item.second.last_update.time_since_epoch());
-                if (duration_since_update.count() > 1000.0f && item.second.lock) {
+                auto duration = end - item.second.last_update;
+                auto duration_since_update = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
+                if (item.second.lock && duration_since_update.count() > 1000.0f) {
                     EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
                                                                      item.first + std::string(" was unlocked"));
                     item.second.lock = false;
@@ -73,20 +75,15 @@ namespace moonshine {
     }
 
     void UIManager::register_field(std::string &label, element_owner owner, bool notify) {
-        auto lock = std::scoped_lock<std::mutex>(uiMap);
-        uiElements[label] = element_locker();
-        uiElements[label].owner = owner;
 
-        if (notify) {
-            EngineSystems::getInstance().get_lobby_manager()->replicateUi(label, uiElements[label]);
-        }
+        auto locker = element_locker();
+        locker.owner = owner;
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Locked " + label);
+        register_field(label, locker, notify);
     }
 
     void UIManager::register_field(std::string &label, element_locker locker, bool notify) {
-        locker.owner = other;
-
+        auto lock = std::scoped_lock<std::mutex>(uiMap);
         if (uiElements.find(label) != uiElements.end()) {
             register_known_field(label, locker);
         } else {
@@ -104,19 +101,23 @@ namespace moonshine {
 
         element_locker &current = uiElements.at(label);
 
-        if (current.last_update > locker.last_update && locker.lock) {
-            uiElements[label] = locker;
+        if (current.owner == self && current.lock) return;
+
+        if (current.lock) {
+            if (current.last_update < locker.last_update) {
+                current.last_update = locker.last_update;
+            }
         } else {
-            current.last_update = locker.last_update;
+            uiElements[label] = locker;
         }
     }
 
     bool UIManager::is_locked(const std::string &label) {
-        if(!(uiElements.find(label) != uiElements.end())) return false;
-        
+        if (uiElements.find(label) == uiElements.end()) return false;
+
         element_locker locker = uiElements.at(label);
-        
-        return  locker.lock && locker.owner != self;
+
+        return locker.lock && locker.owner != self;
     }
 
 } // moonshine

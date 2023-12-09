@@ -43,6 +43,7 @@ namespace moonshine {
             
             std::string label = jObj["label"].get_string().c_str();
             element_locker locker = boost::json::from_value(jObj["locker"]);
+            locker.owner = other;
             uiMngr->register_field(label, locker, EngineSystems::getInstance().get_lobby_manager()->isHost());
         }
     }
