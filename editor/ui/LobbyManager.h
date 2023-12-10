@@ -49,7 +49,7 @@ namespace moonshine {
 
         void replicateAdd(std::string path, std::string name, std::string uuid);
 
-        void replicateUi(std::string &label, element_locker locker);
+        void replicateUi(std::string &label, element_locker &locker);
         
         bool isHost() {
             return isHosting;

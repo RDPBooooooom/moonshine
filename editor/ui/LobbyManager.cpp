@@ -161,7 +161,10 @@ namespace moonshine {
         }
     }
     
-    void LobbyManager::replicateUi(std::string &label, element_locker locker){
+    void LobbyManager::replicateUi(std::string &label, element_locker &locker){
+        
+        locker.last_replication = std::chrono::high_resolution_clock::now();
+        
         if(inSession){
             m_client->send(label, locker);
         }

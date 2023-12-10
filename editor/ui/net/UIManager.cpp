@@ -90,7 +90,7 @@ namespace moonshine {
             uiElements[label] = locker;
         }
 
-        if (notify) {
+        if (notify && check_rate_limit(uiElements[label])) {
             EngineSystems::getInstance().get_lobby_manager()->replicateUi(label, uiElements[label]);
         }
 
@@ -118,6 +118,20 @@ namespace moonshine {
         element_locker locker = uiElements.at(label);
 
         return locker.lock && locker.owner != self;
+    }
+
+    bool UIManager::check_rate_limit(element_locker &locker) {
+
+        if(locker.last_replication == std::chrono::high_resolution_clock::time_point::min()){
+            return true;
+        }
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - locker.last_replication);
+
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Replication duration " + std::to_string(duration.count()));
+        
+        return duration.count() > rate_limit;
     }
 
 } // moonshine
