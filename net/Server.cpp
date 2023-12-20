@@ -169,6 +169,16 @@ namespace moonshine::net {
             client->async_send_json(message);
         }
     }
+    
+    void Server::broadcast(std::string &uuid){
+        boost::json::object message;
+        message["action"] = "removeObject";
+        message["objectId"] = uuid;
+
+        for (auto client: m_connectedClients) {
+            client->async_send_json(message);
+        }
+    }
 
 } // moonshine
 // net

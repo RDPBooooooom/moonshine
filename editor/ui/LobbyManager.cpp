@@ -173,4 +173,13 @@ namespace moonshine {
         }
     }
 
+    void LobbyManager::replicateRemove(std::string uuid) {
+        if (inSession) {
+            m_client->send(uuid);
+        }
+        if (isHosting) {
+            m_server->broadcast(uuid);
+        }
+    }
+
 } // moonshine

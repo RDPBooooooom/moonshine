@@ -36,6 +36,12 @@ namespace moonshine {
 
             std::shared_ptr<WorkspaceManager> wkspaceMngr = EngineSystems::getInstance().get_workspace_manager();
             wkspaceMngr->import_object(wkspaceMngr->get_workspace_path() + "\\" + path.c_str(), name.c_str(), id);
+        } else if(std::equal(action.begin(), action.end(), "removeObject")){
+            boost::uuids::string_generator gen;
+            boost::uuids::uuid id = gen(jObj["objectId"].get_string().c_str());
+
+            Scene &scene = Scene::getCurrentScene();
+            scene.remove_object(scene.get_by_id(id));
         } else if (std::equal(action.begin(), action.end(), "lockUI")) {
             std::shared_ptr<UIManager> uiMngr = EngineSystems::getInstance().get_ui_manager();
 

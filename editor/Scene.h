@@ -19,6 +19,8 @@ namespace moonshine {
         std::shared_ptr<std::vector<std::shared_ptr<SceneObject>>> gameObjects;
 
         mutable std::mutex editGameObjectsMutex;
+        
+        void handle_remove(std::shared_ptr<SceneObject> object);
 
     public:
         static Scene &getCurrentScene();

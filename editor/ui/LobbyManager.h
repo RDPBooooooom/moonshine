@@ -48,6 +48,8 @@ namespace moonshine {
         void replicate(std::shared_ptr<SceneObject> &object);
 
         void replicateAdd(std::string path, std::string name, std::string uuid);
+        
+        void replicateRemove(std::string uuid);
 
         void replicateUi(std::string &label, element_locker &locker);
         

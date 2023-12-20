@@ -92,5 +92,13 @@ namespace moonshine::net {
         m_connection->async_send_json(jObj);
         EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] lockUi Message sent"));
     }
+    
+    void Client::send(std::string uuid){
+        boost::json::object jObj;
+        jObj["action"] = "removeObject";
+        jObj["objectId"] = uuid;
+        m_connection->async_send_json(jObj);
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] RemoveObject message sent"));
+    }
 } // moonshine
 // net

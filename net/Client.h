@@ -50,6 +50,8 @@ namespace moonshine::net {
         
         void send(std::string &label, element_locker locker);
         
+        void send(std::string uuid);
+        
     private:
         void handleRequests();
 

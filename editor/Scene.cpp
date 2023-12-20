@@ -4,6 +4,7 @@
 
 #include <thread>
 #include "Scene.h"
+#include "EngineSystems.h"
 
 namespace moonshine {
 
@@ -22,15 +23,15 @@ namespace moonshine {
         gameObjects->push_back(object);
     }
 
-    void Scene::remove_object(std::shared_ptr<SceneObject> object) {
-        {
-            std::unique_lock<std::mutex> uniqueLock(editGameObjectsMutex);
-            auto newEnd = std::remove(gameObjects->begin(), gameObjects->end(),
-                                      object); // Move elements to keep to the front
-            gameObjects->erase(newEnd, gameObjects->end()); // Erase the unwanted elements
-        }
-        // Wait, so the buffer isn't used in vulkan command anymore.
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    void Scene::remove_object(std::shared_ptr<SceneObject> item) {
+
+        if(item == nullptr) return;
+        
+        std::function<void()> deleteObject = [this, item] { handle_remove(item); };
+        std::thread thread(deleteObject);
+        thread.detach();
+        
+        EngineSystems::getInstance().get_lobby_manager()->replicateRemove(item->get_id_as_string());
     }
 
     std::shared_ptr<SceneObject> Scene::get_at(int index) {
@@ -52,6 +53,17 @@ namespace moonshine {
     std::shared_ptr<SceneObject> Scene::get_by_id(boost::uuids::uuid uuid) {
         std::scoped_lock<std::mutex> uniqueLock(editGameObjectsMutex);
         return get_by_id_unlocked(uuid);
+    }
+
+    void Scene::handle_remove(std::shared_ptr<SceneObject> object) {
+        {
+            std::unique_lock<std::mutex> uniqueLock(editGameObjectsMutex);
+            auto newEnd = std::remove(gameObjects->begin(), gameObjects->end(),
+                                      object); // Move elements to keep to the front
+            gameObjects->erase(newEnd, gameObjects->end()); // Erase the unwanted elements
+        }
+        // Wait, so the buffer isn't used in a vulkan command anymore. Should use fences before deleting the vkbuffer, but would require some bigger changes
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
 } // moonspace
