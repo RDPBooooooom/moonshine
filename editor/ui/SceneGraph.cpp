@@ -6,6 +6,7 @@
 #include "SceneGraph.h"
 #include "imgui.h"
 #include "../Scene.h"
+#include "thread"
 
 namespace moonshine {
 
@@ -30,7 +31,9 @@ namespace moonshine {
                         m_popupItem = item;
                     }
 
-                    if (ImGui::MenuItem("Delete")) { /* TODO: Handle delete... */ }
+                    if (ImGui::MenuItem("Delete")) { 
+                        m_deleteItem = item;
+                    }
                     ImGui::EndPopup();
                 }
 
@@ -42,6 +45,8 @@ namespace moonshine {
         }
 
         showPopup(m_popupItem);
+        handleDelete(current, m_deleteItem);
+        
         ImGui::End();
 
     }
@@ -83,6 +88,15 @@ namespace moonshine {
     }
 
     SceneGraph::SceneGraph(std::shared_ptr<InputHandler> &inputHandler) : m_inputHandler{inputHandler} {
+    }
+
+    void SceneGraph::handleDelete(Scene& scene, std::shared_ptr<SceneObject> item) {
+        if(item == nullptr) return;
+
+        std::function<void()> deleteObject = [&scene, item] { scene.remove_object(item); };
+        std::thread thread(deleteObject);
+        thread.detach();
+        m_deleteItem = nullptr;
     }
 
 

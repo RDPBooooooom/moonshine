@@ -8,6 +8,7 @@
 #include <memory>
 #include "UIWindow.h"
 #include "../SceneObject.h"
+#include "../Scene.h"
 
 namespace moonshine {
 
@@ -19,6 +20,8 @@ namespace moonshine {
 
         bool m_openPopup = false;
         std::shared_ptr<SceneObject> m_popupItem = nullptr;
+        
+        std::shared_ptr<SceneObject> m_deleteItem = nullptr;
 
     public:
         SceneGraph(std::shared_ptr<InputHandler>& inputHandler);
@@ -31,6 +34,7 @@ namespace moonshine {
 
     private:
         void showPopup(std::shared_ptr<SceneObject> &item);
+        void handleDelete(Scene& scene, std::shared_ptr<SceneObject> item);
     };
 
 } // moonshine

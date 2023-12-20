@@ -31,6 +31,7 @@ namespace moonshine {
 
         explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data);
         explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data, boost::uuids::uuid uniqueId);
+        ~SceneObject();
 
         void init(Device &device, std::shared_ptr<MaterialManager> &materialManager);
 

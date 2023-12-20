@@ -42,4 +42,8 @@ namespace moonshine {
               m_uniqueId{uniqueId} {
         m_name = name;
     }
+
+    SceneObject::~SceneObject() {
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Destroyed " + to_string(m_uniqueId));
+    }
 }

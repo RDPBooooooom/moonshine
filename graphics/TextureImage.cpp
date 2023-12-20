@@ -23,7 +23,7 @@ namespace moonshine {
         VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         if (!pixels) {
-            throw std::runtime_error("failed to load texture image!");
+            throw std::runtime_error("failed to load texture image! " + std::string(filepath));
         }
 
         VkBuffer stagingBuffer;
