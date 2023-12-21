@@ -117,7 +117,7 @@ namespace moonshine {
 
             ImGui::SameLine();
             ImGui::SetItemDefaultFocus();
-            if (ImGui::Button("Start Hosting")) {
+            if (ImGui::Button("Start Hosting") && !lobbyName.empty()) {
                 ImGui::CloseCurrentPopup();
                 start_hosting();
             }
