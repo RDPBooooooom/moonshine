@@ -200,6 +200,10 @@ namespace moonshine {
                 } else {
                     data.m_matName = mat.name;
                 }
+                
+                if(textureIndex < 0){
+                    throw std::runtime_error("invalid texture index for pbrMetallicRoughness.baseColorTexture");
+                }
 
                 data.m_texName = model.images[textureIndex].uri;
                 data.m_path = path;
