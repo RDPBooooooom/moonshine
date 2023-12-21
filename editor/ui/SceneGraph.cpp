@@ -93,6 +93,10 @@ namespace moonshine {
     void SceneGraph::handleDelete(Scene& scene, std::shared_ptr<SceneObject> item) {
         if(item == nullptr) return;
 
+        if (item == m_selectedGameObject){
+            m_selectedGameObject = nullptr;
+        }
+        
         scene.remove_object(item);
         m_deleteItem = nullptr;
     }
