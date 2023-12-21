@@ -2,6 +2,7 @@
 // Created by marvin on 28.10.2023.
 //
 
+#include <thread>
 #include "LobbyConnector.h"
 #include "../editor/EngineSystems.h"
 #include "../MoonshineApp.h"
@@ -17,9 +18,24 @@ namespace moonshine {
         connection->async_send_json(object);
     }
 
+    void LobbyConnector::try_connect() {
+        std::function<void()> connect_handle = [this] { connect(); };
+        std::thread connect_thread(connect_handle);
+        connect_thread.detach();
+    }
+
     void LobbyConnector::connect() {
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(MoonshineApp::APP_SETTINGS.LOBBY_SERVER_ADDRESS, MoonshineApp::APP_SETTINGS.LOBBY_SERVER_PORT);
-        connection->start(endpoint_iterator);
+        tcp::resolver::iterator endpoint_iterator = resolver.resolve(MoonshineApp::APP_SETTINGS.LOBBY_SERVER_ADDRESS,
+                                                                     MoonshineApp::APP_SETTINGS.LOBBY_SERVER_PORT);
+
+        try {
+            connection->start(endpoint_iterator);
+        } catch (const boost::system::system_error &e) {
+            EngineSystems::getInstance().get_logger()->error(LoggerType::Networking,
+                                                             std::string("Failed to connect: ") + e.what());
+            return;
+        }
+
 
         std::function<void()> handleRequestsHandle = [this] { handleRequests(); };
         thread = std::thread(handleRequestsHandle);

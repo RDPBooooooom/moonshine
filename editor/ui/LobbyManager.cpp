@@ -20,7 +20,7 @@ namespace moonshine {
             };
         } else {
             if (ImGui::Button("Connect", ImVec2(100, 20))) {
-                connector.connect();
+                connector.try_connect();
                 if (isHosting) {
                     connector.registerAsHost(lobbyName, m_server->get_port());
                     connector.receiveHosts();

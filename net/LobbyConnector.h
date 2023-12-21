@@ -67,7 +67,7 @@ namespace moonshine {
             return m_isConnected;
         }
 
-        void connect();
+        void try_connect();
 
         void registerAsHost(const std::string& name, int port);
 
@@ -76,6 +76,9 @@ namespace moonshine {
         void disconnect();
 
         LobbyConnector::Host getSelectedHost();
+        
+    private:
+        void connect();
     };
 
 } // moonshine
