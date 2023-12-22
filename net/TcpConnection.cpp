@@ -13,8 +13,18 @@ namespace moonshine {
 
         reply_ = header + reply_; // Prepend header to message
 
+        std::chrono::steady_clock::time_point send_time = std::chrono::steady_clock::now();
+
         boost::asio::async_write(socket_, boost::asio::buffer(reply_),
-                                 [this](const boost::system::error_code &error, size_t bytes_transferred) {
+                                 [this, send_time](const boost::system::error_code &error, size_t bytes_transferred) {
+
+                                     auto end_time = std::chrono::steady_clock::now();
+                                     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                             end_time - send_time);
+
+                                     EngineSystems::getInstance().get_statistics()->add_sent_package(bytes_transferred,
+                                                                                                     (double) duration.count() /
+                                                                                                     1000000);
                                  });
     }
 
@@ -42,6 +52,7 @@ namespace moonshine {
                                                                     m_content_buffer.end());
 
                                             boost::json::value jv = boost::json::parse(content_str);
+
 
                                             m_queue.push_back(jv);
 

@@ -27,6 +27,13 @@ namespace moonshine {
             last_update = frame_end;
             last = current;
             current = {};
+
+            {
+                std::scoped_lock<std::mutex> lock(networking_mutex);
+                
+                sent_data.kb_last_second = (double) sent_data.total_bytes / 1000;
+                sent_data.total_bytes = 0;
+            }
         }
 
         // Only used latest frame for draw_calls and vertex_count
@@ -45,7 +52,12 @@ namespace moonshine {
             ImGui::Text((std::string("Avg. frame time (ms): ") + std::to_string(last.frame_time_avg)).c_str());
             ImGui::Text((std::string("FPS: ") + std::to_string(last.frame_count)).c_str());
         }
-        
+
+        if (ImGui::CollapsingHeader("Networking##Stats", ImGuiTreeNodeFlags_None)) {
+            ImGui::Text((std::string("kb/s: ") + std::to_string(sent_data.kb_last_second)).c_str());
+            ImGui::Text((std::string("ms: ") + std::to_string(sent_data.avg_ms)).c_str());
+        }
+
         ImGui::End();
     }
 
@@ -55,5 +67,14 @@ namespace moonshine {
 
     void StatisticsManager::add_vertex_count(const size_t count) {
         current.vertex_count += count;
+    }
+
+    void StatisticsManager::add_sent_package(size_t bytes_transferred, double ms) {
+        std::scoped_lock<std::mutex> lock(networking_mutex);
+
+        sent_data.total_bytes += bytes_transferred;
+        sent_data.package_count++;
+        sent_data.total_ms += ms;
+        sent_data.avg_ms = sent_data.total_ms / sent_data.package_count;
     }
 } // moonshine
