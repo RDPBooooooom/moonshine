@@ -41,7 +41,6 @@ namespace moonshine {
                 if (isOpen) {
                     ImGui::TreePop();
                 }
-
             }
         }
 
@@ -80,6 +79,8 @@ namespace moonshine {
                 std::string nameStr(text);
                 item->setName(nameStr);
                 ImGui::CloseCurrentPopup();
+                
+                EngineSystems::getInstance().get_lobby_manager()->replicateRename(item->get_id_as_string(), item->getName());
 
                 m_popupItem = nullptr;
                 m_inputHandler->enable();

@@ -26,7 +26,7 @@ namespace moonshine {
 
                 std::string name;
                 if (node.name.empty()) {
-                    name = "Obj: " + std::to_string(nr_loaded_objects);
+                    name = "?";
                 } else {
                     name = node.name;
                 }

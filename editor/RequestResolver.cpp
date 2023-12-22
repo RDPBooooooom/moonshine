@@ -51,6 +51,16 @@ namespace moonshine {
             element_locker locker = boost::json::from_value(jObj["locker"]);
             locker.owner = other;
             uiMngr->register_field(label, locker, EngineSystems::getInstance().get_lobby_manager()->isHost());
+        } else if(std::equal(action.begin(), action.end(), "renameObject")){
+            boost::uuids::string_generator gen;
+            boost::uuids::uuid id = gen(jObj["objectId"].get_string().c_str());
+            Scene &scene = Scene::getCurrentScene();
+            scene.get_by_id(id)->setName(jObj["name"].as_string().c_str());
+
+            auto lobby_manager = EngineSystems::getInstance().get_lobby_manager();
+            if(lobby_manager->isHost()){
+                lobby_manager->replicateRename(jObj["objectId"].as_string().c_str(), jObj["name"].as_string().c_str());
+            }
         }
     }
 } // moonshine

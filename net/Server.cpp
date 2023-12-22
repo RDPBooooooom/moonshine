@@ -180,5 +180,16 @@ namespace moonshine::net {
         }
     }
 
+    void Server::broadcast(std::string &uuid, std::string &name){
+        boost::json::object message;
+        message["action"] = "renameObject";
+        message["objectId"] = uuid;
+        message["name"] = name;
+
+        for (auto client: m_connectedClients) {
+            client->async_send_json(message);
+        }
+    }
+
 } // moonshine
 // net

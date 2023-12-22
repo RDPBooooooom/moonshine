@@ -181,5 +181,14 @@ namespace moonshine {
             m_server->broadcast(uuid);
         }
     }
+    
+    void LobbyManager::replicateRename(std::string uuid, std::string name){
+        if (inSession) {
+            m_client->send(uuid, name);
+        }
+        if (isHosting) {
+            m_server->broadcast(uuid, name);
+        }
+    }
 
 } // moonshine

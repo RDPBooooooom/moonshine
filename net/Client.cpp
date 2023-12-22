@@ -15,7 +15,7 @@ namespace moonshine::net {
         m_connection->start(m_resolver.resolve(ipv4, std::to_string(port)));
 
         EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, "[Client] Connected!");
-        
+
         m_connection.get()->async_receive_json();
         if (m_ioContext.stopped()) {
             m_ioContext.restart();
@@ -31,7 +31,7 @@ namespace moonshine::net {
 
                 // Stop the IO context to allow the thread to finish
                 m_ioContext.stop();
-                
+
                 threadStop = true;
 
                 // Join the thread if it's running
@@ -46,10 +46,11 @@ namespace moonshine::net {
                     m_receiveThread.join();
                     m_messageQueue.clear();
                 }
-                
+
             }
             catch (const std::exception &e) {
-                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] An error occurred during disconnection: ") + e.what());
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string(
+                        "[Client] An error occurred during disconnection: ") + e.what());
                 // Handle exceptions as appropriate for your application
             }
         }
@@ -71,7 +72,8 @@ namespace moonshine::net {
         jObj["action"] = "updateObject";
         jObj["objectId"] = object->get_id_as_string();
         m_connection->async_send_json(jObj);
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] UpdateObject message sent"));
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                        std::string("[Client] UpdateObject message sent"));
     }
 
     void Client::send(std::string &path, std::string &name, std::string &uuid) {
@@ -81,7 +83,8 @@ namespace moonshine::net {
         jObj["path"] = path;
         jObj["name"] = name;
         m_connection->async_send_json(jObj);
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] AddObject message sent"));
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                        std::string("[Client] AddObject message sent"));
     }
 
     void Client::send(std::string &label, element_locker locker) {
@@ -90,15 +93,27 @@ namespace moonshine::net {
         jObj["label"] = label;
         jObj["locker"] = boost::json::to_value(locker);
         m_connection->async_send_json(jObj);
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] lockUi Message sent"));
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                        std::string("[Client] lockUi Message sent"));
     }
-    
-    void Client::send(std::string uuid){
+
+    void Client::send(std::string &uuid, std::string &name) {
+        boost::json::object jObj;
+        jObj["action"] = "renameObject";
+        jObj["objectId"] = uuid;
+        jObj["name"] = name;
+        m_connection->async_send_json(jObj);
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                        std::string("[Client] RenameObject message sent"));
+    }
+
+    void Client::send(std::string &uuid) {
         boost::json::object jObj;
         jObj["action"] = "removeObject";
         jObj["objectId"] = uuid;
         m_connection->async_send_json(jObj);
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("[Client] RemoveObject message sent"));
+        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                        std::string("[Client] RemoveObject message sent"));
     }
 } // moonshine
 // net

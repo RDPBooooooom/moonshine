@@ -26,7 +26,7 @@ namespace moonshine::net {
         TcpConnection::pointer m_connection;
 
         SafeQueue<boost::json::value> m_messageQueue;
-        
+
         RequestResolver resolver;
         std::thread m_receiveThread;
         bool threadStop = false;
@@ -43,15 +43,17 @@ namespace moonshine::net {
         void connect(std::string ipv4, int64_t port);
 
         void disconnect();
-        
+
         void send(std::shared_ptr<SceneObject> &object);
-        
+
         void send(std::string &path, std::string &name, std::string &uuid);
-        
+
         void send(std::string &label, element_locker locker);
-        
-        void send(std::string uuid);
-        
+
+        void send(std::string &uuid);
+
+        void send(std::string &uuid, std::string &name);
+
     private:
         void handleRequests();
 
