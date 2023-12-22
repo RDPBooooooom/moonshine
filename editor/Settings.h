@@ -10,6 +10,7 @@
 
 struct Settings {
     bool ENABLE_MOUSE_DEBUG = false;
+    bool ENABLE_CAMERA_DEBUG = false;
 
     spdlog::level::level_enum EDITOR_LOG_LEVEL_CONSOLE = spdlog::level::info;
     spdlog::level::level_enum NETWORKING_LOG_LEVEL_CONSOLE = spdlog::level::info;
@@ -54,6 +55,7 @@ struct Settings {
     static std::string serialize(const Settings &settings) {
         boost::json::object settings_json = {
                 {"ENABLE_MOUSE_DEBUG",   settings.ENABLE_MOUSE_DEBUG},
+                {"ENABLE_CAMERA_DEBUG",   settings.ENABLE_CAMERA_DEBUG},
                 {"LOGGING",
                                          {
                                                  {"EDITOR",
@@ -92,7 +94,8 @@ struct Settings {
         boost::json::object settings_json = boost::json::parse(json_data).as_object();
 
         load_bool(settings.ENABLE_MOUSE_DEBUG, settings_json, "ENABLE_MOUSE_DEBUG");
-
+        load_bool(settings.ENABLE_CAMERA_DEBUG, settings_json, "ENABLE_CAMERA_DEBUG");
+        
         if (settings_json.contains("LOGGING")) {
             boost::json::object log_settings = settings_json["LOGGING"].as_object();
 

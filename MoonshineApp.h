@@ -71,20 +71,14 @@ namespace moonshine {
         std::shared_ptr<MaterialManager> m_materialManager;
         VkDescriptorPool m_imGuiPool;
 
-        Scene scene;
-
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
         std::vector<std::unique_ptr<Buffer>> m_fragUBO;
-/*
-        std::unique_ptr<UniformBuffer<UniformBufferObject>> m_matrixUBONew;
-        std::unique_ptr<UniformBuffer<FragmentUniformBufferObject>> m_fragUBONew;
-*/
-        std::unique_ptr<TextureImage> m_image;
-        std::unique_ptr<TextureImage> m_imageTwo;
+
+        Scene scene;
+        Camera m_camera;
 
         std::unique_ptr<moonshine::SceneGraph> m_sceneGraph;
 
-        Camera m_camera;
 
     public:
 

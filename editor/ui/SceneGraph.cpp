@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "../Scene.h"
 #include "thread"
+#include "../EngineSystems.h"
 
 namespace moonshine {
 
@@ -31,7 +32,7 @@ namespace moonshine {
                         m_popupItem = item;
                     }
 
-                    if (ImGui::MenuItem("Delete")) { 
+                    if (ImGui::MenuItem("Delete")) {
                         m_deleteItem = item;
                     }
                     ImGui::EndPopup();
@@ -46,7 +47,7 @@ namespace moonshine {
 
         showPopup(m_popupItem);
         handleDelete(current, m_deleteItem);
-        
+
         ImGui::End();
 
     }
@@ -87,19 +88,36 @@ namespace moonshine {
         }
     }
 
-    SceneGraph::SceneGraph(std::shared_ptr<InputHandler> &inputHandler) : m_inputHandler{inputHandler} {
+    SceneGraph::SceneGraph(std::shared_ptr<InputHandler> &inputHandler, Camera &camera) : m_inputHandler{inputHandler},
+                                                                                          m_camera{camera} {
+
+        using std::placeholders::_1;
+        std::function<void(bool)> focus_handle = std::bind(&SceneGraph::focus_selected, this, _1);
+        focus_selected_input_handle = inputHandler->registerKeyEvent(GLFW_KEY_F, focus_handle, false, false);
     }
 
-    void SceneGraph::handleDelete(Scene& scene, std::shared_ptr<SceneObject> item) {
-        if(item == nullptr) return;
+    void SceneGraph::handleDelete(Scene &scene, std::shared_ptr<SceneObject> item) {
+        if (item == nullptr) return;
 
-        if (item == m_selectedGameObject){
+        if (item == m_selectedGameObject) {
             m_selectedGameObject = nullptr;
         }
-        
+
         scene.remove_object(item);
         m_deleteItem = nullptr;
     }
 
+    void SceneGraph::focus_selected(bool isReleased) {
+        if (m_selectedGameObject == nullptr) return;
+
+        m_camera.look_at(*m_selectedGameObject->getTransform());
+
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
+                                                         "focused " + m_selectedGameObject->as_string());
+    }
+
+    SceneGraph::~SceneGraph() {
+        m_inputHandler->unregisterKeyEvent(focus_selected_input_handle);
+    }
 
 } // moonshine

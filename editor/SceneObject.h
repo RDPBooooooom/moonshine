@@ -21,16 +21,18 @@ namespace moonshine {
 
     private:
         std::string m_name;
-        
+
         boost::uuids::uuid m_uniqueId;
-        
-        Transform& m_transform;
+
+        Transform &m_transform;
 
         std::vector<std::shared_ptr<Node>> nodes;
     public:
 
         explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data);
+
         explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data, boost::uuids::uuid uniqueId);
+
         ~SceneObject();
 
         void init(Device &device, std::shared_ptr<MaterialManager> &materialManager);
@@ -52,6 +54,8 @@ namespace moonshine {
         boost::uuids::uuid getId() const { return m_uniqueId; }
 
         std::string get_id_as_string() const { return boost::uuids::to_string(m_uniqueId); }
+
+        std::string as_string() { return getName() + "(" + get_id_as_string() + ")"; };
 
 
     };

@@ -9,6 +9,7 @@
 #include "UIWindow.h"
 #include "../SceneObject.h"
 #include "../Scene.h"
+#include "../Camera.h"
 
 namespace moonshine {
 
@@ -22,19 +23,27 @@ namespace moonshine {
         std::shared_ptr<SceneObject> m_popupItem = nullptr;
         
         std::shared_ptr<SceneObject> m_deleteItem = nullptr;
+        
+        Camera &m_camera;
+        
+        int focus_selected_input_handle = -1;
 
     public:
-        SceneGraph(std::shared_ptr<InputHandler>& inputHandler);
+        SceneGraph(std::shared_ptr<InputHandler>& inputHandler, Camera &camera);
+        ~SceneGraph() override;
 
         void draw() override;
 
+        void focus_selected(bool isReleased);
         std::shared_ptr<SceneObject> getSelected(){
             return m_selectedGameObject;
         }
+        
 
     private:
         void showPopup(std::shared_ptr<SceneObject> &item);
         void handleDelete(Scene& scene, std::shared_ptr<SceneObject> item);
+
     };
 
 } // moonshine

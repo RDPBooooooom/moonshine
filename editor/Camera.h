@@ -22,10 +22,7 @@ namespace moonshine {
         bool m_movementModeActive = false;
 
         float m_camSpeed = 10;
-        float m_rotationSpeed = 200;
-
-        float m_angleH;
-        float m_angleV;
+        float m_rotationSpeed = 0.15f;
 
         std::vector<int> m_registeredFunctions;
 
@@ -38,11 +35,13 @@ namespace moonshine {
 
         Transform *getTransform() { return &m_transform; }
 
+        void look_at(const Transform &target);
+        void show_debug();
 
     private:
         void handleMovementMode(bool isReleased);
 
-        void move(glm::vec3 toMove);
+        void move(glm::vec3 toMove, bool ignore_active_mode = false);
 
         void moveForward(bool isReleased);
 
@@ -54,7 +53,6 @@ namespace moonshine {
 
         void mouseMovement(CursorPosition cPos);
 
-        float getPercentRotation(float distance, float totalDistance);
     };
 
 } // moonshine

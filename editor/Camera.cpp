@@ -2,9 +2,11 @@
 // Created by marvi on 08.06.2023.
 //
 
+#include "glm/gtc/type_ptr.hpp"
 #include "Camera.h"
 #include "Time.h"
-#include "glm/gtx/string_cast.hpp"
+#include "imgui.h"
+#include "../MoonshineApp.h"
 
 #define GLM_FORCE_RADIANS
 
@@ -43,7 +45,6 @@ namespace moonshine {
     }
 
     glm::mat4 Camera::getViewMat() {
-        m_transform.rotation = normalize(m_transform.rotation);
         glm::mat4 rotation = glm::mat4_cast(m_transform.rotation);
         glm::mat4 translation = glm::translate(glm::mat4(1.0f), -m_transform.position);
         glm::mat4 view = rotation * translation;
@@ -60,8 +61,8 @@ namespace moonshine {
         }
     }
 
-    void Camera::move(glm::vec3 toMove) {
-        if (!m_movementModeActive) return;
+    void Camera::move(glm::vec3 toMove, bool ignore_active_mode) {
+        if (!m_movementModeActive && !ignore_active_mode) return;
 
         m_transform.position += toMove;
     }
@@ -85,27 +86,37 @@ namespace moonshine {
     void Camera::mouseMovement(CursorPosition cPos) {
         if (!m_movementModeActive) return;
 
-        m_angleH += m_rotationSpeed * getPercentRotation(cPos.oldY - cPos.y, m_window->m_height) * Time::deltaTime;
-        m_angleV += m_rotationSpeed * getPercentRotation(cPos.oldX - cPos.x, m_window->m_width) * Time::deltaTime;
+        float deltaX = cPos.x - cPos.oldX;
+        float deltaY = cPos.oldY - cPos.y;
 
-        glm::vec3 yAxis = glm::vec3(0, 1, 0);
+        deltaX *= Time::deltaTime * m_rotationSpeed;
+        deltaY *= Time::deltaTime * m_rotationSpeed;
 
-        // Rotate the view vector by the horizontal angle around the vertical axis
-        glm::vec3 view = glm::vec3(0.0f, 0.0f, -1.0f);
-        view = glm::angleAxis(glm::radians(m_angleV), yAxis) * view;
-        view = glm::normalize(view);
-
-        // Rotate the view vector by the vertical angle around the horizontal axis
-        glm::vec3 u = glm::cross(yAxis, view);
-        u = glm::normalize(u);
-
-        m_transform.rotation =
-                glm::angleAxis(glm::radians(-m_angleV), yAxis) * glm::angleAxis(glm::radians(m_angleH), u);
+        glm::quat pitch = glm::angleAxis(-deltaY, glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::quat yaw = glm::angleAxis(deltaX, glm::vec3(0.0f, 1.0f, 0.0f));
+        m_transform.rotation = pitch * m_transform.rotation * yaw;
     }
 
-    float Camera::getPercentRotation(float distance, float totalDistance) {
-        return distance / totalDistance * 100;
+
+    void Camera::look_at(const Transform &target) {
+        m_transform.position = target.position;
+
+        move(m_transform.getForward() * 5.0f, true);
     }
 
+    void Camera::show_debug() {
+        if (!MoonshineApp::APP_SETTINGS.ENABLE_CAMERA_DEBUG) return;
+
+        ImGui::Begin("CameraDebug");
+
+        ImGui::BeginDisabled(true);
+        ImGui::SeparatorText("Transform");
+        ImGui::InputFloat3("Position##camera", glm::value_ptr(m_transform.position));
+        ImGui::InputFloat4("Rotation##camera", glm::value_ptr(m_transform.rotation));
+        ImGui::InputFloat3("Scale##camera", glm::value_ptr(m_transform.scale));
+        ImGui::EndDisabled();
+
+        ImGui::End();
+    }
 
 } // moonshine

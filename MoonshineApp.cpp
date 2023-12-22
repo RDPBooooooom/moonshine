@@ -212,7 +212,7 @@ namespace moonshine {
 
         // Init UI
         auto inputHandler = m_window.getInputHandler();
-        m_sceneGraph = std::make_unique<SceneGraph>(inputHandler);
+        m_sceneGraph = std::make_unique<SceneGraph>(inputHandler, m_camera);
         EngineSystems::getInstance().set_lobby_manager(std::make_shared<LobbyManager>(inputHandler));
 
         EngineSystems::getInstance().set_workspace_manager(
@@ -236,6 +236,7 @@ namespace moonshine {
             EngineSystems::getInstance().get_statistics()->draw();
 
             m_sceneGraph->draw();
+            m_camera.show_debug();
             showInspector();
 
             {
