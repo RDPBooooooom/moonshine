@@ -38,7 +38,7 @@ namespace moonshine {
         std::thread ioContextThread;
 
         std::mutex hostMutex;
-        std::unique_ptr<std::vector<Host>> currentHosts;
+        std::vector<std::shared_ptr<Host>> currentHosts;
         int item_current_idx = 0;
 
     public:
@@ -46,8 +46,6 @@ namespace moonshine {
         LobbyConnector() : io_service(), resolver(io_service) {
             connection =
                     TcpConnection::create(io_service, m_messageQueue);
-
-            currentHosts = std::make_unique<std::vector<Host>>();
         }
 
         ~LobbyConnector() {
@@ -75,7 +73,7 @@ namespace moonshine {
 
         void disconnect();
 
-        LobbyConnector::Host getSelectedHost();
+        std::shared_ptr<LobbyConnector::Host> getSelectedHost();
         
     private:
         void connect();

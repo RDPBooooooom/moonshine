@@ -86,7 +86,7 @@ namespace moonshine {
                 }
 
                 std::scoped_lock<std::mutex> lock(hostMutex);
-                currentHosts->clear();
+                currentHosts.clear();
             }
             catch (const std::exception &e) {
                 std::cerr << "An error occurred during disconnection: " << e.what() << std::endl;
@@ -95,10 +95,13 @@ namespace moonshine {
         }
     }
 
-    LobbyConnector::Host LobbyConnector::getSelectedHost() {
+    std::shared_ptr<LobbyConnector::Host> LobbyConnector::getSelectedHost() {
         std::scoped_lock<std::mutex> lock(hostMutex);
 
-        return currentHosts->at(item_current_idx);
+        if(item_current_idx < 0) return nullptr;
+        if(item_current_idx >= currentHosts.size()) return nullptr;
+        
+        return currentHosts.at(item_current_idx);
     }
 
     void LobbyConnector::handleRequests() {
@@ -112,16 +115,16 @@ namespace moonshine {
             if (std::equal(action.begin(), action.end(), "updateHosts")) {
                 boost::json::array hosts = jObj["hosts"].as_array();
                 hostMutex.lock();
-                currentHosts->clear();
+                currentHosts.clear();
                 for (boost::json::value v: hosts) {
                     boost::json::object o = v.get_object();
-                    Host host = {};
-                    host.id = o["id"].get_int64();
-                    host.name = o["name"].get_string();
-                    host.ipv4 = o["ip"].get_string();
-                    host.port = o["port"].get_int64();
+                    std::shared_ptr<Host> host = std::make_shared<Host>();
+                    host->id = o["id"].get_int64();
+                    host->name = o["name"].get_string();
+                    host->ipv4 = o["ip"].get_string();
+                    host->port = o["port"].get_int64();
 
-                    currentHosts->push_back(host);
+                    currentHosts.push_back(host);
                 }
                 hostMutex.unlock();
             }
@@ -133,9 +136,9 @@ namespace moonshine {
         std::scoped_lock<std::mutex> lock(hostMutex);
 
         if (ImGui::BeginListBox("Available Hosts", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
-            for (int n = 0; n < currentHosts->size(); n++) {
+            for (int n = 0; n < currentHosts.size(); n++) {
                 const bool is_selected = (item_current_idx == n);
-                if (ImGui::Selectable(currentHosts->at(n).name.c_str(), is_selected))
+                if (ImGui::Selectable(currentHosts.at(n)->name.c_str(), is_selected))
                     item_current_idx = n;
 
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)

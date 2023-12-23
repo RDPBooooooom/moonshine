@@ -43,13 +43,15 @@ namespace moonshine {
                 openHostPrompt = true;
             };
             ImGui::SameLine();
+
+            std::shared_ptr<LobbyConnector::Host> selected = connector.getSelectedHost();
+            ImGui::BeginDisabled(selected == nullptr);
             if (ImGui::Button("Join", ImVec2(100, 20))) {
                 inSession = true;
-
-                LobbyConnector::Host selected = connector.getSelectedHost();
-
-                m_client->connect(selected.ipv4, selected.port);
+                
+                m_client->connect(selected->ipv4, selected->port);
             };
+            ImGui::EndDisabled();
 
         } else if (inSession) {
             // Currently connected to a host and therefor in a session
@@ -160,15 +162,15 @@ namespace moonshine {
             m_server->broadcast(path, name, uuid);
         }
     }
-    
-    void LobbyManager::replicateUi(std::string &label, element_locker &locker){
-        
+
+    void LobbyManager::replicateUi(std::string &label, element_locker &locker) {
+
         locker.last_replication = std::chrono::high_resolution_clock::now();
-        
-        if(inSession){
+
+        if (inSession) {
             m_client->send(label, locker);
         }
-        if(isHosting){
+        if (isHosting) {
             m_server->broadcast(label, locker);
         }
     }
@@ -181,8 +183,8 @@ namespace moonshine {
             m_server->broadcast(uuid);
         }
     }
-    
-    void LobbyManager::replicateRename(std::string uuid, std::string name){
+
+    void LobbyManager::replicateRename(std::string uuid, std::string name) {
         if (inSession) {
             m_client->send(uuid, name);
         }
