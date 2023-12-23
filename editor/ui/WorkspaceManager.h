@@ -11,6 +11,7 @@
 #include "../../graphics/Device.h"
 #include "../../graphics/MaterialManager.h"
 #include "../Transform.h"
+#include "../Camera.h"
 #include <boost/uuid/uuid.hpp>
 #include <boost/json/array.hpp>
 
@@ -20,10 +21,13 @@ namespace moonshine {
 
     private:
         Device &m_device;
-
+        Camera &m_camera;
+        
         std::shared_ptr<InputHandler> m_inputHandler;
         std::shared_ptr<MaterialManager> m_materialManager;
 
+        std::vector<boost::uuids::uuid> m_generated_ids;
+        
         std::string m_workspacePath;
 
         struct import_data {
@@ -32,7 +36,9 @@ namespace moonshine {
             std::string name = "";
             boost::uuids::uuid uuid;
             
-            bool overwrite_transform = false;
+            bool overwrite_pos = false;
+            bool overwrite_rot = false;
+            bool overwrite_scale = false;
             Transform transform = {};
         };
 
@@ -56,17 +62,18 @@ namespace moonshine {
     public:
 
         explicit WorkspaceManager(Device &device, std::shared_ptr<MaterialManager> &materialManager,
-                                  std::shared_ptr<InputHandler> &inputHandler) : m_inputHandler{inputHandler},
+                                  std::shared_ptr<InputHandler> &inputHandler, Camera &camera) : m_inputHandler{inputHandler},
                                                                                  m_device{device},
-                                                                                 m_materialManager{materialManager} {
+                                                                                 m_materialManager{materialManager},
+                                                                                 m_camera{camera} {
             
         }
 
         void draw();
 
-        void import_object(std::string path, std::string file);
+        void import_object(std::string path, std::string file, Transform transform);
 
-        void import_object(std::string path, std::string file, boost::uuids::uuid uuid);
+        void import_object(std::string path, std::string file, boost::uuids::uuid uuid, Transform transform = {});
 
         void save_scene();
 

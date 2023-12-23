@@ -154,12 +154,12 @@ namespace moonshine {
         }
     }
 
-    void LobbyManager::replicateAdd(std::string path, std::string name, std::string uuid) {
+    void LobbyManager::replicateAdd(std::string path, std::string name, std::string uuid, Transform transform) {
         if (inSession) {
-            m_client->send(path, name, uuid);
+            m_client->send(path, name, uuid, transform);
         }
         if (isHosting) {
-            m_server->broadcast(path, name, uuid);
+            m_server->broadcast(path, name, uuid, transform);
         }
     }
 

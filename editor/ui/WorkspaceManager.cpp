@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <boost/uuid/string_generator.hpp>
+#include <boost/uuid/random_generator.hpp>
 #include "imgui.h"
 #include "../../external/ImGuiFileDialog/ImGuiFileDialog.h"
 #include "../GltfLoader.h"
@@ -43,7 +44,10 @@ namespace moonshine {
                 std::string path = ImGuiFileDialog::Instance()->GetCurrentPath();
                 std::string file = ImGuiFileDialog::Instance()->GetCurrentFileName();
 
-                import_object(path + "\\", file);
+                Transform transform = {};
+                transform.position = m_camera.getTransform()->position + m_camera.getTransform()->getForward() * -5.0f;
+
+                import_object(path + "\\", file, transform);
             }
             ImGuiFileDialog::Instance()->Close();
         }
@@ -97,27 +101,35 @@ namespace moonshine {
         }
     }
 
+    void WorkspaceManager::import_object(std::string path, std::string file, Transform transform) {
+        import_data data = {};
+        data.path = std::move(path);
+        data.file = std::move(file);
+        data.uuid = boost::uuids::uuid();
 
-    void WorkspaceManager::import_object(std::string path, std::string file) {
-        import_object(std::move(path), std::move(file), boost::uuids::uuid());
+        data.overwrite_pos = true;
+
+        data.transform = transform;
+
+        import_object(data);
     }
 
-    void WorkspaceManager::import_object(std::string path, std::string file, boost::uuids::uuid uuid) {
-
-        if (Scene::getCurrentScene().get_by_id(uuid) != nullptr) {
-            return;
-        }
-
+    void
+    WorkspaceManager::import_object(std::string path, std::string file, boost::uuids::uuid uuid, Transform transform) {
         import_data data = {};
         data.path = std::move(path);
         data.file = std::move(file);
         data.uuid = uuid;
+        data.transform = transform;
+
+        data.overwrite_pos = true;
 
         import_object(data);
     }
 
     void WorkspaceManager::import_object(import_data &data) {
-        if (Scene::getCurrentScene().get_by_id(data.uuid) != nullptr) {
+        if (Scene::getCurrentScene().get_by_id(data.uuid) != nullptr ||
+            std::find(m_generated_ids.begin(), m_generated_ids.end(), data.uuid) != m_generated_ids.end()) {
             return;
         }
 
@@ -133,22 +145,28 @@ namespace moonshine {
     void WorkspaceManager::import_object_gltf(import_data data) {
 
         try {
+            if (data.uuid.is_nil()) {
+                data.uuid = boost::uuids::random_generator()();
+            }
+            m_generated_ids.push_back(data.uuid);
+
+            std::string pathInWorkspace = FileUtils::get_relative_path(data.path, m_workspacePath);
+            EngineSystems::getInstance().get_lobby_manager()->replicateAdd(pathInWorkspace, data.file,
+                                                                           to_string(data.uuid), data.transform);
+
             std::vector<std::shared_ptr<SceneObject>> toLoad = GltfLoader::load_gltf(data.path, data.file,
                                                                                      data.uuid);
 
-            std::string pathInWorkspace = FileUtils::get_relative_path(data.path, m_workspacePath);
-
             for (const auto &item: toLoad) {
                 {
-                    EngineSystems::getInstance().get_lobby_manager()->replicateAdd(pathInWorkspace, data.file,
-                                                                                   item->get_id_as_string());
-
                     auto lock = Scene::getCurrentScene().getLock();
                     item->init(m_device, m_materialManager);
                 }
 
                 if (!data.name.empty()) item->setName(data.name);
-                if (data.overwrite_transform) item->set_transform(data.transform);
+                if (data.overwrite_pos) item->getTransform()->position = data.transform.position;
+                if (data.overwrite_rot) item->getTransform()->rotation = data.transform.rotation;
+                if (data.overwrite_scale) item->getTransform()->scale = data.transform.scale;
 
                 Scene::getCurrentScene().add_object(item);
             }
@@ -227,7 +245,9 @@ namespace moonshine {
             data.uuid = gen(sceneObject["objectId"].as_string().c_str());
             data.name = sceneObject["name"].as_string().c_str();
 
-            data.overwrite_transform = true;
+            data.overwrite_pos = true;
+            data.overwrite_rot = true;
+            data.overwrite_scale = true;
             data.transform.deserialize(sceneObject["transform"].as_object());
 
             import_object(data);

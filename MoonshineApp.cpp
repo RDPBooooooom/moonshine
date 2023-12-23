@@ -216,7 +216,7 @@ namespace moonshine {
         EngineSystems::getInstance().set_lobby_manager(std::make_shared<LobbyManager>(inputHandler));
 
         EngineSystems::getInstance().set_workspace_manager(
-                std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler));
+                std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler, m_camera));
 
         while (!m_window.shouldClose()) {
             EngineSystems::getInstance().get_statistics()->startFrame();

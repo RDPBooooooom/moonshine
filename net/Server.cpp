@@ -147,12 +147,13 @@ namespace moonshine::net {
         }
     }
 
-    void Server::broadcast(std::string &path, std::string &name, std::string &uuid) {
+    void Server::broadcast(std::string &path, std::string &name, std::string &uuid, Transform transform) {
         boost::json::object message;
         message["action"] = "addObject";
         message["objectId"] = uuid;
         message["path"] = path;
         message["name"] = name;
+        message["transform"] = transform.serialize();
 
         for (auto client: m_connectedClients) {
             client->async_send_json(message);

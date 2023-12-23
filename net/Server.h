@@ -72,7 +72,7 @@ namespace moonshine::net {
 
         void broadcast(moonshine::Scene &scene);
 
-        void broadcast(std::string &path, std::string &name, std::string &uuid);
+        void broadcast(std::string &path, std::string &name, std::string &uuid, Transform transform);
 
         void broadcast(std::string &label, element_locker locker);
 

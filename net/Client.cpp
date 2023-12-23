@@ -76,12 +76,13 @@ namespace moonshine::net {
                                                         std::string("[Client] UpdateObject message sent"));
     }
 
-    void Client::send(std::string &path, std::string &name, std::string &uuid) {
+    void Client::send(std::string &path, std::string &name, std::string &uuid, Transform transform) {
         boost::json::object jObj;
         jObj["action"] = "addObject";
         jObj["objectId"] = uuid;
         jObj["path"] = path;
         jObj["name"] = name;
+        jObj["transform"] = transform.serialize();
         m_connection->async_send_json(jObj);
         EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
                                                         std::string("[Client] AddObject message sent"));
