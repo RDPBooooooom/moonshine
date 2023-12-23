@@ -45,4 +45,13 @@ namespace moonshine {
         //TODO: Validation
         return m_materials.at((size_t) matIdx);
     }
+
+    void MaterialManager::clean_up() {
+        m_materials.clear();
+        m_materialLayout = nullptr;
+        m_materialDescriptorSets.clear();
+        materialPool = nullptr;
+        m_sampler = nullptr;
+        
+    }
 } // moonshine

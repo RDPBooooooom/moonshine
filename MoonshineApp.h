@@ -78,8 +78,7 @@ namespace moonshine {
         Camera m_camera;
 
         std::unique_ptr<moonshine::SceneGraph> m_sceneGraph;
-
-
+        
     public:
 
         MoonshineApp();
@@ -100,6 +99,8 @@ namespace moonshine {
         void updateUniformBuffer(uint32_t currentImage);
 
         void cleanup() {
+            m_materialManager->clean_up();
+
             vkDestroyDescriptorPool(m_device.getVkDevice(), m_imGuiPool, nullptr);
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplGlfw_Shutdown();
