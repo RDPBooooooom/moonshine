@@ -25,12 +25,12 @@ namespace moonshine {
 
     void Scene::remove_object(std::shared_ptr<SceneObject> item) {
 
-        if(item == nullptr) return;
-        
+        if (item == nullptr) return;
+
         std::function<void()> deleteObject = [this, item] { handle_remove(item); };
         std::thread thread(deleteObject);
         thread.detach();
-        
+
         EngineSystems::getInstance().get_lobby_manager()->replicateRemove(item->get_id_as_string());
     }
 
@@ -64,6 +64,29 @@ namespace moonshine {
         }
         // Wait, so the buffer isn't used in a vulkan command anymore. Should use fences before deleting the vkbuffer, but would require some bigger changes
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    boost::json::object Scene::serialize() {
+
+        boost::json::object scene;
+        boost::json::array sceneObjects;
+        
+        for (const auto& item: *gameObjects) {
+            boost::json::object gameObj;
+            gameObj["objectId"] = item->get_id_as_string();
+            gameObj["name"] = item->getName();
+            
+            gameObj["transform"] = item->getTransform()->serialize();
+            
+            SceneObject::object_meta_data meta_data = item->get_meta_data();
+            gameObj["path"] = meta_data.path;
+            gameObj["filename"] = meta_data.filename;
+            
+            sceneObjects.push_back(gameObj);
+        }
+        scene["objects"] = sceneObjects;
+
+        return scene;
     }
 
 } // moonspace

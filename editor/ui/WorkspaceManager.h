@@ -10,7 +10,9 @@
 #include "../InputHandler.h"
 #include "../../graphics/Device.h"
 #include "../../graphics/MaterialManager.h"
+#include "../Transform.h"
 #include <boost/uuid/uuid.hpp>
+#include <boost/json/array.hpp>
 
 namespace moonshine {
 
@@ -23,7 +25,17 @@ namespace moonshine {
         std::shared_ptr<MaterialManager> m_materialManager;
 
         std::string m_workspacePath;
-        
+
+        struct import_data {
+            std::string path = "";
+            std::string file = "";
+            std::string name = "";
+            boost::uuids::uuid uuid;
+            
+            bool overwrite_transform = false;
+            Transform transform = {};
+        };
+
     public:
         const std::string &get_workspace_path() const;
 
@@ -33,8 +45,13 @@ namespace moonshine {
 
         void drawInitModal();
 
-        void import_object_gltf(std::string path, std::string file);
-        void import_object_gltf(std::string path, std::string file, boost::uuids::uuid uuid);
+        void import_object_gltf(import_data data);
+
+        void load_workspace_scene();
+
+        void handle_load_scene(const boost::json::array &objects);
+
+        void import_object(import_data &data);
 
     public:
 
@@ -42,12 +59,17 @@ namespace moonshine {
                                   std::shared_ptr<InputHandler> &inputHandler) : m_inputHandler{inputHandler},
                                                                                  m_device{device},
                                                                                  m_materialManager{materialManager} {
+            
         }
 
         void draw();
-        
+
         void import_object(std::string path, std::string file);
+
         void import_object(std::string path, std::string file, boost::uuids::uuid uuid);
+
+        void save_scene();
+
     };
 
 } // moonshine

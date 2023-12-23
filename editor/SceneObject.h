@@ -17,7 +17,14 @@
 #include <boost/uuid/uuid_io.hpp>
 
 namespace moonshine {
+
     class SceneObject {
+
+    public:
+        struct object_meta_data {
+            std::string filename = "";
+            std::string path = "";
+        };
 
     private:
         std::string m_name;
@@ -27,6 +34,8 @@ namespace moonshine {
         Transform &m_transform;
 
         std::vector<std::shared_ptr<Node>> nodes;
+
+        object_meta_data meta_data;
     public:
 
         explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data);
@@ -42,6 +51,10 @@ namespace moonshine {
         Transform *getTransform() {
             return &m_transform;
         }
+        
+        void set_transform(Transform &transform){
+            m_transform = transform;
+        }
 
         std::basic_string<char> getName() {
             return m_name;
@@ -51,13 +64,19 @@ namespace moonshine {
             m_name = name;
         }
 
+        object_meta_data &get_meta_data() {
+            return meta_data;
+        }
+        
+        void set_meta_data(object_meta_data &meta_data){
+            this->meta_data = meta_data;
+        }
+
         boost::uuids::uuid getId() const { return m_uniqueId; }
 
         std::string get_id_as_string() const { return boost::uuids::to_string(m_uniqueId); }
 
         std::string as_string() { return getName() + "(" + get_id_as_string() + ")"; };
-
-
     };
 
 }

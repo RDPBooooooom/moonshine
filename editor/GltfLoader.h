@@ -11,15 +11,19 @@
 #include "Node.h"
 
 namespace moonshine {
-    
+
     class GltfLoader {
 
     private:
         static int nr_loaded_objects;
-    public:
-        static std::vector<std::shared_ptr<SceneObject>> load_gltf(std::string filepath, std::string filename, boost::uuids::uuid uuid);
         
-        static std::vector<std::shared_ptr<Node>> getSubmeshes(tinygltf::Model &model, tinygltf::Node &node, std::shared_ptr<Node> parent, std::string &path);
+        static std::vector<std::shared_ptr<Node>>
+        getSubmeshes(tinygltf::Model &model, tinygltf::Node &node, std::shared_ptr<Node> parent, std::string &path);
+
+    public:
+        static std::vector<std::shared_ptr<SceneObject>>
+        load_gltf(std::string &filepath, std::string &filename, boost::uuids::uuid &uuid);
+
     };
 
 } // moonshine

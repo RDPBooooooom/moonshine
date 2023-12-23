@@ -4,11 +4,13 @@
 
 #include "GltfLoader.h"
 #include "Scene.h"
+#include "EngineSystems.h"
 
 namespace moonshine {
     int GltfLoader::nr_loaded_objects = 0;
 
-    std::vector<std::shared_ptr<SceneObject>> GltfLoader::load_gltf(std::string filepath, std::string filename, boost::uuids::uuid uuid) {
+    std::vector<std::shared_ptr<SceneObject>>
+    GltfLoader::load_gltf(std::string &filepath, std::string &filename, boost::uuids::uuid &uuid) {
 
         tinygltf::Model m_model;
         std::vector<std::shared_ptr<SceneObject>> loadedObjects;
@@ -30,16 +32,27 @@ namespace moonshine {
                 } else {
                     name = node.name;
                 }
-                
+
                 std::shared_ptr<SceneObject> object;
-                if(uuid.is_nil()){
+                if (uuid.is_nil()) {
                     object = std::make_shared<SceneObject>(name, nodeList);
-                } else{
+                } else {
                     object = std::make_shared<SceneObject>(name, nodeList, uuid);
                 }
-                
+
+                SceneObject::object_meta_data meta_data = {};
+                meta_data.path = filepath;
+                meta_data.filename = filename;
+                object->set_meta_data(meta_data);
+
                 loadedObjects.push_back(object);
             }
+        }
+
+        if (loadedObjects.size() > 1) {
+            // Since the meta_data is contained in each object its problematic if such a scene gets saved and loaded. For each object that's in the scene each model in the file gets loaded again!
+            EngineSystems::getInstance().get_logger()->warn(LoggerType::Editor,
+                                                            "Its currently not supported to load gltf files that contain multiple models. This leads to problems when saving and loading the scene.");
         }
 
         return loadedObjects;
@@ -200,8 +213,8 @@ namespace moonshine {
                 } else {
                     data.m_matName = mat.name;
                 }
-                
-                if(textureIndex < 0){
+
+                if (textureIndex < 0) {
                     throw std::runtime_error("invalid texture index for pbrMetallicRoughness.baseColorTexture");
                 }
 

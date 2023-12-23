@@ -79,6 +79,8 @@ namespace moonshine {
             return gameObjects->cend();
         }
 
+        boost::json::object serialize();
+
     };
 } // moonspace
 
