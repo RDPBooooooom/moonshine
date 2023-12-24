@@ -114,7 +114,7 @@ namespace moonshine {
         m_camera.look_at(*m_selectedGameObject->getTransform());
 
         EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
-                                                         "focused " + m_selectedGameObject->as_string());
+                                                         "focused {}", m_selectedGameObject->as_string());
     }
 
     SceneGraph::~SceneGraph() {

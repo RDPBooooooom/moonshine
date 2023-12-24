@@ -49,9 +49,8 @@ namespace moonshine::net {
 
             }
             catch (const std::exception &e) {
-                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string(
-                        "[Client] An error occurred during disconnection: ") + e.what());
-                // Handle exceptions as appropriate for your application
+                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, 
+                        "[Client] An error occurred during disconnection: {}", e.what());
             }
         }
     }

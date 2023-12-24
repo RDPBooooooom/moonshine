@@ -30,9 +30,9 @@ namespace moonshine {
         }
 
         if (!res)
-            logger->error(LoggerType::Editor, std::string("Failed to load glTF: ") + filepath);
+            logger->error(LoggerType::Editor, "Failed to load glTF: {}", filepath);
         else
-            logger->info(LoggerType::Editor, std::string("Loaded glTF: ") + filepath);
+            logger->info(LoggerType::Editor, "Loaded glTF: {}", filepath);
 
         return res;
     }

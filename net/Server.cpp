@@ -22,10 +22,10 @@ namespace moonshine::net {
         if (!error) {
 
             EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                            std::string("[SERVER] New Connection by ") +
-                                                            new_connection->socket().remote_endpoint().address().to_string() +
-                                                            std::string(":") +
-                                                            std::to_string(new_connection->socket().remote_endpoint().port()));
+                                                            "[SERVER] New Connection by {}:{}",
+                                                            new_connection->socket().remote_endpoint().address().to_string(),
+                                                            std::to_string(
+                                                                    new_connection->socket().remote_endpoint().port()));
 
             new_connection->start();
 
@@ -165,13 +165,13 @@ namespace moonshine::net {
         message["action"] = "lockUI";
         message["label"] = label;
         message["locker"] = boost::json::to_value(locker);
-        
+
         for (auto client: m_connectedClients) {
             client->async_send_json(message);
         }
     }
-    
-    void Server::broadcast(std::string &uuid){
+
+    void Server::broadcast(std::string &uuid) {
         boost::json::object message;
         message["action"] = "removeObject";
         message["objectId"] = uuid;
@@ -181,7 +181,7 @@ namespace moonshine::net {
         }
     }
 
-    void Server::broadcast(std::string &uuid, std::string &name){
+    void Server::broadcast(std::string &uuid, std::string &name) {
         boost::json::object message;
         message["action"] = "renameObject";
         message["objectId"] = uuid;

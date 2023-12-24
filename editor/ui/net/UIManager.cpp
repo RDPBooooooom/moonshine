@@ -61,9 +61,9 @@ namespace moonshine {
             for (std::pair<const std::basic_string<char>, element_locker> &item: uiElements) {
                 auto duration = end - item.second.last_update;
                 auto duration_since_update = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-                if (item.second.lock && duration_since_update.count() > 1000.0f) {
+                if (item.second.lock && duration_since_update.count() > 1000) {
                     EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
-                                                                     item.first + std::string(" was unlocked"));
+                                                                     "{} was unlocked", item.first);
                     item.second.lock = false;
                 }
             }
@@ -94,7 +94,7 @@ namespace moonshine {
             EngineSystems::getInstance().get_lobby_manager()->replicateUi(label, uiElements[label]);
         }
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Locked " + label);
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Locked {}", label);
     }
 
     void UIManager::register_known_field(const std::string &label, element_locker locker) {
@@ -129,7 +129,7 @@ namespace moonshine {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - locker.last_replication);
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Replication duration " + std::to_string(duration.count()));
+        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Replication duration {}", std::to_string(duration.count()));
         
         return duration.count() > rate_limit;
     }

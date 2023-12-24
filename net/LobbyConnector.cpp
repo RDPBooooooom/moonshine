@@ -32,7 +32,7 @@ namespace moonshine {
             connection->start(endpoint_iterator);
         } catch (const boost::system::system_error &e) {
             EngineSystems::getInstance().get_logger()->error(LoggerType::Networking,
-                                                             std::string("Failed to connect: ") + e.what());
+                                                             "Failed to connect: {}", e.what());
             return;
         }
 

@@ -137,12 +137,12 @@ namespace moonshine {
                              compare(currentExtension)) ==
                 availableExtensions.end()) {
                 EngineSystems::getInstance().get_logger()->critical(LoggerType::Rendering,
-                                                                    std::string("required extensions not supported: ") +
+                                                                    "required extensions not supported: {}",
                                                                     currentExtension);
                 return false;
             }
             EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering,
-                                                             std::string("Found ") + currentExtension);
+                                                             "Found {}", currentExtension);
         }
 
         return true;

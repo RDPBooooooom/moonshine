@@ -33,7 +33,7 @@ namespace moonshine {
         std::mutex uiMap;
 
         float since_last_updated = 0;
-        float rate_limit = 50;
+        int rate_limit = 50;
 
     public:
 

@@ -173,10 +173,10 @@ namespace moonshine {
 
         } catch (const std::runtime_error &e) {
             EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Failed to import gltf (" + std::string(e.what()) + ")");
+                                                             "Failed to import gltf ({})", e.what());
         } catch (const std::exception &e) {
             EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Failed to import gltf (" + std::string(e.what()) + ")");
+                                                             "Failed to import gltf ({})", e.what());
         }
     }
 

@@ -41,24 +41,29 @@ namespace moonshine {
     public:
         Logger();
 
-        void debug(LoggerType type, const std::string &message) {
-            loggers.find(type)->second->debug(message);
+        template<typename... Args>
+        void debug(LoggerType type, const std::string &message, Args... args) {
+            loggers.find(type)->second->debug(message, args...);
         }
 
-        void info(LoggerType type, const std::string &message) {
-            loggers.find(type)->second->info(message);
+        template<typename... Args>
+        void info(LoggerType type, const std::string &message, Args... args) {
+            loggers.find(type)->second->info(message, args...);
         }
 
-        void warn(LoggerType type, const std::string &message) {
-            loggers.find(type)->second->warn(message);
+        template<typename... Args>
+        void warn(LoggerType type, const std::string &message, Args... args) {
+            loggers.find(type)->second->warn(message, args...);
         }
 
-        void error(LoggerType type, const std::string &message) {
-            loggers.find(type)->second->error(message);
+        template<typename... Args>
+        void error(LoggerType type, const std::string &message, Args... args) {
+            loggers.find(type)->second->error(message, args...);
         }
 
-        void critical(LoggerType type, const std::string &message) {
-            loggers.find(type)->second->critical(message);
+        template<typename... Args>
+        void critical(LoggerType type, const std::string &message, Args... args) {
+            loggers.find(type)->second->critical(message, args...);
         }
 
         void preDraw() {

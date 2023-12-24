@@ -71,7 +71,7 @@ namespace moonshine {
         auto endpoint = boost::asio::connect(socket_, connectTo);
 
         EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                        std::string("Connnected to: ") + endpoint->host_name());
+                                                        "Connnected to: {}", endpoint->host_name());
     }
 
     void TcpConnection::start() {
