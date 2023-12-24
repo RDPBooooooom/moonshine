@@ -132,12 +132,16 @@ namespace moonshine {
 
         m_inputHandler->enable();
 
-        m_server = std::make_shared<net::Server>();
+        std::function<void()> start_hosting_server_handle = [this] {
+            m_server = std::make_shared<net::Server>();
 
-        connector.registerAsHost(lobbyName, m_server->get_port());
-        connector.receiveHosts();
+            connector.registerAsHost(lobbyName, m_server->get_port());
+            connector.receiveHosts();
 
-        isHosting = true;
+            isHosting = true;
+        };
+        std::thread thread(start_hosting_server_handle);
+        thread.detach();
     }
 
     void LobbyManager::replicate() {
