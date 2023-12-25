@@ -9,6 +9,7 @@
 #include <fstream>
 #include <minwindef.h>
 #include <libloaderapi.h>
+#include <filesystem>
 
 namespace moonshine {
 
@@ -53,6 +54,24 @@ namespace moonshine {
                 // The filePath does not start with the workspacePath, return the original filePath
                 return filePath;
             }
+        }
+
+        static std::filesystem::path get_user_root_directory()
+        {
+            const char* home_dir = std::getenv("USERPROFILE");
+            if(home_dir != nullptr)
+                return std::filesystem::path(home_dir);
+            else
+                throw std::runtime_error("Cannot find user root directory");
+        }
+
+        static std::filesystem::path get_downloads_directory()
+        {
+            const char* home_dir = std::getenv("USERPROFILE");
+            if(home_dir != nullptr)
+                return std::filesystem::path(home_dir) / "Downloads";
+            else
+                throw std::runtime_error("Cannot find downloads directory");
         }
     };
 

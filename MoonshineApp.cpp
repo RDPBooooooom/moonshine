@@ -90,7 +90,7 @@ namespace moonshine {
                 .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
                 .build();
 
-        m_materialManager = std::make_unique<MaterialManager>(&m_device);
+        m_materialManager = std::make_unique<MaterialManager>(m_device);
 
         m_matrixUBO.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < m_matrixUBO.size(); i++) {

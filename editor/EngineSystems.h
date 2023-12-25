@@ -68,6 +68,10 @@ namespace moonshine {
         const std::shared_ptr<UIManager> &get_ui_manager() const{
             return m_uiManager;
         };
+        
+        void clean_up() {
+            m_workspaceManager->clean_up();
+        };
     };
 
 } // namespace moonshine

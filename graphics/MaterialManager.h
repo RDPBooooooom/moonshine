@@ -16,7 +16,7 @@ namespace moonshine {
 
     private:
 
-        Device *m_device;
+        Device& m_device;
         std::shared_ptr<DescriptorPool> materialPool{};
         std::shared_ptr<TextureSampler> m_sampler;
 
@@ -25,7 +25,7 @@ namespace moonshine {
         std::vector<std::shared_ptr<Material>> m_materials;
 
     public:
-        explicit MaterialManager(Device *device);
+        explicit MaterialManager(Device &device);
 
         VkDescriptorSetLayout getMaterialLayout() {
             return m_materialLayout->getDescriptorSetLayout();

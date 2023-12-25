@@ -53,6 +53,7 @@
 #include "editor/ui/LobbyManager.h"
 #include "editor/Scene.h"
 #include "editor/ui/WorkspaceManager.h"
+#include "editor/EngineSystems.h"
 
 
 namespace moonshine {
@@ -100,6 +101,7 @@ namespace moonshine {
 
         void cleanup() {
             m_materialManager->clean_up();
+            EngineSystems::getInstance().clean_up();
 
             vkDestroyDescriptorPool(m_device.getVkDevice(), m_imGuiPool, nullptr);
             ImGui_ImplVulkan_Shutdown();

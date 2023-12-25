@@ -8,10 +8,10 @@
 #include "Device.h"
 
 namespace moonshine {
-    TextureSampler::TextureSampler(Device *device) : m_device{device} {
+    TextureSampler::TextureSampler(Device &device) : m_device{device} {
 
         VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(m_device->getVkPhysicalDevice(), &properties);
+        vkGetPhysicalDeviceProperties(m_device.getVkPhysicalDevice(), &properties);
 
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -34,12 +34,12 @@ namespace moonshine {
         samplerInfo.minLod = 0.0f;
         samplerInfo.maxLod = 0.0f;
 
-        if (vkCreateSampler(m_device->getVkDevice(), &samplerInfo, nullptr, &m_vkSampler) != VK_SUCCESS) {
+        if (vkCreateSampler(m_device.getVkDevice(), &samplerInfo, nullptr, &m_vkSampler) != VK_SUCCESS) {
             throw std::runtime_error("failed to create texture sampler!");
         }
     }
 
     TextureSampler::~TextureSampler() {
-        vkDestroySampler(m_device->getVkDevice(), m_vkSampler, nullptr);
+        vkDestroySampler(m_device.getVkDevice(), m_vkSampler, nullptr);
     }
 } // moonshine

@@ -7,6 +7,7 @@
 #include <utility>
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/random_generator.hpp>
+#include <filesystem>
 #include "imgui.h"
 #include "../../external/ImGuiFileDialog/ImGuiFileDialog.h"
 #include "../GltfLoader.h"
@@ -14,6 +15,7 @@
 #include "../../utils/FileUtils.h"
 #include "../EngineSystems.h"
 #include "../../MoonshineApp.h"
+#include "../../utils/FileUtils.h"
 
 namespace moonshine {
 
@@ -24,10 +26,18 @@ namespace moonshine {
 
         ImGui::SeparatorText(m_workspacePath.c_str());
 
-        if (ImGui::Button("Import")) {
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseImport", "Choose a file to import", ".gltf",
-                                                    m_workspacePath + "/",
-                                                    1,
+        if (ImGui::Button("Import into workspace")) {
+            static std::string path;
+
+            if (path.empty()) {
+                try {
+                    path = FileUtils::get_downloads_directory().string() + "\\";
+                } catch (const std::runtime_error &err) {
+                    path = "/";
+                }
+            }
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseImport", "Choose a file to import", nullptr,
+                                                    path, 1,
                                                     nullptr, ImGuiFileDialogFlags_Modal);
         }
 
@@ -39,20 +49,65 @@ namespace moonshine {
 
         ImGui::Separator();
 
+        draw_workspace_items();
+
         if (ImGuiFileDialog::Instance()->Display("ChooseImport")) {
             if (ImGuiFileDialog::Instance()->IsOk()) {
                 std::string path = ImGuiFileDialog::Instance()->GetCurrentPath();
-                std::string file = ImGuiFileDialog::Instance()->GetCurrentFileName();
 
-                Transform transform = {};
-                transform.position = m_camera.getTransform()->position + m_camera.getTransform()->getForward() * -5.0f;
-
-                import_object(path + "\\", file, transform);
+                handle_workspace_import(path);
             }
             ImGuiFileDialog::Instance()->Close();
         }
 
         ImGui::End();
+    }
+
+    void WorkspaceManager::draw_workspace_items() {
+        // Width of a button, adjust to your needs
+        const float buttonSize = 75.0f;
+        // Spacing between buttons, adjust to your needs
+        const float buttonSpacing = 10.0f;
+
+        //Number of buttons per row will be calculated dynamically based on window width
+        int buttonsPerRow = ImGui::GetContentRegionAvail().x / (buttonSize + buttonSpacing);
+        buttonsPerRow = std::max(buttonsPerRow, 1); // Make sure it's at least 1 to avoid division by zero
+
+        int counter = 0;
+        
+        std::shared_ptr<workspace_object> to_delete = nullptr;
+
+        for (const auto &workspace_object: m_available_imports) {
+            ImGui::BeginGroup();
+            if (ImGui::ImageButton((workspace_object->name + "##" + std::to_string(counter)).c_str(),
+                                   workspace_object->has_thumbnail ? workspace_object->m_imGui_thumbnail_DS
+                                                                   : m_imGui_placeHolder_DS,
+                                   ImVec2(buttonSize, buttonSize))) {
+                Transform transform = {};
+                transform.position = m_camera.getTransform()->position + m_camera.getTransform()->getForward() * -5.0f;
+
+                import_object(workspace_object->path, workspace_object->file, transform);
+            }
+            if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
+            {
+                if (ImGui::Button("Delete")) {
+                    to_delete = workspace_object;
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
+            }
+            ImGui::TextDisabled((workspace_object->name).c_str());
+            ImGui::EndGroup();
+
+            // handling wrapping
+            counter++;
+            if (counter % buttonsPerRow != 0) {
+                ImGui::SameLine();
+            }
+        }
+
+        remove_workspace_object(to_delete);
     }
 
     void WorkspaceManager::drawInitModal() {
@@ -94,6 +149,7 @@ namespace moonshine {
                     MoonshineApp::APP_SETTINGS.LATEST_WORKSPACE = m_workspacePath;
 
                     load_workspace_scene();
+                    discover_workspace();
                 }
             }
 
@@ -252,5 +308,179 @@ namespace moonshine {
 
             import_object(data);
         }
+    }
+
+    void WorkspaceManager::discover_workspace() {
+        for (const auto &directory_search: std::filesystem::directory_iterator(m_workspacePath)) {
+            if (directory_search.is_directory()) {
+                for (const auto &file_search: std::filesystem::directory_iterator(directory_search.path())) {
+                    if (file_search.is_regular_file() && file_search.path().extension() == ".gltf") {
+
+                        std::shared_ptr<workspace_object> obj = load_workspace_object(
+                                file_search.path().parent_path().string() + "\\",
+                                file_search.path().filename().string(),
+                                file_search.path().stem().string());
+
+                        {
+                            std::unique_lock<std::mutex> lock(m_available_imports_mtx);
+                            m_available_imports.push_back(obj);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::shared_ptr<WorkspaceManager::workspace_object>
+    WorkspaceManager::load_workspace_object(std::string path, std::string file, std::string name) {
+        std::shared_ptr<workspace_object> obj = std::make_shared<workspace_object>();
+        obj->path = std::move(path);
+        obj->file = std::move(file);
+        obj->name = std::move(name);
+
+        if (std::filesystem::exists(obj->path + "thumbnail.png")) {
+            auto lock = Scene::getCurrentScene().getLock();
+            obj->m_thumbnail_image = std::make_unique<TextureImage>(
+                    (obj->path + std::string("thumbnail.png")).c_str(), &m_device,
+                    m_device.getCommandPool());
+            obj->m_imGui_thumbnail_DS = ImGui_ImplVulkan_AddTexture(m_previewSampler->getVkSampler(),
+                                                                    obj->m_thumbnail_image->getImageView(),
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            obj->has_thumbnail = true;
+        }
+
+        return obj;
+    }
+
+    void WorkspaceManager::remove_workspace_object(std::shared_ptr<workspace_object> &toDelete) {
+        if(toDelete == nullptr) return;
+        {
+            std::unique_lock<std::mutex> lock(m_available_imports_mtx);
+            m_available_imports.erase(std::remove(m_available_imports.begin(), m_available_imports.end(), toDelete),
+                                      m_available_imports.end());
+        }
+        
+        // remove folder in workspace
+        for (auto &dir_entry: std::filesystem::directory_iterator(toDelete->path)) {
+            std::filesystem::remove(dir_entry);
+        }
+        std::filesystem::remove(toDelete->path);
+
+    }
+
+    void WorkspaceManager::handle_workspace_import(std::string &path) {
+        auto logger = EngineSystems::getInstance().get_logger();
+
+        bool found_gltf = false;
+        std::string name;
+        std::string filename;
+        for (const auto &file_search: std::filesystem::directory_iterator(path)) {
+            if (file_search.is_regular_file() && file_search.path().extension() == ".gltf") {
+                if (found_gltf) {
+                    logger->error(LoggerType::Editor,
+                                  "Can't import folder because multiple gltf files were found in root!");
+                    return;
+                } else {
+                    found_gltf = true;
+                    name = file_search.path().stem().string();
+                    filename = file_search.path().filename().string();
+                }
+            }
+        }
+
+        if (!found_gltf) {
+            logger->error(LoggerType::Editor, "Can't import folder because no gltf file was found in root!");
+            return;
+        }
+
+        std::string destination;
+        std::string temp_folder;
+
+        try {
+            {
+                std::unique_lock<std::mutex> lock(m_unique_temp_folder);
+                validate_path(m_workspacePath + "\\temp\\", temp_folder, name);
+                std::filesystem::create_directories(temp_folder);
+            }
+
+
+            // move to temp
+            for (const auto &dir_entry: std::filesystem::directory_iterator(path)) {
+                const auto &path = dir_entry.path();
+                if (std::filesystem::is_regular_file(path)) {
+                    std::filesystem::copy(path, temp_folder / path.filename());
+                }
+            }
+
+        } catch (std::filesystem::filesystem_error &err) {
+            logger->error(LoggerType::Editor, "Unable to import folder: {}", err.what());
+
+            for (auto &dir_entry: std::filesystem::directory_iterator(temp_folder)) {
+                std::filesystem::remove(dir_entry);
+            }
+            std::filesystem::remove(temp_folder);
+            return;
+        }
+
+        try {
+            {
+                std::unique_lock<std::mutex> lock(m_unique_workspace_folder);
+                validate_path(m_workspacePath + "\\", destination, name);
+                std::filesystem::create_directories(destination);
+            }
+
+            for (const auto &dir_entry: std::filesystem::directory_iterator(temp_folder)) {
+                const auto &path = dir_entry.path();
+                if (std::filesystem::is_regular_file(path)) {
+                    std::filesystem::rename(path,
+                                            destination / path.filename()); // Move files from temp to final destination
+                }
+            }
+
+            std::filesystem::remove(temp_folder);
+        } catch (std::filesystem::filesystem_error &err) {
+            logger->error(LoggerType::Editor, "Unable to import folder: {}", err.what());
+
+            // Remove temp folder
+            for (auto &dir_entry: std::filesystem::directory_iterator(temp_folder)) {
+                std::filesystem::remove(dir_entry);
+            }
+            std::filesystem::remove(temp_folder);
+
+            // remove folder in workspace
+            for (auto &dir_entry: std::filesystem::directory_iterator(destination)) {
+                std::filesystem::remove(dir_entry);
+            }
+            std::filesystem::remove(destination);
+
+            return;
+        }
+
+        std::shared_ptr<workspace_object> obj = load_workspace_object(destination, filename, name);
+        {
+            std::unique_lock<std::mutex> lock(m_available_imports_mtx);
+            m_available_imports.push_back(obj);
+        }
+
+        logger->info(LoggerType::Editor, "Imported {}", name);
+    }
+
+    void WorkspaceManager::validate_path(const std::string &root_path, std::string &path, const std::string &name,
+                                         int iteration) {
+
+        path = root_path + name + (iteration == 0 ? "\\" : "_" + std::to_string(iteration) + "\\");
+
+        for (const auto &item: m_available_imports) {
+            if (item->path == path) {
+                validate_path(root_path, path, name, ++iteration);
+                break;
+            }
+        }
+    }
+
+    void WorkspaceManager::clean_up() {
+        m_available_imports.clear();
+        m_placeholder_image = nullptr;
+        m_previewSampler = nullptr;
     }
 } // moonshine

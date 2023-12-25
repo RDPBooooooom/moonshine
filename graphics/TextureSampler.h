@@ -12,11 +12,11 @@ namespace moonshine {
     class TextureSampler {
 
     private:
-        Device *m_device;
+        Device &m_device;
         VkSampler m_vkSampler;
 
     public:
-        TextureSampler(Device *device);
+        explicit TextureSampler(Device &device);
 
         ~TextureSampler();
 
