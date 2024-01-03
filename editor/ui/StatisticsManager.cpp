@@ -70,6 +70,8 @@ namespace moonshine {
     }
 
     void StatisticsManager::add_sent_package(size_t bytes_transferred, double ms) {
+        if (ms < 0.0) return;
+        
         std::scoped_lock<std::mutex> lock(networking_mutex);
 
         if (sent_data.package_count > 1000){

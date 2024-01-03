@@ -7,12 +7,12 @@
 
 namespace moonshine {
     std::chrono::high_resolution_clock::time_point from_string(const boost::json::value &jval) {
-        std::chrono::high_resolution_clock::time_point tp{std::chrono::milliseconds (jval.as_int64())};
+        std::chrono::high_resolution_clock::time_point tp(std::chrono::microseconds (jval.as_int64()));
         return tp;
     }
 
     boost::json::value to_string(std::chrono::high_resolution_clock::time_point tp) {
-        auto sec = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
+        auto sec = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
         return boost::json::value(sec);
     }
 
@@ -64,11 +64,11 @@ namespace moonshine {
                                             } else {
                                                 m_queue.push_back(jv);
                                             }
-
+                                            
                                             if (jv.contains("_send_time")) {
                                                 auto send_time = from_string(jv["_send_time"]);
                                                 auto end_time = std::chrono::high_resolution_clock::now();
-                                                auto millisec = std::chrono::duration<double>(end_time - send_time);
+                                                auto millisec = std::chrono::duration<double>(end_time - send_time) * 1000;
                                                 EngineSystems::getInstance().get_statistics()->add_sent_package(
                                                         bytes_transferred,
                                                         millisec.count());
