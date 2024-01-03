@@ -38,7 +38,7 @@ namespace moonshine {
 
         ~TcpConnection();
 
-        void async_send_json(const boost::json::value &jv);
+        void async_send_json(boost::json::object &jv);
 
         void async_receive_json();
 

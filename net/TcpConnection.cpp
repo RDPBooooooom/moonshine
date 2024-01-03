@@ -6,7 +6,20 @@
 #include "../editor/EngineSystems.h"
 
 namespace moonshine {
-    void TcpConnection::async_send_json(const boost::json::value &jv) {
+    std::chrono::steady_clock::time_point from_string(const boost::json::value &jval) {
+        std::chrono::steady_clock::time_point tp{std::chrono::nanoseconds(jval.as_int64())};
+        return tp;
+    }
+
+    boost::json::value to_string(std::chrono::steady_clock::time_point tp) {
+        auto sec = std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch()).count();
+        return boost::json::value(sec);
+    }
+
+    void TcpConnection::async_send_json(boost::json::object &jv) {
+
+        jv["_send_time"] = to_string(std::chrono::steady_clock::now());
+
         reply_ = boost::json::serialize(jv);
         uint32_t length = htonl(static_cast<uint32_t>(reply_.size()));
         std::string header(reinterpret_cast<char *>(&length), 4);
@@ -17,14 +30,6 @@ namespace moonshine {
 
         boost::asio::async_write(socket_, boost::asio::buffer(reply_),
                                  [this, send_time](const boost::system::error_code &error, size_t bytes_transferred) {
-
-                                     auto end_time = std::chrono::steady_clock::now();
-                                     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                             end_time - send_time);
-
-                                     EngineSystems::getInstance().get_statistics()->add_sent_package(bytes_transferred,
-                                                                                                     (double) duration.count() /
-                                                                                                     1000000);
                                  });
     }
 
@@ -51,10 +56,37 @@ namespace moonshine {
                                             std::string content_str(m_content_buffer.begin(),
                                                                     m_content_buffer.end());
 
-                                            boost::json::value jv = boost::json::parse(content_str);
+                                            boost::json::object jv = boost::json::parse(content_str).as_object();
 
+                                            if (jv.contains("_systemMessage") && jv["_systemMessage"].as_bool()) {
+                                                EngineSystems::getInstance().get_statistics()->add_sent_package(
+                                                        jv["_size"].as_int64(),
+                                                        jv["_time"].as_double());
+                                            } else {
+                                                m_queue.push_back(jv);
+                                            }
 
-                                            m_queue.push_back(jv);
+                                            if (jv.contains("_send_time")) {
+                                                auto send_time = from_string(jv["_send_time"]);
+                                                auto end_time = std::chrono::steady_clock::now();
+                                                auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                                        end_time - send_time);
+                                                EngineSystems::getInstance().get_statistics()->add_sent_package(
+                                                        bytes_transferred,
+                                                        (double) duration.count() /
+                                                        1000000);
+
+                                                if (!jv.contains("_answer") ||
+                                                    (jv.contains("_answer") && jv["_answer"].as_bool())) {
+                                                    boost::json::object answer;
+                                                    answer["_systemMessage"] = true;
+                                                    answer["_time"] = (double) duration.count() / 1000000;
+                                                    answer["_size"] = bytes_transferred;
+                                                    answer["_answer"] = false;
+                                                    async_send_json(answer);
+                                                }
+                                            }
+
 
                                             // Reset the state for the next message
                                             m_read_header = true;
