@@ -6,19 +6,19 @@
 #include "../editor/EngineSystems.h"
 
 namespace moonshine {
-    std::chrono::steady_clock::time_point from_string(const boost::json::value &jval) {
-        std::chrono::steady_clock::time_point tp{std::chrono::nanoseconds(jval.as_int64())};
+    std::chrono::high_resolution_clock::time_point from_string(const boost::json::value &jval) {
+        std::chrono::high_resolution_clock::time_point tp{std::chrono::nanoseconds(jval.as_int64())};
         return tp;
     }
 
-    boost::json::value to_string(std::chrono::steady_clock::time_point tp) {
+    boost::json::value to_string(std::chrono::high_resolution_clock::time_point tp) {
         auto sec = std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch()).count();
         return boost::json::value(sec);
     }
 
     void TcpConnection::async_send_json(boost::json::object &jv) {
 
-        jv["_send_time"] = to_string(std::chrono::steady_clock::now());
+        jv["_send_time"] = to_string(std::chrono::high_resolution_clock::now());
 
         reply_ = boost::json::serialize(jv);
         uint32_t length = htonl(static_cast<uint32_t>(reply_.size()));
@@ -26,10 +26,8 @@ namespace moonshine {
 
         reply_ = header + reply_; // Prepend header to message
 
-        std::chrono::steady_clock::time_point send_time = std::chrono::steady_clock::now();
-
         boost::asio::async_write(socket_, boost::asio::buffer(reply_),
-                                 [this, send_time](const boost::system::error_code &error, size_t bytes_transferred) {
+                                 [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                  });
     }
 
@@ -68,7 +66,7 @@ namespace moonshine {
 
                                             if (jv.contains("_send_time")) {
                                                 auto send_time = from_string(jv["_send_time"]);
-                                                auto end_time = std::chrono::steady_clock::now();
+                                                auto end_time = std::chrono::high_resolution_clock::now();
                                                 auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                                                         end_time - send_time);
                                                 EngineSystems::getInstance().get_statistics()->add_sent_package(
