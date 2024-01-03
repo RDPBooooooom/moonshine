@@ -338,10 +338,10 @@ namespace moonshine {
         obj->file = std::move(file);
         obj->name = std::move(name);
 
-        if (std::filesystem::exists(obj->path + "thumbnail.png")) {
+        if (std::filesystem::exists(m_workspacePath + "\\" + obj->path + "thumbnail.png")) {
             auto lock = Scene::getCurrentScene().getLock();
             obj->m_thumbnail_image = std::make_unique<TextureImage>(
-                    (obj->path + std::string("thumbnail.png")).c_str(), &m_device,
+                    (m_workspacePath + "\\" + obj->path + std::string("thumbnail.png")).c_str(), &m_device,
                     m_device.getCommandPool());
             obj->m_imGui_thumbnail_DS = ImGui_ImplVulkan_AddTexture(m_previewSampler->getVkSampler(),
                                                                     obj->m_thumbnail_image->getImageView(),
