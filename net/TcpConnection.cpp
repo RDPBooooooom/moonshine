@@ -7,12 +7,12 @@
 
 namespace moonshine {
     std::chrono::high_resolution_clock::time_point from_string(const boost::json::value &jval) {
-        std::chrono::high_resolution_clock::time_point tp{std::chrono::nanoseconds(jval.as_int64())};
+        std::chrono::high_resolution_clock::time_point tp{std::chrono::milliseconds (jval.as_int64())};
         return tp;
     }
 
     boost::json::value to_string(std::chrono::high_resolution_clock::time_point tp) {
-        auto sec = std::chrono::duration_cast<std::chrono::nanoseconds>(tp.time_since_epoch()).count();
+        auto sec = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
         return boost::json::value(sec);
     }
 
@@ -44,7 +44,8 @@ namespace moonshine {
 
                                             async_receive_json();  // Continue to read the message content
                                         } else {
-                                            std::cerr << "Error receiving header: " << error.message() << std::endl;
+                                            EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                                                            "Error receiving header: {}", error.message());
                                         }
                                     });
         } else {
@@ -67,18 +68,16 @@ namespace moonshine {
                                             if (jv.contains("_send_time")) {
                                                 auto send_time = from_string(jv["_send_time"]);
                                                 auto end_time = std::chrono::high_resolution_clock::now();
-                                                auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                                        end_time - send_time);
+                                                auto millisec = std::chrono::duration<double, std::milli>(end_time - send_time);
                                                 EngineSystems::getInstance().get_statistics()->add_sent_package(
                                                         bytes_transferred,
-                                                        (double) duration.count() /
-                                                        1000000);
-
+                                                        millisec.count());
+                                                
                                                 if (!jv.contains("_answer") ||
                                                     (jv.contains("_answer") && jv["_answer"].as_bool())) {
                                                     boost::json::object answer;
                                                     answer["_systemMessage"] = true;
-                                                    answer["_time"] = (double) duration.count() / 1000000;
+                                                    answer["_time"] = millisec.count();
                                                     answer["_size"] = bytes_transferred;
                                                     answer["_answer"] = false;
                                                     async_send_json(answer);
@@ -90,8 +89,8 @@ namespace moonshine {
                                             m_read_header = true;
                                             async_receive_json();  // Continue to read the next message header
                                         } else {
-                                            std::cerr << "Error receiving content: " << error.message()
-                                                      << std::endl;
+                                            EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
+                                                                                            "Error receiving content: {}", error.message());
                                         }
                                     });
         }
