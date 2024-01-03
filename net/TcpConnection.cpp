@@ -68,7 +68,7 @@ namespace moonshine {
                                             if (jv.contains("_send_time")) {
                                                 auto send_time = from_string(jv["_send_time"]);
                                                 auto end_time = std::chrono::high_resolution_clock::now();
-                                                auto millisec = std::chrono::duration<double, std::milli>(end_time - send_time);
+                                                auto millisec = std::chrono::duration<double>(end_time - send_time);
                                                 EngineSystems::getInstance().get_statistics()->add_sent_package(
                                                         bytes_transferred,
                                                         millisec.count());
