@@ -72,6 +72,11 @@ namespace moonshine {
     void StatisticsManager::add_sent_package(size_t bytes_transferred, double ms) {
         std::scoped_lock<std::mutex> lock(networking_mutex);
 
+        if (sent_data.package_count > 1000){
+            sent_data.total_ms = 0;
+            sent_data.package_count = 0;
+        }
+        
         sent_data.total_bytes += bytes_transferred;
         sent_data.package_count++;
         sent_data.total_ms += ms;
