@@ -54,8 +54,11 @@ namespace moonshine {
         }
 
         if (ImGui::CollapsingHeader("Networking##Stats", ImGuiTreeNodeFlags_None)) {
+            std::scoped_lock<std::mutex> lock(networking_mutex);
             ImGui::Text((std::string("kb/s: ") + std::to_string(sent_data.kb_last_second)).c_str());
             ImGui::Text((std::string("ms: ") + std::to_string(sent_data.avg_ms)).c_str());
+            ImGui::Text(std::to_string(sent_data.total_ms).c_str());
+            ImGui::Text(std::to_string(sent_data.package_count).c_str());
         }
 
         ImGui::End();

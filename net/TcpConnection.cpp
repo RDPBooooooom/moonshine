@@ -68,7 +68,8 @@ namespace moonshine {
                                             if (jv.contains("_send_time")) {
                                                 auto send_time = from_string(jv["_send_time"]);
                                                 auto end_time = std::chrono::high_resolution_clock::now();
-                                                auto millisec = std::chrono::duration<double>(end_time - send_time) * 1000;
+                                                auto duration = end_time - send_time;
+                                                auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
                                                 EngineSystems::getInstance().get_statistics()->add_sent_package(
                                                         bytes_transferred,
                                                         millisec.count());
@@ -77,7 +78,7 @@ namespace moonshine {
                                                     (jv.contains("_answer") && jv["_answer"].as_bool())) {
                                                     boost::json::object answer;
                                                     answer["_systemMessage"] = true;
-                                                    answer["_time"] = millisec.count();
+                                                    answer["_time"] = static_cast<double>(millisec.count());
                                                     answer["_size"] = bytes_transferred;
                                                     answer["_answer"] = false;
                                                     async_send_json(answer);
