@@ -86,7 +86,7 @@ namespace moonshine {
                 Transform transform = {};
                 transform.position = m_camera.getTransform()->position + m_camera.getTransform()->getForward() * -5.0f;
 
-                import_object(workspace_object->path, workspace_object->file, transform);
+                import_object(m_workspacePath + "\\" + workspace_object->path, workspace_object->file, transform);
             }
             if (ImGui::BeginPopupContextItem()) // <-- use last item id as popup id
             {
@@ -296,7 +296,7 @@ namespace moonshine {
 
             import_data data = {};
 
-            data.path = sceneObject["path"].as_string().c_str();
+            data.path = m_workspacePath + "\\" + sceneObject["path"].as_string().c_str();
             data.file = sceneObject["filename"].as_string().c_str();
             data.uuid = gen(sceneObject["objectId"].as_string().c_str());
             data.name = sceneObject["name"].as_string().c_str();
@@ -317,7 +317,7 @@ namespace moonshine {
                     if (file_search.is_regular_file() && file_search.path().extension() == ".gltf") {
 
                         std::shared_ptr<workspace_object> obj = load_workspace_object(
-                                file_search.path().parent_path().string() + "\\",
+                                file_search.path().parent_path().stem().string() + "\\",
                                 file_search.path().filename().string(),
                                 file_search.path().stem().string());
 
@@ -400,6 +400,7 @@ namespace moonshine {
             {
                 std::unique_lock<std::mutex> lock(m_unique_temp_folder);
                 validate_path(m_workspacePath + "\\temp\\", temp_folder, name);
+                temp_folder = m_workspacePath + "\\temp\\" + temp_folder;
                 std::filesystem::create_directories(temp_folder);
             }
 
@@ -426,14 +427,14 @@ namespace moonshine {
             {
                 std::unique_lock<std::mutex> lock(m_unique_workspace_folder);
                 validate_path(m_workspacePath + "\\", destination, name);
-                std::filesystem::create_directories(destination);
+                std::filesystem::create_directories(m_workspacePath + "\\" + destination);
             }
 
             for (const auto &dir_entry: std::filesystem::directory_iterator(temp_folder)) {
                 const auto &path = dir_entry.path();
                 if (std::filesystem::is_regular_file(path)) {
                     std::filesystem::rename(path,
-                                            destination / path.filename()); // Move files from temp to final destination
+                                            m_workspacePath + "\\" + (destination / path.filename()).string()); // Move files from temp to final destination
                 }
             }
 
@@ -468,7 +469,7 @@ namespace moonshine {
     void WorkspaceManager::validate_path(const std::string &root_path, std::string &path, const std::string &name,
                                          int iteration) {
 
-        path = root_path + name + (iteration == 0 ? "\\" : "_" + std::to_string(iteration) + "\\");
+        path = name + (iteration == 0 ? "\\" : "_" + std::to_string(iteration) + "\\");
 
         for (const auto &item: m_available_imports) {
             if (item->path == path) {

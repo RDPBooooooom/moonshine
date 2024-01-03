@@ -2,6 +2,7 @@
 // Created by marvin on 16.11.2023.
 //
 
+#include <filesystem>
 #include "GltfLoader.h"
 #include "Scene.h"
 #include "EngineSystems.h"
@@ -41,10 +42,15 @@ namespace moonshine {
                 }
 
                 SceneObject::object_meta_data meta_data = {};
-                meta_data.path = filepath;
+
+                std::filesystem::path path(filepath);
+                
+                meta_data.path = path.parent_path().stem().string() + "\\";
                 meta_data.filename = filename;
                 object->set_meta_data(meta_data);
 
+                
+                
                 loadedObjects.push_back(object);
             }
         }
