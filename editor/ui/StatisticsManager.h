@@ -43,6 +43,7 @@ namespace moonshine {
         
         std::mutex networking_mutex;
         networking_data sent_data = {};
+        networking_data received_data = {};
         
 
     public:
@@ -56,7 +57,9 @@ namespace moonshine {
 
         void add_vertex_count(const size_t count);
         
-        void add_sent_package(size_t bytes_transferred, double ms);
+        void add_sent_package(size_t bytes_transferred);
+
+        void add_received_package(size_t bytes_transferred, double ms);
     };
 
 } // moonshine

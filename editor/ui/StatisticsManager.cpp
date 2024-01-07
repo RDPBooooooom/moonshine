@@ -30,6 +30,9 @@ namespace moonshine {
 
             {
                 std::scoped_lock<std::mutex> lock(networking_mutex);
+
+                received_data.kb_last_second = (double) received_data.total_bytes / 1000;
+                received_data.total_bytes = 0;
                 
                 sent_data.kb_last_second = (double) sent_data.total_bytes / 1000;
                 sent_data.total_bytes = 0;
@@ -55,10 +58,14 @@ namespace moonshine {
 
         if (ImGui::CollapsingHeader("Networking##Stats", ImGuiTreeNodeFlags_None)) {
             std::scoped_lock<std::mutex> lock(networking_mutex);
+            ImGui::SeparatorText("Sent");
             ImGui::Text((std::string("kb/s: ") + std::to_string(sent_data.kb_last_second)).c_str());
-            ImGui::Text((std::string("ms: ") + std::to_string(sent_data.avg_ms)).c_str());
-            ImGui::Text(std::to_string(sent_data.total_ms).c_str());
-            ImGui::Text(std::to_string(sent_data.package_count).c_str());
+            
+            ImGui::SeparatorText("Received");
+            ImGui::Text((std::string("kb/s: ") + std::to_string(received_data.kb_last_second)).c_str());
+            ImGui::Text((std::string("ms: ") + std::to_string(received_data.avg_ms)).c_str());
+            ImGui::Text(std::to_string(received_data.total_ms).c_str());
+            ImGui::Text(std::to_string(received_data.package_count).c_str());
         }
 
         ImGui::End();
@@ -72,19 +79,26 @@ namespace moonshine {
         current.vertex_count += count;
     }
 
-    void StatisticsManager::add_sent_package(size_t bytes_transferred, double ms) {
-        if (ms < 0.0) return;
+    void StatisticsManager::add_sent_package(size_t bytes_transferred) {
         
         std::scoped_lock<std::mutex> lock(networking_mutex);
-
-        if (sent_data.package_count > 1000){
-            sent_data.total_ms = 0;
-            sent_data.package_count = 0;
-        }
         
         sent_data.total_bytes += bytes_transferred;
-        sent_data.package_count++;
-        sent_data.total_ms += ms;
-        sent_data.avg_ms = sent_data.total_ms / sent_data.package_count;
+    }
+    
+    void StatisticsManager::add_received_package(size_t bytes_transferred, double ms){
+        if (ms < 0.0) return;
+
+        std::scoped_lock<std::mutex> lock(networking_mutex);
+
+        if (received_data.package_count > 100){
+            received_data.total_ms = 0;
+            received_data.package_count = 0;
+        }
+
+        received_data.total_bytes += bytes_transferred;
+        received_data.package_count++;
+        received_data.total_ms += ms;
+        received_data.avg_ms = received_data.total_ms / received_data.package_count;
     }
 } // moonshine

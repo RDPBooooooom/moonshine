@@ -7,7 +7,7 @@
 
 namespace moonshine {
     std::chrono::high_resolution_clock::time_point from_string(const boost::json::value &jval) {
-        std::chrono::high_resolution_clock::time_point tp(std::chrono::microseconds (jval.as_int64()));
+        std::chrono::high_resolution_clock::time_point tp(std::chrono::microseconds(jval.as_int64()));
         return tp;
     }
 
@@ -25,9 +25,11 @@ namespace moonshine {
         std::string header(reinterpret_cast<char *>(&length), 4);
 
         reply_ = header + reply_; // Prepend header to message
-
+        
         boost::asio::async_write(socket_, boost::asio::buffer(reply_),
                                  [this](const boost::system::error_code &error, size_t bytes_transferred) {
+                                     EngineSystems::getInstance().get_statistics()->add_sent_package(
+                                             bytes_transferred);
                                  });
     }
 
@@ -45,7 +47,8 @@ namespace moonshine {
                                             async_receive_json();  // Continue to read the message content
                                         } else {
                                             EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                                                            "Error receiving header: {}", error.message());
+                                                                                            "Error receiving header: {}",
+                                                                                            error.message());
                                         }
                                     });
         } else {
@@ -57,32 +60,18 @@ namespace moonshine {
 
                                             boost::json::object jv = boost::json::parse(content_str).as_object();
 
-                                            if (jv.contains("_systemMessage") && jv["_systemMessage"].as_bool()) {
-                                                EngineSystems::getInstance().get_statistics()->add_sent_package(
-                                                        jv["_size"].as_int64(),
-                                                        jv["_time"].as_double());
-                                            } else {
-                                                m_queue.push_back(jv);
-                                            }
+                                            m_queue.push_back(jv);
                                             
                                             if (jv.contains("_send_time")) {
                                                 auto send_time = from_string(jv["_send_time"]);
                                                 auto end_time = std::chrono::high_resolution_clock::now();
                                                 auto duration = end_time - send_time;
-                                                auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-                                                EngineSystems::getInstance().get_statistics()->add_sent_package(
+                                                auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                        duration);
+                                                EngineSystems::getInstance().get_statistics()->add_received_package(
                                                         bytes_transferred,
-                                                        millisec.count());
+                                                        static_cast<double>(millisec.count()));
                                                 
-                                                if (!jv.contains("_answer") ||
-                                                    (jv.contains("_answer") && jv["_answer"].as_bool())) {
-                                                    boost::json::object answer;
-                                                    answer["_systemMessage"] = true;
-                                                    answer["_time"] = static_cast<double>(millisec.count());
-                                                    answer["_size"] = bytes_transferred;
-                                                    answer["_answer"] = false;
-                                                    async_send_json(answer);
-                                                }
                                             }
 
 
@@ -91,7 +80,8 @@ namespace moonshine {
                                             async_receive_json();  // Continue to read the next message header
                                         } else {
                                             EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                                                            "Error receiving content: {}", error.message());
+                                                                                            "Error receiving content: {}",
+                                                                                            error.message());
                                         }
                                     });
         }
