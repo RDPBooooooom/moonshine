@@ -33,7 +33,7 @@ namespace moonshine {
 
                 received_data.kb_last_second = (double) received_data.total_bytes / 1000;
                 received_data.total_bytes = 0;
-                
+
                 sent_data.kb_last_second = (double) sent_data.total_bytes / 1000;
                 sent_data.total_bytes = 0;
             }
@@ -60,10 +60,10 @@ namespace moonshine {
             std::scoped_lock<std::mutex> lock(networking_mutex);
             ImGui::SeparatorText("Sent");
             ImGui::Text((std::string("kb/s: ") + std::to_string(sent_data.kb_last_second)).c_str());
-            
+            ImGui::Text((std::string("ms: ") + std::to_string(sent_data.get_median())).c_str());
+
             ImGui::SeparatorText("Received");
             ImGui::Text((std::string("kb/s: ") + std::to_string(received_data.kb_last_second)).c_str());
-            ImGui::Text((std::string("ms: ") + std::to_string(received_data.get_median())).c_str());
         }
 
         ImGui::End();
@@ -78,16 +78,18 @@ namespace moonshine {
     }
 
     void StatisticsManager::add_sent_package(size_t bytes_transferred) {
-        
+
         std::scoped_lock<std::mutex> lock(networking_mutex);
-        
         sent_data.total_bytes += bytes_transferred;
     }
-    
-    void StatisticsManager::add_received_package(size_t bytes_transferred, long ms){
+
+    void StatisticsManager::add_rtt(long ms) {
         std::scoped_lock<std::mutex> lock(networking_mutex);
-        
+        sent_data.add_ms_value(ms);
+    }
+
+    void StatisticsManager::add_received_package(size_t bytes_transferred) {
+        std::scoped_lock<std::mutex> lock(networking_mutex);
         received_data.total_bytes += bytes_transferred;
-        received_data.add_ms_value(ms);
     }
 } // moonshine

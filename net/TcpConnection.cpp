@@ -68,13 +68,12 @@ namespace moonshine {
                                                 auto duration = end_time - send_time;
                                                 auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(
                                                         duration);
-                                                EngineSystems::getInstance().get_statistics()->add_received_package(
-                                                        bytes_transferred,
+                                                EngineSystems::getInstance().get_statistics()->add_rtt(
                                                         millisec.count());
                                             } else {
                                                 // handle normal case => standard package with information
                                                 m_queue.push_back(jv);
-                                                
+
                                                 if (jv.contains("_send_time")) {
                                                     if (!jv.contains("_answer") ||
                                                         (jv.contains("_answer") && jv["_answer"].as_bool())) {
@@ -84,8 +83,10 @@ namespace moonshine {
                                                         async_send_json(answer);
                                                     }
                                                 }
+                                                EngineSystems::getInstance().get_statistics()->add_received_package(
+                                                        bytes_transferred);
                                             }
-                                            
+
                                             // Reset the state for the next message
                                             m_read_header = true;
                                             async_receive_json();  // Continue to read the next message header

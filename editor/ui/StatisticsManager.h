@@ -85,7 +85,9 @@ namespace moonshine {
 
         void add_sent_package(size_t bytes_transferred);
 
-        void add_received_package(size_t bytes_transferred, long ms);
+        void add_received_package(size_t bytes_transferred);
+
+        void add_rtt(long ms);
     };
 
 } // moonshine
