@@ -25,7 +25,7 @@ namespace moonshine {
         std::string header(reinterpret_cast<char *>(&length), 4);
 
         reply_ = header + reply_; // Prepend header to message
-        
+
         boost::asio::async_write(socket_, boost::asio::buffer(reply_),
                                  [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                      EngineSystems::getInstance().get_statistics()->add_sent_package(
@@ -55,26 +55,37 @@ namespace moonshine {
             boost::asio::async_read(socket_, boost::asio::buffer(m_content_buffer),
                                     [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                         if (!error) {
+
                                             std::string content_str(m_content_buffer.begin(),
                                                                     m_content_buffer.end());
 
                                             boost::json::object jv = boost::json::parse(content_str).as_object();
 
-                                            m_queue.push_back(jv);
-                                            
-                                            if (jv.contains("_send_time")) {
-                                                auto send_time = from_string(jv["_send_time"]);
+                                            if (jv.contains("_systemMessage") && jv["_systemMessage"].as_bool()) {
+                                                // special system message to measure rtt
+                                                auto send_time = from_string(jv["_send_time_org"]);
                                                 auto end_time = std::chrono::high_resolution_clock::now();
                                                 auto duration = end_time - send_time;
                                                 auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(
                                                         duration);
                                                 EngineSystems::getInstance().get_statistics()->add_received_package(
                                                         bytes_transferred,
-                                                        static_cast<double>(millisec.count()));
+                                                        millisec.count());
+                                            } else {
+                                                // handle normal case => standard package with information
+                                                m_queue.push_back(jv);
                                                 
+                                                if (jv.contains("_send_time")) {
+                                                    if (!jv.contains("_answer") ||
+                                                        (jv.contains("_answer") && jv["_answer"].as_bool())) {
+                                                        boost::json::object answer;
+                                                        answer["_systemMessage"] = true;
+                                                        answer["_send_time_org"] = jv["_send_time"].as_int64();
+                                                        async_send_json(answer);
+                                                    }
+                                                }
                                             }
-
-
+                                            
                                             // Reset the state for the next message
                                             m_read_header = true;
                                             async_receive_json();  // Continue to read the next message header

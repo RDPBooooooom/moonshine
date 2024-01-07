@@ -63,9 +63,7 @@ namespace moonshine {
             
             ImGui::SeparatorText("Received");
             ImGui::Text((std::string("kb/s: ") + std::to_string(received_data.kb_last_second)).c_str());
-            ImGui::Text((std::string("ms: ") + std::to_string(received_data.avg_ms)).c_str());
-            ImGui::Text(std::to_string(received_data.total_ms).c_str());
-            ImGui::Text(std::to_string(received_data.package_count).c_str());
+            ImGui::Text((std::string("ms: ") + std::to_string(received_data.get_median())).c_str());
         }
 
         ImGui::End();
@@ -86,19 +84,10 @@ namespace moonshine {
         sent_data.total_bytes += bytes_transferred;
     }
     
-    void StatisticsManager::add_received_package(size_t bytes_transferred, double ms){
-        if (ms < 0.0) return;
-
+    void StatisticsManager::add_received_package(size_t bytes_transferred, long ms){
         std::scoped_lock<std::mutex> lock(networking_mutex);
-
-        if (received_data.package_count > 100){
-            received_data.total_ms = 0;
-            received_data.package_count = 0;
-        }
-
+        
         received_data.total_bytes += bytes_transferred;
-        received_data.package_count++;
-        received_data.total_ms += ms;
-        received_data.avg_ms = received_data.total_ms / received_data.package_count;
+        received_data.add_ms_value(ms);
     }
 } // moonshine

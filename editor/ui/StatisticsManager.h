@@ -6,6 +6,9 @@
 #define MOONSHINE_STATISTICSMANAGER_H
 
 #include <mutex>
+#include <vector>
+#include <algorithm>
+#include <deque>
 #include "chrono"
 
 namespace moonshine {
@@ -22,13 +25,36 @@ namespace moonshine {
     };
 
     struct networking_data {
-        
+
         size_t total_bytes = 0;
         double kb_last_second = 0;
-        
-        int package_count = 0;
-        double total_ms = 0;
-        double avg_ms = 0; 
+
+        std::deque<long> ms_values;
+        size_t max_size = 100;
+
+        void add_ms_value(long ms) {
+            if (ms_values.size() == max_size) {
+                // Remove the oldest value if we've reached max_size
+                ms_values.pop_front();
+            }
+            // Add the new value to the deque
+            ms_values.push_back(ms);
+        }
+
+        double get_median() {
+            if (ms_values.empty()) {
+                return 0;  // Undefined, really.
+            } else {
+                std::deque<long> sorted(ms_values);
+                std::sort(sorted.begin(), sorted.end());
+                int size = sorted.size();
+                if (size % 2 == 0) {
+                    return (sorted[size / 2 - 1] + sorted[size / 2]) / 2.0;
+                } else {
+                    return sorted[size / 2];
+                }
+            }
+        }
     };
 
     class StatisticsManager {
@@ -40,11 +66,11 @@ namespace moonshine {
 
         frame_data current;
         frame_data last;
-        
+
         std::mutex networking_mutex;
         networking_data sent_data = {};
         networking_data received_data = {};
-        
+
 
     public:
         void startFrame();
@@ -56,10 +82,10 @@ namespace moonshine {
         void increment_draw_call();
 
         void add_vertex_count(const size_t count);
-        
+
         void add_sent_package(size_t bytes_transferred);
 
-        void add_received_package(size_t bytes_transferred, double ms);
+        void add_received_package(size_t bytes_transferred, long ms);
     };
 
 } // moonshine
