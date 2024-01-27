@@ -30,56 +30,56 @@ namespace moonshine {
 
     private:
         GLFWwindow *m_window;
-        std::vector<int> m_pressedKeys;
-        std::vector<int> m_freshlyPressedKeys;
-        std::vector<int> m_removedKeys;
-        std::map<int, std::vector<KeyFunction>> m_registeredEvents;
-        std::map<int, std::vector<KeyFunction>> m_registeredOnReleasedEvents;
-        std::map<int, std::vector<KeyFunction>> m_registeredOnPressedEvents;
-        std::vector<MouseFunction> m_registeredMouseEvents;
-        CursorPosition m_cursorPosition{};
+        std::vector<int> m_pressed_keys;
+        std::vector<int> m_freshly_pressed_keys;
+        std::vector<int> m_removed_keys;
+        std::map<int, std::vector<KeyFunction>> m_registered_events;
+        std::map<int, std::vector<KeyFunction>> m_registered_on_released_events;
+        std::map<int, std::vector<KeyFunction>> m_registered_on_pressed_events;
+        std::vector<MouseFunction> m_registered_mouse_events;
+        CursorPosition m_cursor_position{};
         
-        bool disabled = false;
+        bool m_disabled = false;
 
     private:
-        void addKey(int key);
+        void add_key(int key);
 
-        void removeKey(int key);
+        void remove_key(int key);
 
-        void updateCursorPos();
+        void update_cursor_pos();
 
-        void drawMouseDebug() const;
+        void draw_mouse_debug() const;
 
     public:
         explicit InputHandler(GLFWwindow *window);
 
-        void onKeypress(int key, int scancode, int action, int mods);
+        void on_keypress(int key, int scancode, int action, int mods);
 
-        void onMousePress(int button, int action, int mods);
+        void on_mouse_press(int button, int action, int mods);
 
-        int registerKeyEvent(int key, const std::function<void(bool)> &callback);
+        int register_key_event(int key, const std::function<void(bool)> &callback);
 
-        int registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease);
+        int register_key_event(int key, const std::function<void(bool)> &callback, bool trigger_on_release);
 
-        int registerMouseEvent(std::function<void(CursorPosition)> &callback);
+        int register_mouse_event(std::function<void(CursorPosition)> &callback);
 
-        void unregisterKeyEvent(int functionId);
+        void unregister_key_event(int function_id);
 
-        static int getNewFuncId() {
+        static int get_new_func_id() {
             return NEXT_FUNCTION_ID++;
         }
 
-        void triggerEvents();
+        void trigger_events();
 
         int
-        registerKeyEvent(int key, const std::function<void(bool)> &callback, bool triggerOnRelease, bool triggerOnHold);
+        register_key_event(int key, const std::function<void(bool)> &callback, bool trigger_on_release, bool trigger_on_hold);
     
         void disable(){
-            disabled = true;
+            m_disabled = true;
         }
         
         void enable(){
-            disabled = false;
+            m_disabled = false;
         }
     };
 

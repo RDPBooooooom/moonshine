@@ -15,8 +15,8 @@ namespace moonshine {
         std::deque<T> m_deqQueue;
         boost::condition_variable m_cvBlocking;
         boost::mutex m_muxBlocking;
-        
-        bool notifiedToStop = false;
+
+        bool m_notified_to_stop = false;
 
     public:
         SafeQueue() = default;
@@ -53,7 +53,7 @@ namespace moonshine {
         void push_front(const T &item) {
             boost::mutex::scoped_lock scopedLock(m_muxQueue);
             m_deqQueue.emplace_front(std::move(item));
-            
+
             boost::unique_lock<boost::mutex> uniqueLock(m_muxBlocking);
             m_cvBlocking.notify_one();
         }
@@ -80,24 +80,24 @@ namespace moonshine {
             boost::mutex::scoped_lock scopedLock(m_muxQueue);
             m_deqQueue.clear();
         }
-        
-        void notify(){
+
+        void notify() {
             boost::unique_lock<boost::mutex> uniqueLock(m_muxBlocking);
             m_cvBlocking.notify_one();
         }
 
-        void notifyToStop(){
+        void notify_to_stop() {
             boost::unique_lock<boost::mutex> uniqueLock(m_muxBlocking);
-            notifiedToStop = true;
+            m_notified_to_stop = true;
             m_cvBlocking.notify_one();
         }
 
         void wait() {
-            while (is_empty() && !notifiedToStop) {
+            while (is_empty() && !m_notified_to_stop) {
                 boost::unique_lock<boost::mutex> uniqueLock(m_muxBlocking);
                 m_cvBlocking.wait(uniqueLock);
             }
-            notifiedToStop = false;
+            m_notified_to_stop = false;
         }
     };
 }

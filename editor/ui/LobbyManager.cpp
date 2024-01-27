@@ -11,55 +11,55 @@ namespace moonshine {
     void LobbyManager::draw() {
         ImGui::Begin("Lobby manager");
 
-        bool connected = connector.isConnected();
+        bool connected = m_connector.is_connected();
 
         // Connect to the LobbyManager Server
         if (connected) {
             if (ImGui::Button("Disconnect", ImVec2(100, 20))) {
-                connector.disconnect();
+                m_connector.disconnect();
             };
         } else {
             if (ImGui::Button("Connect", ImVec2(100, 20))) {
-                connector.try_connect();
-                if (isHosting) {
-                    connector.registerAsHost(lobbyName, m_server->get_port());
-                    connector.receiveHosts();
+                m_connector.try_connect();
+                if (m_is_hosting) {
+                    m_connector.register_as_host(m_lobby_name, m_server->get_port());
+                    m_connector.receive_hosts();
                 }
             };
         }
 
         // Hosting and leaving a active session
-        if (isHosting) {
+        if (m_is_hosting) {
             // Currently hosting a session 
             ImGui::SameLine();
             if (ImGui::Button("End Session", ImVec2(100, 20))) {
                 m_server->stop();
-                isHosting = false;
+                m_is_hosting = false;
             };
-        } else if (connected && !inSession && !isHosting) {
+        } else if (connected && !m_in_session && !m_is_hosting) {
             // Connected to the lobby server, but not hosting or in a session
             ImGui::SameLine();
             if (ImGui::Button("Host", ImVec2(100, 20))) {
-                openHostPrompt = true;
+                m_open_host_prompt = true;
             };
             ImGui::SameLine();
 
-            std::shared_ptr<LobbyConnector::Host> selected = connector.getSelectedHost();
+            std::shared_ptr<LobbyConnector::Host> selected = m_connector.get_selected_host();
             ImGui::BeginDisabled(selected == nullptr);
             if (ImGui::Button("Join", ImVec2(100, 20))) {
-                inSession = true;
-                
+                m_in_session = true;
+
                 m_client->connect(selected->ipv4, selected->port);
             };
             ImGui::EndDisabled();
 
-        } else if (inSession) {
+        } else if (m_in_session) {
             // Currently connected to a host and therefor in a session
             ImGui::SameLine();
             if (ImGui::Button("Leave Session", ImVec2(100, 20))) {
                 m_client->disconnect();
 
-                inSession = false;
+                m_in_session = false;
             };
         }
 
@@ -70,26 +70,26 @@ namespace moonshine {
         }
 
         if (ImGui::Button("Reload", ImVec2(100, 20))) {
-            connector.receiveHosts();
+            m_connector.receive_hosts();
         };
 
         if (!connected) {
             ImGui::EndDisabled();
         }
 
-        connector.drawHosts();
+        m_connector.draw_hosts();
 
         ImGui::End();
 
-        showPopup();
+        show_popup();
     }
 
-    void LobbyManager::showPopup() {
+    void LobbyManager::show_popup() {
 
-        if (openHostPrompt) {
+        if (m_open_host_prompt) {
             ImGui::OpenPopup("Host?");
             m_inputHandler->disable();
-            openHostPrompt = false;
+            m_open_host_prompt = false;
         }
 
         // Always center this window when appearing
@@ -97,20 +97,20 @@ namespace moonshine {
         ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
         if (ImGui::BeginPopupModal("Host?", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-            const int bufferSize = 256;
-            char text[bufferSize] = {};
-            std::string name = lobbyName;
-            strncpy(text, name.c_str(), bufferSize - 1);
-            text[bufferSize - 1] = '\0'; // Ensure null-termination
+            const int buffer_size = 256;
+            char text[buffer_size] = {};
+            std::string name = m_lobby_name;
+            strncpy(text, name.c_str(), buffer_size - 1);
+            text[buffer_size - 1] = '\0'; // Ensure null-termination
             ImGui::Text("Lobby name");
             ImGui::SameLine();
 
-            if (ImGui::InputText("##lobbyName", text, bufferSize, ImGuiInputTextFlags_EnterReturnsTrue)) {
-                lobbyName = text;
+            if (ImGui::InputText("##lobbyName", text, buffer_size, ImGuiInputTextFlags_EnterReturnsTrue)) {
+                m_lobby_name = text;
                 ImGui::CloseCurrentPopup();
                 start_hosting();
             };
-            lobbyName = text;
+            m_lobby_name = text;
 
             if (ImGui::Button("Cancel")) {
                 ImGui::CloseCurrentPopup();
@@ -119,7 +119,7 @@ namespace moonshine {
 
             ImGui::SameLine();
             ImGui::SetItemDefaultFocus();
-            if (ImGui::Button("Start Hosting") && !lobbyName.empty()) {
+            if (ImGui::Button("Start Hosting") && !m_lobby_name.empty()) {
                 ImGui::CloseCurrentPopup();
                 start_hosting();
             }
@@ -135,64 +135,64 @@ namespace moonshine {
         std::function<void()> start_hosting_server_handle = [this] {
             m_server = std::make_shared<net::Server>();
 
-            connector.registerAsHost(lobbyName, m_server->get_port());
-            connector.receiveHosts();
+            m_connector.register_as_host(m_lobby_name, m_server->get_port());
+            m_connector.receive_hosts();
 
-            isHosting = true;
+            m_is_hosting = true;
         };
         std::thread thread(start_hosting_server_handle);
         thread.detach();
     }
 
     void LobbyManager::replicate() {
-        timeSinceLastReplication += Time::deltaTime;
-        if (isHosting && timeSinceLastReplication > 0.1f) {
-            timeSinceLastReplication = 0;
-            m_server->broadcast(Scene::getCurrentScene());
+        m_time_since_last_replication += Time::s_delta_time;
+        if (m_is_hosting && m_time_since_last_replication > 0.1f) {
+            m_time_since_last_replication = 0;
+            m_server->broadcast(Scene::get_current_scene());
         }
     }
 
     void LobbyManager::replicate(std::shared_ptr<SceneObject> &object) {
-        if (inSession) {
+        if (m_in_session) {
             m_client->send(object);
         }
     }
 
-    void LobbyManager::replicateAdd(std::string path, std::string name, std::string uuid, Transform transform) {
-        if (inSession) {
+    void LobbyManager::replicate_add(std::string path, std::string name, std::string uuid, Transform transform) {
+        if (m_in_session) {
             m_client->send(path, name, uuid, transform);
         }
-        if (isHosting) {
+        if (m_is_hosting) {
             m_server->broadcast(path, name, uuid, transform);
         }
     }
 
-    void LobbyManager::replicateUi(std::string &label, element_locker &locker) {
+    void LobbyManager::replicate_ui(std::string &label, element_locker &locker) {
 
         locker.last_replication = std::chrono::high_resolution_clock::now();
 
-        if (inSession) {
+        if (m_in_session) {
             m_client->send(label, locker);
         }
-        if (isHosting) {
+        if (m_is_hosting) {
             m_server->broadcast(label, locker);
         }
     }
 
-    void LobbyManager::replicateRemove(std::string uuid) {
-        if (inSession) {
+    void LobbyManager::replicate_remove(std::string uuid) {
+        if (m_in_session) {
             m_client->send(uuid);
         }
-        if (isHosting) {
+        if (m_is_hosting) {
             m_server->broadcast(uuid);
         }
     }
 
-    void LobbyManager::replicateRename(std::string uuid, std::string name) {
-        if (inSession) {
+    void LobbyManager::replicate_rename(std::string uuid, std::string name) {
+        if (m_in_session) {
             m_client->send(uuid, name);
         }
-        if (isHosting) {
+        if (m_is_hosting) {
             m_server->broadcast(uuid, name);
         }
     }

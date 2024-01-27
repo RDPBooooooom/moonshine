@@ -20,22 +20,22 @@ namespace moonshine {
 
         jv["_send_time"] = to_string(std::chrono::high_resolution_clock::now());
 
-        reply_ = boost::json::serialize(jv);
-        uint32_t length = htonl(static_cast<uint32_t>(reply_.size()));
+        m_reply = boost::json::serialize(jv);
+        uint32_t length = htonl(static_cast<uint32_t>(m_reply.size()));
         std::string header(reinterpret_cast<char *>(&length), 4);
 
-        reply_ = header + reply_; // Prepend header to message
+        m_reply = header + m_reply; // Prepend header to message
 
-        boost::asio::async_write(socket_, boost::asio::buffer(reply_),
+        boost::asio::async_write(m_socket, boost::asio::buffer(m_reply),
                                  [this](const boost::system::error_code &error, size_t bytes_transferred) {
-                                     EngineSystems::getInstance().get_statistics()->add_sent_package(
+                                     EngineSystems::get_instance().get_statistics()->add_sent_package(
                                              bytes_transferred);
                                  });
     }
 
     void TcpConnection::async_receive_json() {
         if (m_read_header) {
-            boost::asio::async_read(socket_, boost::asio::buffer(m_header_buffer),
+            boost::asio::async_read(m_socket, boost::asio::buffer(m_header_buffer),
                                     [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                         if (!error) {
                                             m_expected_message_length = ntohl(
@@ -46,13 +46,13 @@ namespace moonshine {
 
                                             async_receive_json();  // Continue to read the message content
                                         } else {
-                                            EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                                                            "Error receiving header: {}",
-                                                                                            error.message());
+                                            EngineSystems::get_instance().get_logger()->info(LoggerType::Networking,
+                                                                                             "Error receiving header: {}",
+                                                                                             error.message());
                                         }
                                     });
         } else {
-            boost::asio::async_read(socket_, boost::asio::buffer(m_content_buffer),
+            boost::asio::async_read(m_socket, boost::asio::buffer(m_content_buffer),
                                     [this](const boost::system::error_code &error, size_t bytes_transferred) {
                                         if (!error) {
 
@@ -68,7 +68,7 @@ namespace moonshine {
                                                 auto duration = end_time - send_time;
                                                 auto millisec = std::chrono::duration_cast<std::chrono::milliseconds>(
                                                         duration);
-                                                EngineSystems::getInstance().get_statistics()->add_rtt(
+                                                EngineSystems::get_instance().get_statistics()->add_rtt(
                                                         millisec.count());
                                             } else {
                                                 // handle normal case => standard package with information
@@ -83,7 +83,7 @@ namespace moonshine {
                                                         async_send_json(answer);
                                                     }
                                                 }
-                                                EngineSystems::getInstance().get_statistics()->add_received_package(
+                                                EngineSystems::get_instance().get_statistics()->add_received_package(
                                                         bytes_transferred);
                                             }
 
@@ -91,19 +91,19 @@ namespace moonshine {
                                             m_read_header = true;
                                             async_receive_json();  // Continue to read the next message header
                                         } else {
-                                            EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                                                            "Error receiving content: {}",
-                                                                                            error.message());
+                                            EngineSystems::get_instance().get_logger()->info(LoggerType::Networking,
+                                                                                             "Error receiving content: {}",
+                                                                                             error.message());
                                         }
                                     });
         }
     }
 
     void TcpConnection::start(tcp::resolver::iterator connectTo) {
-        auto endpoint = boost::asio::connect(socket_, connectTo);
+        auto endpoint = boost::asio::connect(m_socket, connectTo);
 
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                        "Connnected to: {}", endpoint->host_name());
+        EngineSystems::get_instance().get_logger()->info(LoggerType::Networking,
+                                                         "Connnected to: {}", endpoint->host_name());
     }
 
     void TcpConnection::start() {
@@ -111,8 +111,8 @@ namespace moonshine {
     }
 
     TcpConnection::~TcpConnection() {
-        EngineSystems::getInstance().get_logger()->info(LoggerType::Networking,
-                                                        std::string("Closed connection"));
+        EngineSystems::get_instance().get_logger()->info(LoggerType::Networking,
+                                                         std::string("Closed connection"));
     }
 
 } // moonshine

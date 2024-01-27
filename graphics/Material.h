@@ -15,8 +15,8 @@ namespace moonshine {
 
     private:
         std::string m_name;
-        std::string m_textureName;
-        std::string m_pathToTexture;
+        std::string m_texture_name;
+        std::string m_path_to_texture;
 
         VkDescriptorSet m_imGui_DS;
 
@@ -25,20 +25,20 @@ namespace moonshine {
 
     public:
 
-        Material(std::string name, std::string textureName, std::string pathToTexture,
+        Material(std::string name, std::string texture_name, std::string path_to_texture,
                  std::shared_ptr<TextureSampler> &sampler);
 
-        VkSampler getVkSampler() {
-            return m_sampler->getVkSampler();
+        VkSampler get_vk_sampler() {
+            return m_sampler->get_vk_sampler();
         }
 
-        VkImageView getVkImageView() {
-            return m_texture->getImageView();
+        VkImageView get_vk_image_view() {
+            return m_texture->get_image_view();
         }
 
-        void loadTexture(Device &device);
+        void load_texture(Device &device);
 
-        void drawGui();
+        void draw_gui();
     };
 
 } // moonshine

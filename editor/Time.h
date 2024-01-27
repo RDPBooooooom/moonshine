@@ -12,21 +12,21 @@ namespace moonshine {
     
     class Time {
     private:
-        static double currentFrame;
-        static double lastFrame;
+        static double s_current_frame;
+        static double s_last_frame;
         
     public:
-        static float deltaTime;
+        static float s_delta_time;
         
-        static void initTime(){
-            currentFrame = glfwGetTime();
-            lastFrame = currentFrame;
+        static void init_time(){
+            s_current_frame = glfwGetTime();
+            s_last_frame = s_current_frame;
         }
         
-        static void calcDeltaTime(){
-            currentFrame = glfwGetTime();
-            deltaTime = currentFrame - lastFrame;
-            lastFrame = currentFrame;
+        static void calc_delta_time(){
+            s_current_frame = glfwGetTime();
+            s_delta_time = s_current_frame - s_last_frame;
+            s_last_frame = s_current_frame;
         }
     };
     

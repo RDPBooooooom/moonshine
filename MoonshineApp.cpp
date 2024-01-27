@@ -29,14 +29,14 @@ namespace moonshine {
     }
 
     void MoonshineApp::run() {
-        initVulkan();
-        initImGui();
-        mainLoop();
+        init_vulkan();
+        init_im_gui();
+        main_loop();
         cleanup();
     }
 
 
-    void MoonshineApp::loadSettings() {
+    void MoonshineApp::load_settings() {
         try {
 
             std::ifstream settings_file("settings.json");
@@ -46,48 +46,48 @@ namespace moonshine {
                                       std::istreambuf_iterator<char>());
                 try {
                     MoonshineApp::APP_SETTINGS = Settings::deserialize(json_data);
-                    EngineSystems::getInstance().get_logger()->info(LoggerType::Editor,
-                                                                    "Found and loaded settings.json");
+                    EngineSystems::get_instance().get_logger()->info(LoggerType::Editor,
+                                                                     "Found and loaded settings.json");
                 } catch (const boost::json::system_error &jse) {
                     MoonshineApp::APP_SETTINGS = Settings{}; // The standard values are set from the struct initialization here.
-                    EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                                     "Error while loading json. The file is probably in a wrong state! Loaded with standard settings");
+                    EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
+                                                                      "Error while loading json. The file is probably in a wrong state! Loaded with standard settings");
                 }
             } else {
                 // File does not exist, set default settings and write them to the file
                 MoonshineApp::APP_SETTINGS = Settings{}; // The standard values are set from the struct initialization here.
-                saveSettings();
-                EngineSystems::getInstance().get_logger()->info(LoggerType::Editor,
-                                                                "No settings file found, init with standard settings.json");
+                save_settings();
+                EngineSystems::get_instance().get_logger()->info(LoggerType::Editor,
+                                                                 "No settings file found, init with standard settings.json");
             }
 
             settings_file.close();
         } catch (const std::ifstream::failure &ife) {
             MoonshineApp::APP_SETTINGS = Settings{};
-            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Error while reading settings.json file. Loaded with standard settings");
+            EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
+                                                              "Error while reading settings.json file. Loaded with standard settings");
 
         }
     }
 
-    void MoonshineApp::saveSettings() {
+    void MoonshineApp::save_settings() {
         std::string json_data = Settings::serialize(MoonshineApp::APP_SETTINGS);
 
         std::ofstream output_file("settings.json");
         if (output_file.is_open()) {
             output_file << json_data;
             output_file.close();
-            EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
-                                                             "Saved settings.json");
+            EngineSystems::get_instance().get_logger()->debug(LoggerType::Editor,
+                                                              "Saved settings.json");
         } else {
-            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Unable to save settings.json. Settings will not persist!");
+            EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
+                                                              "Unable to save settings.json. Settings will not persist!");
         }
     }
 
-    void MoonshineApp::initVulkan() {
-        globalPool = DescriptorPool::Builder(m_device).setMaxSets(MAX_FRAMES_IN_FLIGHT)
-                .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
+    void MoonshineApp::init_vulkan() {
+        m_global_pool = DescriptorPool::Builder(m_device).set_max_sets(MAX_FRAMES_IN_FLIGHT)
+                .add_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
                 .build();
 
         m_materialManager = std::make_unique<MaterialManager>(m_device);
@@ -105,7 +105,7 @@ namespace moonshine {
             m_matrixUBO[i]->map();
         }
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, "UBO created");
+        EngineSystems::get_instance().get_logger()->debug(LoggerType::Rendering, "UBO created");
 
         m_fragUBO.resize(MAX_FRAMES_IN_FLIGHT);
         for (int i = 0; i < m_matrixUBO.size(); i++) {
@@ -120,10 +120,10 @@ namespace moonshine {
             m_fragUBO[i]->map();
         }
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Rendering, "FRAG UBO created");
+        EngineSystems::get_instance().get_logger()->debug(LoggerType::Rendering, "FRAG UBO created");
     }
 
-    void MoonshineApp::initImGui() {
+    void MoonshineApp::init_im_gui() {
         VkDescriptorPoolSize pool_sizes[] =
                 {
                         {VK_DESCRIPTOR_TYPE_SAMPLER,                1000},
@@ -146,7 +146,7 @@ namespace moonshine {
         pool_info.poolSizeCount = std::size(pool_sizes);
         pool_info.pPoolSizes = pool_sizes;
 
-        check_vk_result(vkCreateDescriptorPool(m_device.getVkDevice(), &pool_info, nullptr, &m_imGuiPool));
+        check_vk_result(vkCreateDescriptorPool(m_device.get_vk_device(), &pool_info, nullptr, &m_imGuiPool));
 
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
@@ -156,15 +156,15 @@ namespace moonshine {
 
         ImGui::StyleColorsDark();
 
-        ImGui_ImplGlfw_InitForVulkan(m_window.getGLFWWindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(m_window.get_glfw_window(), true);
 
         // Setup Platform/Renderer backends
         ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = m_device.getVkInstance();
-        init_info.PhysicalDevice = m_device.getVkPhysicalDevice();
-        init_info.Device = m_device.getVkDevice();
-        init_info.QueueFamily = m_device.getGraphicsQueueFamily();
-        init_info.Queue = m_device.getGraphicsQueue();
+        init_info.Instance = m_device.get_vk_instance();
+        init_info.PhysicalDevice = m_device.get_vk_physical_device();
+        init_info.Device = m_device.get_vk_device();
+        init_info.QueueFamily = m_device.get_graphics_queue_family();
+        init_info.Queue = m_device.get_graphics_queue();
         init_info.PipelineCache = VK_NULL_HANDLE;
         init_info.DescriptorPool = m_imGuiPool;
         init_info.Subpass = 0;
@@ -174,146 +174,148 @@ namespace moonshine {
         init_info.Allocator = VK_NULL_HANDLE;
         init_info.CheckVkResultFn = check_vk_result;
 
-        ImGui_ImplVulkan_Init(&init_info, m_renderer.getSwapChainRenderPass());
+        ImGui_ImplVulkan_Init(&init_info, m_renderer.get_swap_chain_render_pass());
 
-        VkCommandBuffer commandBuffer = beginSingleTimeCommands(&m_device, m_device.getCommandPool());
+        VkCommandBuffer commandBuffer = begin_single_time_commands(&m_device, m_device.get_command_pool());
         ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-        endSingleTimeCommands(&m_device, commandBuffer, m_device.getCommandPool());
+        end_single_time_commands(&m_device, commandBuffer, m_device.get_command_pool());
 
         ImGui_ImplVulkan_DestroyFontUploadObjects();
     }
 
-    void MoonshineApp::mainLoop() {
+    void MoonshineApp::main_loop() {
 
-        Time::initTime();
+        Time::init_time();
 
         auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
-                .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-                .addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
+                .add_binding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                .add_binding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
                 .build();
         std::vector<VkDescriptorSet> globalDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 
 
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
 
-            auto bufferInfo = m_matrixUBO[i]->descriptorInfo();
+            auto bufferInfo = m_matrixUBO[i]->descriptor_info();
 
-            auto fragBufferInfo = m_fragUBO[i]->descriptorInfo();
+            auto fragBufferInfo = m_fragUBO[i]->descriptor_info();
 
-            DescriptorWriter(*globalSetLayout, *globalPool)
-                    .writeBuffer(0, &bufferInfo)
-                    .writeBuffer(1, &fragBufferInfo)
+            DescriptorWriter(*globalSetLayout, *m_global_pool)
+                    .write_buffer(0, &bufferInfo)
+                    .write_buffer(1, &fragBufferInfo)
                     .build(globalDescriptorSets[i]);
         }
 
-        SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.getSwapChainRenderPass(),
-                                              globalSetLayout->getDescriptorSetLayout(),
-                                              m_materialManager->getMaterialLayout()};
+        SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.get_swap_chain_render_pass(),
+                                              globalSetLayout->get_descriptor_set_layout(),
+                                              m_materialManager->get_material_layout()};
 
         // Init UI
-        auto inputHandler = m_window.getInputHandler();
+        auto inputHandler = m_window.get_input_handler();
         m_sceneGraph = std::make_unique<SceneGraph>(inputHandler, m_camera);
-        EngineSystems::getInstance().set_lobby_manager(std::make_shared<LobbyManager>(inputHandler));
+        EngineSystems::get_instance().set_lobby_manager(std::make_shared<LobbyManager>(inputHandler));
 
-        EngineSystems::getInstance().set_workspace_manager(
+        EngineSystems::get_instance().set_workspace_manager(
                 std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler, m_camera));
 
-        while (!m_window.shouldClose()) {
-            EngineSystems::getInstance().get_statistics()->startFrame();
-            Time::calcDeltaTime();
+        while (!m_window.should_close()) {
+            EngineSystems::get_instance().get_statistics()->start_frame();
+            Time::calc_delta_time();
             glfwPollEvents();
 
             ImGui_ImplVulkan_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
-            createDockSpace();
+            create_dock_space();
 
-            m_window.getInputHandler()->triggerEvents();
+            m_window.get_input_handler()->trigger_events();
 
-            EngineSystems::getInstance().get_workspace_manager()->draw();
-            EngineSystems::getInstance().get_lobby_manager()->draw();
-            EngineSystems::getInstance().get_logger()->draw();
-            EngineSystems::getInstance().get_statistics()->draw();
+            EngineSystems::get_instance().get_workspace_manager()->draw();
+            EngineSystems::get_instance().get_lobby_manager()->draw();
+            EngineSystems::get_instance().get_logger()->draw();
+            EngineSystems::get_instance().get_statistics()->draw();
 
             m_sceneGraph->draw();
             m_camera.show_debug();
-            showInspector();
+            show_inspector();
 
             {
-                std::unique_lock<std::mutex> sceneLock = Scene::getCurrentScene().getLock();
-                if (auto commandBuffer = m_renderer.beginFrame()) {
+                std::unique_lock<std::mutex> sceneLock = Scene::get_current_scene().get_lock();
+                if (auto commandBuffer = m_renderer.begin_frame()) {
 
-                    uint32_t frameIndex = m_renderer.getFrameIndex();
-                    updateUniformBuffer(frameIndex);
+                    uint32_t frameIndex = m_renderer.get_frame_index();
+                    update_uniform_buffer(frameIndex);
 
-                    m_renderer.beginSwapChainRenderPass(commandBuffer);
+                    m_renderer.begin_swap_chain_render_pass(commandBuffer);
 
                     FrameInfo frameInfo{
                             frameIndex,
-                            Time::deltaTime,
+                            Time::s_delta_time,
                             commandBuffer,
                             m_camera,
                             globalDescriptorSets[frameIndex],
-                            m_materialManager->getDescriptorSet()};
+                            m_materialManager->get_descriptor_set()};
 
-                    simpleRenderSystem.renderGameObjects(frameInfo, Scene::getCurrentScene());
+                    simpleRenderSystem.render_game_objects(frameInfo, Scene::get_current_scene());
 
                     ImGui::Render();
                     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
-                    m_renderer.endSwapChainRenderPass(commandBuffer);
-                    m_renderer.endFrame();
+                    m_renderer.end_swap_chain_render_pass(commandBuffer);
+                    m_renderer.end_frame();
                 }
             }
 
-            EngineSystems::getInstance().get_lobby_manager()->replicate();
-            EngineSystems::getInstance().get_ui_manager()->update();
-            EngineSystems::getInstance().get_statistics()->endFrame();
+            EngineSystems::get_instance().get_lobby_manager()->replicate();
+            EngineSystems::get_instance().get_ui_manager()->update();
+            EngineSystems::get_instance().get_statistics()->end_frame();
         }
 
-        vkDeviceWaitIdle(m_device.getVkDevice());
+        vkDeviceWaitIdle(m_device.get_vk_device());
     }
 
 
-    void MoonshineApp::showInspector() {
+    void MoonshineApp::show_inspector() {
         ImGui::Begin("Inspector");
         std::shared_ptr<SceneObject> selected = m_sceneGraph->getSelected();
         if (selected != nullptr) {
             bool isDirty = false;
 
-            ImGui::Text(selected->getName().c_str());
+            ImGui::Text(selected->get_name().c_str());
             ImGui::Text(selected->get_id_as_string().c_str());
 
             ImGui::SeparatorText("Transform");
-            if (net::ui::InputFloat3(("Position##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(selected->getTransform()->position))) {
+            if (net::ui::InputFloat3(("Position##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(
+                    selected->get_transform()->position))) {
                 isDirty = true;
             }
 
-            glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->getTransform()->rotation));
+            glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->get_transform()->rotation));
             if (net::ui::InputFloat3(("Rotation##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(rotEulerAngles))) {
-                selected->getTransform()->rotation = glm::quat(glm::radians(rotEulerAngles));
+                selected->get_transform()->rotation = glm::quat(glm::radians(rotEulerAngles));
                 isDirty = true;
             }
 
-            if (net::ui::InputFloat3(("Scale##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(selected->getTransform()->scale))) {
+            if (net::ui::InputFloat3(("Scale##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(
+                    selected->get_transform()->scale))) {
                 isDirty = true;
             }
 
             for (const auto &node: selected->get_nodes()) {
                 for (const auto &mesh: node->get_sub_meshes()) {
-                    m_materialManager->getMaterial(mesh.m_materialIdx)->drawGui();
+                    m_materialManager->get_material(mesh.m_materialIdx)->draw_gui();
                 }
             }
 
             if (isDirty) {
-                EngineSystems::getInstance().get_lobby_manager()->replicate(selected);
+                EngineSystems::get_instance().get_lobby_manager()->replicate(selected);
             }
         }
         ImGui::End();
     }
 
 
-    void MoonshineApp::updateUniformBuffer(uint32_t currentImage) {
+    void MoonshineApp::update_uniform_buffer(uint32_t currentImage) {
         static auto startTime = std::chrono::high_resolution_clock::now();
 
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -322,9 +324,9 @@ namespace moonshine {
 
         UniformBufferObject ubo{};
 
-        ubo.view = m_camera.getViewMat();
-        ubo.proj = glm::perspective(glm::radians(45.0f), m_renderer.getSwapChainExtent().width /
-                                                         (float) m_renderer.getSwapChainExtent().height,
+        ubo.view = m_camera.get_view_mat();
+        ubo.proj = glm::perspective(glm::radians(45.0f), m_renderer.get_swap_chain_extent().width /
+                                                         (float) m_renderer.get_swap_chain_extent().height,
                                     0.1f,
                                     100.0f);
 
@@ -345,17 +347,17 @@ namespace moonshine {
         FragmentUniformBufferObject fragUBO{};
         fragUBO.dirLight = light;
         fragUBO.material = material;
-        fragUBO.viewPos = glm::vec4(-m_camera.getTransform()->position, 0);
+        fragUBO.viewPos = glm::vec4(-m_camera.get_transform()->position, 0);
 
 
-        m_matrixUBO[currentImage]->writeToBuffer(&ubo);
+        m_matrixUBO[currentImage]->write_to_buffer(&ubo);
         m_matrixUBO[currentImage]->flush();
 
-        m_fragUBO[currentImage]->writeToBuffer(&fragUBO);
+        m_fragUBO[currentImage]->write_to_buffer(&fragUBO);
         m_fragUBO[currentImage]->flush();
     }
 
-    void MoonshineApp::createDockSpace() {
+    void MoonshineApp::create_dock_space() {
         static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 
 // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,

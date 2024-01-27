@@ -29,26 +29,26 @@ namespace moonshine {
     private:
         std::string m_name;
 
-        boost::uuids::uuid m_uniqueId;
+        boost::uuids::uuid m_unique_id;
 
         Transform &m_transform;
 
-        std::vector<std::shared_ptr<Node>> nodes;
+        std::vector<std::shared_ptr<Node>> m_nodes;
 
-        object_meta_data meta_data;
+        object_meta_data m_meta_data;
     public:
 
-        explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data);
+        explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &child_nodes);
 
-        explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &data, boost::uuids::uuid uniqueId);
+        explicit SceneObject(std::string &name, std::vector<std::shared_ptr<Node>> &child_nodes, boost::uuids::uuid unique_id);
 
         ~SceneObject();
 
-        void init(Device &device, std::shared_ptr<MaterialManager> &materialManager);
+        void init(Device &device, std::shared_ptr<MaterialManager> &material_manager);
 
-        const std::vector<std::shared_ptr<Node>> &get_nodes() const { return nodes; }
+        const std::vector<std::shared_ptr<Node>> &get_nodes() const { return m_nodes; }
 
-        Transform *getTransform() {
+        Transform *get_transform() {
             return &m_transform;
         }
         
@@ -56,27 +56,27 @@ namespace moonshine {
             m_transform = transform;
         }
 
-        std::basic_string<char> getName() {
+        std::basic_string<char> get_name() {
             return m_name;
         }
 
-        void setName(std::string name) {
+        void set_name(std::string name) {
             m_name = name;
         }
 
         object_meta_data &get_meta_data() {
-            return meta_data;
+            return m_meta_data;
         }
         
         void set_meta_data(object_meta_data &meta_data){
-            this->meta_data = meta_data;
+            this->m_meta_data = meta_data;
         }
 
-        boost::uuids::uuid getId() const { return m_uniqueId; }
+        boost::uuids::uuid get_id() const { return m_unique_id; }
 
-        std::string get_id_as_string() const { return boost::uuids::to_string(m_uniqueId); }
+        std::string get_id_as_string() const { return boost::uuids::to_string(m_unique_id); }
 
-        std::string as_string() { return getName() + "(" + get_id_as_string() + ")"; };
+        std::string as_string() { return get_name() + "(" + get_id_as_string() + ")"; };
     };
 
 }

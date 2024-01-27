@@ -30,12 +30,12 @@ namespace moonshine {
             spdlog::memory_buf_t formatted;
             this->formatter_->format(msg, formatted);
 
-            LogEntry logMessage = {};
-            logMessage.log_level = msg.level;
-            logMessage.logger_type = get_logger_type_by_string(msg.logger_name);
-            logMessage.message = std::string (msg.payload.data(), msg.payload.size());
+            LogEntry log_message = {};
+            log_message.log_level = msg.level;
+            log_message.logger_type = get_logger_type_by_string(msg.logger_name);
+            log_message.message = std::string (msg.payload.data(), msg.payload.size());
 
-            m_log_queue->push_back(logMessage);
+            m_log_queue->push_back(log_message);
         }
 
         void flush_() override {

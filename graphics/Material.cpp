@@ -12,27 +12,27 @@
 
 namespace moonshine {
 
-    Material::Material(std::string name, std::string textureName, std::string pathToTexture,
+    Material::Material(std::string name, std::string texture_name, std::string path_to_texture,
                        std::shared_ptr<TextureSampler> &sampler)
             : m_name{std::move(name)},
-              m_textureName{
-                      std::move(textureName)},
-              m_pathToTexture{
-                      std::move(pathToTexture)} {
+              m_texture_name{
+                      std::move(texture_name)},
+              m_path_to_texture{
+                      std::move(path_to_texture)} {
         m_sampler = sampler;
     }
 
-    void Material::loadTexture(Device &device) {
+    void Material::load_texture(Device &device) {
         m_texture = std::make_unique<TextureImage>(
-                (m_pathToTexture + m_textureName).c_str(), &device,
-                device.getCommandPool());
+                (m_path_to_texture + m_texture_name).c_str(), &device,
+                device.get_command_pool());
         
         // Create Descriptor Set using ImGUI's implementation
-        m_imGui_DS = ImGui_ImplVulkan_AddTexture(m_sampler->getVkSampler(), m_texture->getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        m_imGui_DS = ImGui_ImplVulkan_AddTexture(m_sampler->get_vk_sampler(), m_texture->get_image_view(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     }
     
-    void Material::drawGui(){
+    void Material::draw_gui(){
         ImGui::SeparatorText("Material");
         ImGui::BeginDisabled();
         ImGui::Text(m_name.c_str());

@@ -9,13 +9,13 @@
 
 namespace moonshine {
 
-    void LobbyConnector::registerAsHost(const std::string &name, int port) {
+    void LobbyConnector::register_as_host(const std::string &name, int port) {
 
         boost::json::object object;
         object["action"] = "host";
         object["name"] = name;
         object["port"] = port;
-        connection->async_send_json(object);
+        m_connection->async_send_json(object);
     }
 
     void LobbyConnector::try_connect() {
@@ -25,97 +25,96 @@ namespace moonshine {
     }
 
     void LobbyConnector::connect() {
-        tcp::resolver::iterator endpoint_iterator = resolver.resolve(MoonshineApp::APP_SETTINGS.LOBBY_SERVER_ADDRESS,
-                                                                     MoonshineApp::APP_SETTINGS.LOBBY_SERVER_PORT);
+        tcp::resolver::iterator endpoint_iterator = m_resolver.resolve(MoonshineApp::APP_SETTINGS.LOBBY_SERVER_ADDRESS,
+                                                                       MoonshineApp::APP_SETTINGS.LOBBY_SERVER_PORT);
 
         try {
-            connection->start(endpoint_iterator);
+            m_connection->start(endpoint_iterator);
         } catch (const boost::system::system_error &e) {
-            EngineSystems::getInstance().get_logger()->error(LoggerType::Networking,
-                                                             "Failed to connect: {}", e.what());
+            EngineSystems::get_instance().get_logger()->error(LoggerType::Networking,
+                                                              "Failed to connect: {}", e.what());
             return;
         }
 
 
-        std::function<void()> handleRequestsHandle = [this] { handleRequests(); };
-        thread = std::thread(handleRequestsHandle);
+        std::function<void()> handle_requests_handle = [this] { handle_requests(); };
+        m_thread = std::thread(handle_requests_handle);
 
         m_isConnected = true;
 
-        connection.get()->async_receive_json();
-        if (io_service.stopped()) {
-            io_service.restart();
+        m_connection.get()->async_receive_json();
+        if (m_io_service.stopped()) {
+            m_io_service.restart();
         }
-        ioContextThread = std::thread([ObjectPtr = &io_service] { return ObjectPtr->run(); });
+        m_io_context_thread = std::thread([ObjectPtr = &m_io_service] { return ObjectPtr->run(); });
 
         boost::json::object object;
         object["action"] = "connect";
-        connection.get()->async_send_json(object);
+        m_connection.get()->async_send_json(object);
     }
 
-    void LobbyConnector::receiveHosts() {
+    void LobbyConnector::receive_hosts() {
         boost::json::object object;
         object["action"] = "getHosts";
 
-        connection.get()->async_send_json(object);
+        m_connection.get()->async_send_json(object);
     }
 
     void LobbyConnector::disconnect() {
         if (m_isConnected) {
             try {
                 // Close the connection
-                connection->socket().close();
+                m_connection->socket().close();
 
                 // Stop the IO context to allow the thread to finish
-                io_service.stop();
+                m_io_service.stop();
 
                 // Join the thread if it's running
-                if (ioContextThread.joinable()) {
-                    ioContextThread.join();
+                if (m_io_context_thread.joinable()) {
+                    m_io_context_thread.join();
                 }
 
                 m_isConnected = false;
-                threadStop = true;
+                m_thread_stop = true;
 
-                EngineSystems::getInstance().get_logger()->info(LoggerType::Networking, std::string("Disconnected"));
-                m_messageQueue.notifyToStop();
+                EngineSystems::get_instance().get_logger()->info(LoggerType::Networking, std::string("Disconnected"));
+                m_messageQueue.notify_to_stop();
 
-                if (thread.joinable()) {
-                    thread.join();
+                if (m_thread.joinable()) {
+                    m_thread.join();
                     m_messageQueue.clear();
                 }
 
-                std::scoped_lock<std::mutex> lock(hostMutex);
-                currentHosts.clear();
+                std::scoped_lock<std::mutex> lock(m_host_mutex);
+                m_current_hosts.clear();
             }
             catch (const std::exception &e) {
                 std::cerr << "An error occurred during disconnection: " << e.what() << std::endl;
-                // Handle exceptions as appropriate for your application
             }
         }
     }
 
-    std::shared_ptr<LobbyConnector::Host> LobbyConnector::getSelectedHost() {
-        std::scoped_lock<std::mutex> lock(hostMutex);
+    std::shared_ptr<LobbyConnector::Host> LobbyConnector::get_selected_host() {
+        std::scoped_lock<std::mutex> lock(m_host_mutex);
 
-        if(item_current_idx < 0) return nullptr;
-        if(item_current_idx >= currentHosts.size()) return nullptr;
+        if(m_item_current_idx < 0) return nullptr;
+        if(m_item_current_idx >= m_current_hosts.size()) return nullptr;
         
-        return currentHosts.at(item_current_idx);
+        return m_current_hosts.at(m_item_current_idx);
     }
 
-    void LobbyConnector::handleRequests() {
-        while (isConnected() || !threadStop) {
+    void LobbyConnector::handle_requests() {
+        while (is_connected() || !m_thread_stop) {
             m_messageQueue.wait();
-            if (!isConnected() || threadStop) continue;
+            if (!is_connected() || m_thread_stop) continue;
 
             boost::json::object jObj = m_messageQueue.pop_front().get_object();
 
             boost::json::string action = jObj["action"].get_string();
             if (std::equal(action.begin(), action.end(), "updateHosts")) {
                 boost::json::array hosts = jObj["hosts"].as_array();
-                hostMutex.lock();
-                currentHosts.clear();
+                m_host_mutex.lock();
+                m_current_hosts.clear();
                 for (boost::json::value v: hosts) {
                     boost::json::object o = v.get_object();
                     std::shared_ptr<Host> host = std::make_shared<Host>();
@@ -124,22 +123,22 @@ namespace moonshine {
                     host->ipv4 = o["ip"].get_string();
                     host->port = o["port"].get_int64();
 
-                    currentHosts.push_back(host);
+                    m_current_hosts.push_back(host);
                 }
-                hostMutex.unlock();
+                m_host_mutex.unlock();
             }
         }
-        threadStop = false;
+        m_thread_stop = false;
     }
 
-    void LobbyConnector::drawHosts() {
-        std::scoped_lock<std::mutex> lock(hostMutex);
+    void LobbyConnector::draw_hosts() {
+        std::scoped_lock<std::mutex> lock(m_host_mutex);
 
         if (ImGui::BeginListBox("Available Hosts", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing()))) {
-            for (int n = 0; n < currentHosts.size(); n++) {
-                const bool is_selected = (item_current_idx == n);
-                if (ImGui::Selectable(currentHosts.at(n)->name.c_str(), is_selected))
-                    item_current_idx = n;
+            for (int n = 0; n < m_current_hosts.size(); n++) {
+                const bool is_selected = (m_item_current_idx == n);
+                if (ImGui::Selectable(m_current_hosts.at(n)->name.c_str(), is_selected))
+                    m_item_current_idx = n;
 
                 // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
                 if (is_selected)

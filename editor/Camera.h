@@ -19,39 +19,40 @@ namespace moonshine {
         Window *m_window;
         Transform m_transform{};
 
-        bool m_movementModeActive = false;
+        bool m_movement_mode_active = false;
 
-        float m_camSpeed = 10;
-        float m_rotationSpeed = 0.15f;
+        float m_cam_speed = 10;
+        float m_rotation_speed = 0.15f;
 
-        std::vector<int> m_registeredFunctions;
+        std::vector<int> m_registered_functions;
 
     public:
         explicit Camera(Window *window);
 
         ~Camera();
 
-        glm::mat4 getViewMat();
+        glm::mat4 get_view_mat();
 
-        Transform *getTransform() { return &m_transform; }
+        Transform *get_transform() { return &m_transform; }
 
         void look_at(const Transform &target);
+
         void show_debug();
 
     private:
-        void handleMovementMode(bool isReleased);
+        void handle_movement_mode(bool is_released);
 
-        void move(glm::vec3 toMove, bool ignore_active_mode = false);
+        void move(glm::vec3 to_move, bool ignore_active_mode = false);
 
-        void moveForward(bool isReleased);
+        void move_forward(bool is_released);
 
-        void moveBackward(bool isReleased);
+        void move_backward(bool is_released);
 
-        void moveRight(bool isReleased);
+        void move_right(bool is_released);
 
-        void moveLeft(bool isReleased);
+        void move_left(bool is_released);
 
-        void mouseMovement(CursorPosition cPos);
+        void mouse_movement(CursorPosition cPos);
 
     };
 

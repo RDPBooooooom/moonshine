@@ -14,24 +14,24 @@ namespace moonshine {
 
     private:
         Device *m_device;
-        VkCommandPool m_vkCommandPool;
+        VkCommandPool m_vk_command_pool;
 
-        VkImage m_vkImage;
-        VkDeviceMemory m_vkImageMemory;
+        VkImage m_vk_image;
+        VkDeviceMemory m_vk_image_memory;
 
-        VkImageView m_vkImageView;
+        VkImageView m_vk_image_view;
 
     public:
-        TextureImage(const char *filepath, Device *device, VkCommandPool commandPool);
+        TextureImage(const char *filepath, Device *device, VkCommandPool command_pool);
 
         ~TextureImage();
 
-        void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+        void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
-        VkImageView getImageView() { return m_vkImageView; }
+        VkImageView get_image_view() { return m_vk_image_view; }
 
     private:
-        void createImageView();
+        void create_image_view();
     };
 
 } // moonshine

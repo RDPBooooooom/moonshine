@@ -18,10 +18,10 @@ namespace moonshine {
         public:
             Builder(Device &device) : m_device{device} {}
 
-            Builder &addBinding(
+            Builder &add_binding(
                     uint32_t binding,
-                    VkDescriptorType descriptorType,
-                    VkShaderStageFlags stageFlags,
+                    VkDescriptorType descriptor_type,
+                    VkShaderStageFlags stage_flags,
                     uint32_t count = 1);
 
             std::unique_ptr<DescriptorSetLayout> build() const;
@@ -43,7 +43,7 @@ namespace moonshine {
 
         DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
 
-        VkDescriptorSetLayout getDescriptorSetLayout() const { return m_descriptorSetLayout; }
+        VkDescriptorSetLayout get_descriptor_set_layout() const { return m_descriptorSetLayout; }
 
     private:
         Device &m_device;
@@ -59,26 +59,26 @@ namespace moonshine {
         public:
             Builder(Device &device) : m_device{device} {}
 
-            Builder &addPoolSize(VkDescriptorType descriptorType, uint32_t count);
+            Builder &add_pool_size(VkDescriptorType descriptor_type, uint32_t count);
 
-            Builder &setPoolFlags(VkDescriptorPoolCreateFlags flags);
+            Builder &set_pool_flags(VkDescriptorPoolCreateFlags flags);
 
-            Builder &setMaxSets(uint32_t count);
+            Builder &set_max_sets(uint32_t count);
 
             std::unique_ptr<DescriptorPool> build() const;
 
         private:
             Device &m_device;
-            std::vector<VkDescriptorPoolSize> m_poolSizes{};
-            uint32_t m_maxSets = 1000;
-            VkDescriptorPoolCreateFlags m_poolFlags = 0;
+            std::vector<VkDescriptorPoolSize> m_pool_sizes{};
+            uint32_t m_max_sets = 1000;
+            VkDescriptorPoolCreateFlags m_pool_flags = 0;
         };
 
         DescriptorPool(
                 Device &device,
-                uint32_t maxSets,
-                VkDescriptorPoolCreateFlags poolFlags,
-                const std::vector<VkDescriptorPoolSize> &poolSizes);
+                uint32_t max_sets,
+                VkDescriptorPoolCreateFlags pool_flags,
+                const std::vector<VkDescriptorPoolSize> &pool_sizes);
 
         ~DescriptorPool();
 
@@ -86,36 +86,36 @@ namespace moonshine {
 
         DescriptorPool &operator=(const DescriptorPool &) = delete;
 
-        bool allocateDescriptor(
-                const VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet &descriptor) const;
+        bool allocate_descriptor(
+                const VkDescriptorSetLayout descriptor_set_layout, VkDescriptorSet &descriptor) const;
 
-        void freeDescriptors(std::vector<VkDescriptorSet> &descriptors) const;
+        void free_descriptors(std::vector<VkDescriptorSet> &descriptors) const;
 
-        void resetPool();
+        void reset_pool();
 
-        VkDescriptorPool getVkDiscriptorPool() { return m_descriptorPool; }
+        VkDescriptorPool get_vk_discriptor_pool() { return m_descriptor_pool; }
 
     private:
         Device &m_device;
-        VkDescriptorPool m_descriptorPool;
+        VkDescriptorPool m_descriptor_pool;
 
         friend class DescriptorWriter;
     };
 
     class DescriptorWriter {
     public:
-        DescriptorWriter(DescriptorSetLayout &setLayout, DescriptorPool &pool);
+        DescriptorWriter(DescriptorSetLayout &set_layout, DescriptorPool &pool);
 
-        DescriptorWriter &writeBuffer(uint32_t binding, VkDescriptorBufferInfo *bufferInfo);
+        DescriptorWriter &write_buffer(uint32_t binding, VkDescriptorBufferInfo *buffer_info);
 
-        DescriptorWriter &writeImage(uint32_t binding, VkDescriptorImageInfo *imageInfo);
+        DescriptorWriter &write_image(uint32_t binding, VkDescriptorImageInfo *image_info);
 
         bool build(VkDescriptorSet &set);
 
         void overwrite(VkDescriptorSet &set);
 
     private:
-        DescriptorSetLayout &m_setLayout;
+        DescriptorSetLayout &m_set_layout;
         DescriptorPool &m_pool;
         std::vector<VkWriteDescriptorSet> m_writes;
     };

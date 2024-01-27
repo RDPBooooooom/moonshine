@@ -13,13 +13,13 @@
 
 namespace moonshine {
 
-    bool ModelLoader::loadASCIIModel(tinygltf::Model &model, const char *filepath) {
+    bool ModelLoader::load_ascii_model(tinygltf::Model &model, const char *filepath) {
 
         std::string err;
         std::string warn;
         tinygltf::TinyGLTF loader;
 
-        auto logger = EngineSystems::getInstance().get_logger();
+        auto logger = EngineSystems::get_instance().get_logger();
         bool res = loader.LoadASCIIFromFile(&model, &err, &warn, filepath);
         if (!warn.empty()) {
             logger->warn(LoggerType::Editor, warn);

@@ -3,8 +3,8 @@
 int main() {
 
     try {
-        moonshine::MoonshineApp::loadSettings();
-        
+        moonshine::MoonshineApp::load_settings();
+
         moonshine::MoonshineApp app{};
         app.run();
     } catch (const std::exception &e) {

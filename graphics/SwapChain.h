@@ -17,65 +17,65 @@ namespace moonshine {
     private:
         moonshine::Device &m_device;
 
-        VkExtent2D m_windowExtent;
+        VkExtent2D m_window_extent;
 
-        VkSwapchainKHR m_vkSwapChain;
-        std::vector<VkImage> m_swapChainImages;
-        std::vector<VkImageView> m_swapChainImageViews;
+        VkSwapchainKHR m_vk_swap_chain;
+        std::vector<VkImage> m_swap_chain_images;
+        std::vector<VkImageView> m_swap_chain_image_views;
 
-        VkFormat m_swapChainImageFormat;
-        VkFormat m_swapChainDepthFormat;
+        VkFormat m_swap_chain_image_format;
+        VkFormat m_swap_chain_depth_format;
 
-        VkExtent2D m_swapChainExtent;
-        VkRenderPass m_vkRenderPass;
+        VkExtent2D m_swap_chain_extent;
+        VkRenderPass m_vk_render_pass;
 
-        std::vector<VkImage> m_depthImages;
-        std::vector<VkDeviceMemory> m_depthImageMemorys;
-        std::vector<VkImageView> m_depthImageViews;
+        std::vector<VkImage> m_depth_images;
+        std::vector<VkDeviceMemory> m_depth_image_memorys;
+        std::vector<VkImageView> m_depth_image_views;
 
-        std::vector<VkSemaphore> m_vkImageAvailableSemaphores;
-        std::vector<VkSemaphore> m_vkRenderFinishedSemaphores;
-        std::vector<VkFence> m_vkInFlightFences;
-        std::vector<VkFence> m_imagesInFlight;
+        std::vector<VkSemaphore> m_vk_image_available_semaphores;
+        std::vector<VkSemaphore> m_vk_render_finished_semaphores;
+        std::vector<VkFence> m_vk_in_flight_fences;
+        std::vector<VkFence> m_images_in_flight;
 
-        std::vector<VkFramebuffer> m_swapChainFramebuffers;
+        std::vector<VkFramebuffer> m_swap_chain_framebuffers;
 
-        std::shared_ptr<SwapChain> m_oldSwapChain;
+        std::shared_ptr<SwapChain> m_old_swap_chain;
 
-        size_t m_currentFrame = 0;
+        size_t m_current_frame = 0;
 
 
     private:
 
-        void createSwapChain();
+        void create_swap_chain();
 
-        VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
+        VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR> &available_formats);
 
-        VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
+        VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR> &available_present_modes);
 
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
+        VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR &capabilities);
 
-        void createImageViews();
+        void create_image_views();
 
-        void createRenderPass();
+        void create_render_pass();
 
-        void createFramebuffers();
+        void create_framebuffers();
 
-        void createDepthResources();
+        void create_depth_resources();
 
-        VkFormat findDepthFormat();
+        VkFormat find_depth_format();
 
-        void cleanupSwapChain();
+        void cleanup_swap_chain();
 
         void init();
 
-        void createSyncObjects();
+        void create_sync_objects();
 
     public:
 
-        SwapChain(moonshine::Device &deviceRef, VkExtent2D windowExtent);
+        SwapChain(moonshine::Device &device_ref, VkExtent2D window_extent);
 
-        SwapChain(moonshine::Device &deviceRef, VkExtent2D windowExtent, std::shared_ptr<SwapChain> &previous);
+        SwapChain(moonshine::Device &device_ref, VkExtent2D window_extent, std::shared_ptr<SwapChain> &previous);
 
         SwapChain(const SwapChain &) = delete;
 
@@ -83,23 +83,23 @@ namespace moonshine {
 
         ~SwapChain();
 
-        VkSwapchainKHR getSwapChain() { return m_vkSwapChain; }
+        VkSwapchainKHR get_swap_chain() { return m_vk_swap_chain; }
 
-        VkExtent2D getSwapChainExtent() { return m_swapChainExtent; }
+        VkExtent2D get_swap_chain_extent() { return m_swap_chain_extent; }
 
-        VkRenderPass getRenderPass() { return m_vkRenderPass; }
+        VkRenderPass get_render_pass() { return m_vk_render_pass; }
 
-        std::vector<VkFramebuffer> getFramebuffers() { return m_swapChainFramebuffers; }
+        std::vector<VkFramebuffer> get_framebuffers() { return m_swap_chain_framebuffers; }
 
-        bool compareSwapFormats(const SwapChain &swapChain) const {
-            return swapChain.m_swapChainImageFormat == m_swapChainImageFormat;
+        bool compare_swap_formats(const SwapChain &swap_chain) const {
+            return swap_chain.m_swap_chain_image_format == m_swap_chain_image_format;
         }
 
-        VkResult acquireNextImage(uint32_t *imageIndex);
+        VkResult acquire_next_image(uint32_t *image_index);
 
-        VkResult submitCommandBuffers(VkCommandBuffer const *buffers, uint32_t *imageIndex);
+        VkResult submit_command_buffers(const VkCommandBuffer *buffers, uint32_t *image_index);
 
-        size_t imageCount() { return m_swapChainImages.size(); }
+        size_t image_count() { return m_swap_chain_images.size(); }
     };
 
 } // moonshine

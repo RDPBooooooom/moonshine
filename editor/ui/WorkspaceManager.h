@@ -57,22 +57,21 @@ namespace moonshine {
         std::mutex m_available_imports_mtx;
         std::vector<std::shared_ptr<workspace_object>> m_available_imports;
 
-        std::unique_ptr<TextureSampler> m_previewSampler;
+        std::unique_ptr<TextureSampler> m_preview_sampler;
         VkDescriptorSet m_imGui_placeHolder_DS;
         std::unique_ptr<TextureImage> m_placeholder_image;
 
         std::mutex m_unique_temp_folder;
         std::mutex m_unique_workspace_folder;
 
+        bool m_workspace_modal_active = false;
 
     public:
         const std::string &get_workspace_path() const;
 
     private:
-        bool m_workspaceModalActive = false;
 
-
-        void drawInitModal();
+        void draw_init_modal();
 
         void draw_workspace_items();
 
@@ -92,23 +91,23 @@ namespace moonshine {
 
         void validate_path(const std::string &root_path, std::string &path, const std::string &name, int iteration = 0);
 
-        void remove_workspace_object(std::shared_ptr<workspace_object> &toDelete);
+        void remove_workspace_object(std::shared_ptr<workspace_object> &to_delete);
 
     public:
 
-        explicit WorkspaceManager(Device &device, std::shared_ptr<MaterialManager> &materialManager,
-                                  std::shared_ptr<InputHandler> &inputHandler, Camera &camera) : m_inputHandler{
-                inputHandler},
-                                                                                                 m_device{device},
-                                                                                                 m_materialManager{
-                                                                                                         materialManager},
-                                                                                                 m_camera{camera} {
+        explicit WorkspaceManager(Device &device, std::shared_ptr<MaterialManager> &material_manager,
+                                  std::shared_ptr<InputHandler> &input_handler, Camera &camera) : m_inputHandler{
+                input_handler},
+                                                                                                  m_device{device},
+                                                                                                  m_materialManager{
+                                                                                                         material_manager},
+                                                                                                  m_camera{camera} {
             m_placeholder_image = std::make_unique<TextureImage>(
                     "resources\\editor\\SceneObject_placeholder.png", &device,
-                    device.getCommandPool());
-            m_previewSampler = std::make_unique<TextureSampler>(m_device);
-            m_imGui_placeHolder_DS = ImGui_ImplVulkan_AddTexture(m_previewSampler->getVkSampler(),
-                                                                 m_placeholder_image->getImageView(),
+                    device.get_command_pool());
+            m_preview_sampler = std::make_unique<TextureSampler>(m_device);
+            m_imGui_placeHolder_DS = ImGui_ImplVulkan_AddTexture(m_preview_sampler->get_vk_sampler(),
+                                                                 m_placeholder_image->get_image_view(),
                                                                  VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         }
 

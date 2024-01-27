@@ -59,9 +59,9 @@ namespace moonshine {
 
         glm::mat4 get_submesh_matrix() {
             if (has_parent()){
-                return m_parent->get_submesh_matrix() * m_transform.getMatrix();
+                return m_parent->get_submesh_matrix() * m_transform.get_model_matrix();
             }
-            return m_transform.getMatrix();
+            return m_transform.get_model_matrix();
         }
     };
 

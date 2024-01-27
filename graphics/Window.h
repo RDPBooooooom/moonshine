@@ -17,14 +17,14 @@ namespace moonshine {
 
     private:
         GLFWwindow *m_window;
-        std::shared_ptr<InputHandler> m_inputHandler;
+        std::shared_ptr<InputHandler> m_input_handler;
 
         std::string m_name;
 
     public:
         int m_width;
         int m_height;
-        bool m_framebufferResized;
+        bool m_framebuffer_resized;
 
     public:
         Window(std::string name, int w, int h);
@@ -33,28 +33,28 @@ namespace moonshine {
 
         Window &operator=(const Window &) = delete;
 
-        std::shared_ptr<InputHandler> getInputHandler() { return m_inputHandler; }
+        std::shared_ptr<InputHandler> get_input_handler() { return m_input_handler; }
 
-        static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
+        static void framebuffer_resize_callback(GLFWwindow *window, int width, int height);
 
-        static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
-        
-        static void mouseBtnCallback(GLFWwindow *window, int key, int action, int mods);
+        static void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-        bool shouldClose();
+        static void mouse_btn_callback(GLFWwindow *window, int key, int action, int mods);
 
-        void createSurface(VkInstance instance, VkSurfaceKHR *surface);
+        bool should_close();
 
-        void setNoCursorMode();
+        void create_surface(VkInstance instance, VkSurfaceKHR *surface);
 
-        void setCursorMode();
+        void set_no_cursor_mode();
 
-        VkExtent2D getExtent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
+        void set_cursor_mode();
 
-        GLFWwindow* getGLFWWindow(){ return m_window; }
-        
+        VkExtent2D get_extent() { return {static_cast<uint32_t>(m_width), static_cast<uint32_t>(m_height)}; }
+
+        GLFWwindow *get_glfw_window() { return m_window; }
+
     private:
-        static GLFWwindow *createWindow(int width, int height, const std::string &name) {
+        static GLFWwindow *create_window(int width, int height, const std::string &name) {
             glfwInit();
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             return glfwCreateWindow(width, height, name.c_str(), nullptr, nullptr);

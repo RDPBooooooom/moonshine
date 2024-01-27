@@ -13,14 +13,14 @@ namespace moonshine {
 
     private:
         Device &m_device;
-        VkSampler m_vkSampler;
+        VkSampler m_vk_sampler;
 
     public:
         explicit TextureSampler(Device &device);
 
         ~TextureSampler();
 
-        VkSampler getVkSampler() { return m_vkSampler; }
+        VkSampler get_vk_sampler() { return m_vk_sampler; }
     };
 
 } // moonshine

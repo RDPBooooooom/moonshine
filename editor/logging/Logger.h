@@ -19,7 +19,7 @@ namespace moonshine {
     class Logger {
 
     private:
-        std::unordered_map<LoggerType, std::shared_ptr<spdlog::logger>> loggers;
+        std::unordered_map<LoggerType, std::shared_ptr<spdlog::logger>> m_loggers;
 
         std::shared_ptr<SafeQueue<LogEntry>> m_log_queue;
         std::vector<LogEntry> m_logged_messages;
@@ -43,31 +43,30 @@ namespace moonshine {
 
         template<typename... Args>
         void debug(LoggerType type, const std::string &message, Args... args) {
-            loggers.find(type)->second->debug(message, args...);
+            m_loggers.find(type)->second->debug(message, args...);
         }
 
         template<typename... Args>
         void info(LoggerType type, const std::string &message, Args... args) {
-            loggers.find(type)->second->info(message, args...);
+            m_loggers.find(type)->second->info(message, args...);
         }
 
         template<typename... Args>
         void warn(LoggerType type, const std::string &message, Args... args) {
-            loggers.find(type)->second->warn(message, args...);
+            m_loggers.find(type)->second->warn(message, args...);
         }
 
         template<typename... Args>
         void error(LoggerType type, const std::string &message, Args... args) {
-            loggers.find(type)->second->error(message, args...);
+            m_loggers.find(type)->second->error(message, args...);
         }
 
         template<typename... Args>
         void critical(LoggerType type, const std::string &message, Args... args) {
-            loggers.find(type)->second->critical(message, args...);
+            m_loggers.find(type)->second->critical(message, args...);
         }
 
-        void preDraw() {
-
+        void pre_draw() {
             while (!m_log_queue->is_empty()) {
                 LogEntry entry = m_log_queue->pop_front();
                 m_logged_messages.push_back(entry);

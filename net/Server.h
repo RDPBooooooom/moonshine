@@ -32,14 +32,14 @@ namespace moonshine::net {
         std::thread m_ioThread;
         std::thread m_receiveThread;
 
-        RequestResolver resolver;
+        RequestResolver m_request_resolver;
 
-        struct UPNPDev *m_deviceList;
+        struct UPNPDev *m_device_list;
         struct UPNPUrls m_urls;
         struct IGDdatas m_data;
 
-        bool wasUpnpFreed = false;
-        bool threadStop = false;
+        bool m_was_upnp_freed = false;
+        bool m_thread_stop = false;
 
     public:
 
@@ -50,7 +50,7 @@ namespace moonshine::net {
                 m_connectedClients() {
 
             start_accept();
-            m_receiveThread = std::thread([this] { handleRequests(); });
+            m_receiveThread = std::thread([this] { handle_requests(); });
             m_ioThread = std::thread([ObjectPtr = &m_ioContext] { return ObjectPtr->run(); });
 
             do_upnp();
@@ -91,7 +91,7 @@ namespace moonshine::net {
 
         void free_upnp();
 
-        void handleRequests();
+        void handle_requests();
 
     };
 

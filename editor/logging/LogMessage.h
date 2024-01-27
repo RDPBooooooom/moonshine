@@ -10,9 +10,7 @@
 
 namespace moonshine {
     struct LogEntry {
-        LogEntry() {
-
-        }
+        LogEntry() = default;
 
         spdlog::level_t log_level;
         LoggerType logger_type;

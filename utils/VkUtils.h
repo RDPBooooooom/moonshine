@@ -15,11 +15,11 @@
 #include "array"
 
 namespace moonshine {
-    const std::vector<const char *> validationLayers = {
+    const std::vector<const char *> validation_layers = {
             "VK_LAYER_KHRONOS_validation"
     };
 
-    const std::vector<const char *> deviceExtensions = {
+    const std::vector<const char *> device_extensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 
@@ -29,138 +29,157 @@ namespace moonshine {
         std::vector<VkPresentModeKHR> presentModes;
     };
 
-    static SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
-        SwapChainSupportDetails details;
+    static SwapChainSupportDetails query_swap_chain_support(VkPhysicalDevice
+    device,
+    VkSurfaceKHR surface
+    ) {
+    SwapChainSupportDetails details;
 
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details
+    .capabilities);
 
-        uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+    uint32_t format_count;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count,
+    nullptr);
 
-        if (formatCount != 0) {
-            details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+    if (format_count != 0) {
+    details.formats.
+    resize(format_count);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &format_count, details
+    .formats.
+
+    data()
+
+    );
+}
+
+uint32_t present_mode_count;
+vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count,
+nullptr);
+
+if (present_mode_count != 0) {
+details.presentModes.
+resize(present_mode_count);
+vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &present_mode_count, details
+.presentModes.
+
+data()
+
+);
+}
+return
+details;
+}
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphics_family;
+    std::optional<uint32_t> present_family;
+
+    bool is_complete() {
+        return graphics_family.has_value() && present_family.has_value();
+    }
+};
+
+
+static QueueFamilyIndices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR surface) {
+    QueueFamilyIndices indices;
+    // Logic to find queue family indices to populate struct with
+
+    uint32_t queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families.data());
+
+    int i = 0;
+    for (const auto &queue_family: queue_families) {
+        if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphics_family = i;
         }
 
-        uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
-
-        if (presentModeCount != 0) {
-            details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+        VkBool32 present_support = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &present_support);
+        if (present_support) {
+            indices.present_family = i;
         }
-        return details;
+
+        if (indices.is_complete()) break;
+
+        i++;
     }
 
-    struct QueueFamilyIndices {
-        std::optional<uint32_t> graphicsFamily;
-        std::optional<uint32_t> presentFamily;
+    return indices;
+}
 
-        bool isComplete() {
-            return graphicsFamily.has_value() && presentFamily.has_value();
-        }
-    };
+/*
+ * TODO: Decide if this is the right place for it, probably not
+ */
 
+struct Vertex {
+    glm::vec3 pos;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+    glm::vec3 normal;
 
-    static QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
-        QueueFamilyIndices indices;
-        // Logic to find queue family indices to populate struct with
-
-        uint32_t queueFamilyCount = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-        int i = 0;
-        for (const auto &queueFamily: queueFamilies) {
-            if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                indices.graphicsFamily = i;
-            }
-
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-            if (presentSupport) {
-                indices.presentFamily = i;
-            }
-
-            if (indices.isComplete()) break;
-
-            i++;
-        }
-
-        return indices;
+    static VkVertexInputBindingDescription get_vertex_input_binding_description() {
+        VkVertexInputBindingDescription binding_description{};
+        binding_description.binding = 0;
+        binding_description.stride = sizeof(Vertex);
+        binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        return binding_description;
     }
 
-    /*
-     * TODO: Decide if this is the right place for it, probably not
-     */
+    static std::array<VkVertexInputAttributeDescription, 4> get_attribute_descriptions() {
+        std::array<VkVertexInputAttributeDescription, 4> attribute_descriptions{};
+        attribute_descriptions[0].binding = 0;
+        attribute_descriptions[0].location = 0;
+        attribute_descriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attribute_descriptions[0].offset = offsetof(Vertex, pos);
 
-    struct Vertex {
-        glm::vec3 pos;
-        glm::vec3 color;
-        glm::vec2 texCoord;
-        glm::vec3 normal;
+        attribute_descriptions[1].binding = 0;
+        attribute_descriptions[1].location = 1;
+        attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attribute_descriptions[1].offset = offsetof(Vertex, color);
 
-        static VkVertexInputBindingDescription getBindingDescription() {
-            VkVertexInputBindingDescription bindingDescription{};
-            bindingDescription.binding = 0;
-            bindingDescription.stride = sizeof(Vertex);
-            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            return bindingDescription;
-        }
+        attribute_descriptions[2].binding = 0;
+        attribute_descriptions[2].location = 2;
+        attribute_descriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[2].offset = offsetof(Vertex, texCoord);
 
-        static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions() {
-            std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
-            attributeDescriptions[0].binding = 0;
-            attributeDescriptions[0].location = 0;
-            attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[0].offset = offsetof(Vertex, pos);
+        attribute_descriptions[3].binding = 0;
+        attribute_descriptions[3].location = 3;
+        attribute_descriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attribute_descriptions[3].offset = offsetof(Vertex, normal);
 
-            attributeDescriptions[1].binding = 0;
-            attributeDescriptions[1].location = 1;
-            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[1].offset = offsetof(Vertex, color);
+        return attribute_descriptions;
+    }
+};
 
-            attributeDescriptions[2].binding = 0;
-            attributeDescriptions[2].location = 2;
-            attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-            attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+struct UniformBufferObject {
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
-            attributeDescriptions[3].binding = 0;
-            attributeDescriptions[3].location = 3;
-            attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[3].offset = offsetof(Vertex, normal);
+struct MaterialData {
+    float ambient = 1;
+    float diffuse = 1;
+    float specular = 1;
+    float shininess = 128;
+};
 
-            return attributeDescriptions;
-        }
-    };
+struct DirLight {
+    alignas(16) glm::vec3 direction;
+    alignas(16) glm::vec3 ambient;
+    alignas(16) glm::vec3 diffuse;
+    alignas(16) glm::vec3 specular;
+};
 
-    struct UniformBufferObject {
-        glm::mat4 view;
-        glm::mat4 proj;
-    };
-    
-    struct MaterialData {
-        float ambient = 1;
-        float diffuse = 1;
-        float specular = 1;
-        float shininess = 128;
-    };
-    
-    struct DirLight{
-        alignas(16) glm::vec3 direction;
-        alignas(16) glm::vec3 ambient;
-        alignas(16) glm::vec3 diffuse;
-        alignas(16) glm::vec3 specular;
-    };
-    
-    struct FragmentUniformBufferObject {
-        MaterialData material;
-        alignas(16) glm::vec3  viewPos;
-        alignas(16) DirLight dirLight;
-    };
-    
+struct FragmentUniformBufferObject {
+    MaterialData material;
+    alignas(16) glm::vec3 viewPos;
+    alignas(16) DirLight dirLight;
+};
+
 
 }
 #endif //MOONSHINE_VKUTILS_H

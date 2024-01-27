@@ -23,12 +23,12 @@ namespace moonshine {
 
         Device &m_device;
 
-        VkPipelineLayout m_pipelineLayout;
+        VkPipelineLayout m_pipeline_layout;
         std::unique_ptr<Pipeline> m_pipeline;
 
     public:
-        SimpleRenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
-                           VkDescriptorSetLayout materialSetLayout);
+        SimpleRenderSystem(Device &device, VkRenderPass render_pass, VkDescriptorSetLayout global_set_layout,
+                           VkDescriptorSetLayout material_set_layout);
 
         ~SimpleRenderSystem();
 
@@ -37,13 +37,13 @@ namespace moonshine {
         SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
 
         void
-        renderGameObjects(FrameInfo &frmInfo, Scene &scene);
+        render_game_objects(FrameInfo &frm_info, Scene &scene);
 
     private:
 
-        void createPipeline(VkRenderPass pT);
+        void create_pipeline(VkRenderPass pT);
 
-        void createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout materialSetLayout);
+        void create_pipeline_layout(VkDescriptorSetLayout global_set_layout, VkDescriptorSetLayout material_set_layout);
     };
 
 } // moonshine

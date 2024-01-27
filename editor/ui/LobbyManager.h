@@ -18,19 +18,19 @@ namespace moonshine {
     class LobbyManager : UIWindow {
 
     private:
-        LobbyConnector connector;
+        LobbyConnector m_connector;
 
         std::shared_ptr<InputHandler> m_inputHandler;
         std::shared_ptr<net::Server> m_server;
         std::shared_ptr<net::Client> m_client;
 
-        bool isHosting = false;
-        bool inSession = false;
+        bool m_is_hosting = false;
+        bool m_in_session = false;
 
-        bool openHostPrompt = false;
-        std::string lobbyName;
-        
-        float timeSinceLastReplication = 0.0f;
+        bool m_open_host_prompt = false;
+        std::string m_lobby_name;
+
+        float m_time_since_last_replication = 0.0f;
 
     public:
 
@@ -41,24 +41,24 @@ namespace moonshine {
 
         void draw() override;
 
-        void showPopup();
+        void show_popup();
 
         void replicate();
 
         void replicate(std::shared_ptr<SceneObject> &object);
 
-        void replicateAdd(std::string path, std::string name, std::string uuid, Transform transform);
-        
-        void replicateRemove(std::string uuid);
+        void replicate_add(std::string path, std::string name, std::string uuid, Transform transform);
 
-        void replicateUi(std::string &label, element_locker &locker);
-        
-        void replicateRename(std::string uuid, std::string name);
-        
-        bool isHost() {
-            return isHosting;
+        void replicate_remove(std::string uuid);
+
+        void replicate_ui(std::string &label, element_locker &locker);
+
+        void replicate_rename(std::string uuid, std::string name);
+
+        bool is_host() {
+            return m_is_hosting;
         }
-        
+
     private:
         void start_hosting();
 

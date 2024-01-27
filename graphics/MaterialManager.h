@@ -17,27 +17,27 @@ namespace moonshine {
     private:
 
         Device& m_device;
-        std::shared_ptr<DescriptorPool> materialPool{};
+        std::shared_ptr<DescriptorPool> m_material_pool{};
         std::shared_ptr<TextureSampler> m_sampler;
 
-        std::unique_ptr<DescriptorSetLayout> m_materialLayout;
-        std::vector<VkDescriptorSet> m_materialDescriptorSets{};
+        std::unique_ptr<DescriptorSetLayout> m_material_layout;
+        std::vector<VkDescriptorSet> m_material_descriptor_sets{};
         std::vector<std::shared_ptr<Material>> m_materials;
 
     public:
         explicit MaterialManager(Device &device);
 
-        VkDescriptorSetLayout getMaterialLayout() {
-            return m_materialLayout->getDescriptorSetLayout();
+        VkDescriptorSetLayout get_material_layout() {
+            return m_material_layout->get_descriptor_set_layout();
         }
 
-        std::vector<VkDescriptorSet> getDescriptorSet(){
-            return m_materialDescriptorSets;
+        std::vector<VkDescriptorSet> get_descriptor_set(){
+            return m_material_descriptor_sets;
         }
         
-        uint16_t createMaterial(std::string &name, std::string &textureName, std::string &pathToTexture);
+        uint16_t create_material(std::string &name, std::string &texture_name, std::string &path_to_texture);
 
-        std::shared_ptr<Material> getMaterial(const uint16_t matIdx);
+        std::shared_ptr<Material> get_material(const uint16_t mat_idx);
         
         void clean_up();
     };

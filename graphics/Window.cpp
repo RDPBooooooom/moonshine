@@ -10,17 +10,17 @@
 
 namespace moonshine {
 
-    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h}, m_window(createWindow(w, h, name)) {
+    Window::Window(std::string name, int w, int h) : m_width{w}, m_height{h}, m_window(create_window(w, h, name)) {
         m_name = std::move(name);
 
-        m_inputHandler = std::make_shared<InputHandler>(m_window);
-        
-        glfwSetWindowUserPointer(m_window, this);
-        glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
-        glfwSetKeyCallback(m_window, keyCallback);
-        glfwSetMouseButtonCallback(m_window, mouseBtnCallback);
+        m_input_handler = std::make_shared<InputHandler>(m_window);
 
-        setCursorMode();
+        glfwSetWindowUserPointer(m_window, this);
+        glfwSetFramebufferSizeCallback(m_window, framebuffer_resize_callback);
+        glfwSetKeyCallback(m_window, key_callback);
+        glfwSetMouseButtonCallback(m_window, mouse_btn_callback);
+
+        set_cursor_mode();
     }
 
     Window::~Window() {
@@ -29,38 +29,38 @@ namespace moonshine {
         glfwTerminate();
     }
 
-    void Window::framebufferResizeCallback(GLFWwindow *window, int width, int height) {
-        auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
-        moonWindow->m_framebufferResized = true;
-        moonWindow->m_width = width;
-        moonWindow->m_height = height;
+    void Window::framebuffer_resize_callback(GLFWwindow *window, int width, int height) {
+        auto moon_window = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        moon_window->m_framebuffer_resized = true;
+        moon_window->m_width = width;
+        moon_window->m_height = height;
     }
 
-    void Window::createSurface(VkInstance instance, VkSurfaceKHR *surface) {
+    void Window::create_surface(VkInstance instance, VkSurfaceKHR *surface) {
         if (glfwCreateWindowSurface(instance, m_window, nullptr, surface) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
         }
     }
 
-    bool Window::shouldClose() {
+    bool Window::should_close() {
         return glfwWindowShouldClose(m_window);
     }
 
-    void Window::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-        auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
-        moonWindow->getInputHandler()->onKeypress(key, scancode, action, mods);
+    void Window::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        auto moon_window = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        moon_window->get_input_handler()->on_keypress(key, scancode, action, mods);
     }
 
-    void Window::mouseBtnCallback(GLFWwindow *window, int button, int action, int mods) {
-        auto moonWindow = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
-        moonWindow->getInputHandler()->onMousePress(button, action, mods);
+    void Window::mouse_btn_callback(GLFWwindow *window, int key, int action, int mods) {
+        auto moon_window = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
+        moon_window->get_input_handler()->on_mouse_press(key, action, mods);
     }
 
-    void Window::setNoCursorMode() {
+    void Window::set_no_cursor_mode() {
         glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 
-    void Window::setCursorMode() {
+    void Window::set_cursor_mode() {
         glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 } // moonshine

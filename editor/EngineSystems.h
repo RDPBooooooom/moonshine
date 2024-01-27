@@ -19,7 +19,7 @@ namespace moonshine {
         EngineSystems() {
             m_logger = std::make_shared<Logger>();
             m_statistics = std::make_shared<StatisticsManager>();
-            m_uiManager = std::make_shared<UIManager>();
+            m_ui_manager = std::make_shared<UIManager>();
         }
 
         // Private Copy constructor and copy assignment operator to prevent copying
@@ -28,33 +28,33 @@ namespace moonshine {
         EngineSystems &operator=(const EngineSystems &) = delete;
 
     private:
-        std::shared_ptr<WorkspaceManager> m_workspaceManager;
-        std::shared_ptr<LobbyManager> m_lobbyManager;
+        std::shared_ptr<WorkspaceManager> m_workspace_manager;
+        std::shared_ptr<LobbyManager> m_lobby_manager;
         std::shared_ptr<Logger> m_logger;
         std::shared_ptr<StatisticsManager> m_statistics;
-        std::shared_ptr<UIManager> m_uiManager;
+        std::shared_ptr<UIManager> m_ui_manager;
 
     public:
         // Static method to get the instance of the class
-        static EngineSystems &getInstance() {
+        static EngineSystems &get_instance() {
             static EngineSystems instance; // Guaranteed to be destroyed and instantiated on first use
             return instance;
         }
 
         const std::shared_ptr<WorkspaceManager> &get_workspace_manager() const {
-            return m_workspaceManager;
+            return m_workspace_manager;
         }
 
-        void set_workspace_manager(const std::shared_ptr<WorkspaceManager> &mWorkspaceManager) {
-            m_workspaceManager = mWorkspaceManager;
+        void set_workspace_manager(const std::shared_ptr<WorkspaceManager> &workspace_manager) {
+            m_workspace_manager = workspace_manager;
         }
 
         const std::shared_ptr<LobbyManager> &get_lobby_manager() const {
-            return m_lobbyManager;
+            return m_lobby_manager;
         }
 
-        void set_lobby_manager(const std::shared_ptr<LobbyManager> &mLobbyManager) {
-            m_lobbyManager = mLobbyManager;
+        void set_lobby_manager(const std::shared_ptr<LobbyManager> &lobby_manager) {
+            m_lobby_manager = lobby_manager;
         }
         
         const std::shared_ptr<Logger> &get_logger() const{
@@ -66,11 +66,11 @@ namespace moonshine {
         };
 
         const std::shared_ptr<UIManager> &get_ui_manager() const{
-            return m_uiManager;
+            return m_ui_manager;
         };
         
         void clean_up() {
-            m_workspaceManager->clean_up();
+            m_workspace_manager->clean_up();
         };
     };
 

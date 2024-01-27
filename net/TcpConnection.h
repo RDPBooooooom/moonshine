@@ -29,7 +29,7 @@ namespace moonshine {
         }
 
         tcp::socket &socket() {
-            return socket_;
+            return m_socket;
         }
 
         void start();
@@ -44,18 +44,18 @@ namespace moonshine {
 
     private:
         TcpConnection(boost::asio::io_context &io_context, SafeQueue<boost::json::value> &queue)
-                : socket_(io_context), m_queue(queue) {
+                : m_socket(io_context), m_queue(queue) {
         }
 
         // Function to asynchronously send JSON data
 
 
-        tcp::socket socket_;
+        tcp::socket m_socket;
         bool m_read_header = true;
         uint32_t m_expected_message_length;
         std::array<char, 4> m_header_buffer; // 4 bytes for header
         std::vector<char> m_content_buffer;
-        std::string reply_;
+        std::string m_reply;
         SafeQueue<boost::json::value> &m_queue;
     };
 

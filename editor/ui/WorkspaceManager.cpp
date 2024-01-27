@@ -22,7 +22,7 @@ namespace moonshine {
 
     void WorkspaceManager::draw() {
         ImGui::Begin("Workspace");
-        drawInitModal();
+        draw_init_modal();
 
         ImGui::SeparatorText(m_workspacePath.c_str());
 
@@ -65,16 +65,16 @@ namespace moonshine {
 
     void WorkspaceManager::draw_workspace_items() {
         // Width of a button, adjust to your needs
-        const float buttonSize = 75.0f;
+        const float button_size = 75.0f;
         // Spacing between buttons, adjust to your needs
-        const float buttonSpacing = 10.0f;
+        const float button_spacing = 10.0f;
 
         //Number of buttons per row will be calculated dynamically based on window width
-        int buttonsPerRow = ImGui::GetContentRegionAvail().x / (buttonSize + buttonSpacing);
-        buttonsPerRow = std::max(buttonsPerRow, 1); // Make sure it's at least 1 to avoid division by zero
+        int buttons_per_row = ImGui::GetContentRegionAvail().x / (button_size + button_spacing);
+        buttons_per_row = std::max(buttons_per_row, 1); // Make sure it's at least 1 to avoid division by zero
 
         int counter = 0;
-        
+
         std::shared_ptr<workspace_object> to_delete = nullptr;
 
         for (const auto &workspace_object: m_available_imports) {
@@ -82,9 +82,10 @@ namespace moonshine {
             if (ImGui::ImageButton((workspace_object->name + "##" + std::to_string(counter)).c_str(),
                                    workspace_object->has_thumbnail ? workspace_object->m_imGui_thumbnail_DS
                                                                    : m_imGui_placeHolder_DS,
-                                   ImVec2(buttonSize, buttonSize))) {
+                                   ImVec2(button_size, button_size))) {
                 Transform transform = {};
-                transform.position = m_camera.getTransform()->position + m_camera.getTransform()->getForward() * -5.0f;
+                transform.position = m_camera.get_transform()->position +
+                        m_camera.get_transform()->get_forward_vector() * -5.0f;
 
                 import_object(m_workspacePath + "\\" + workspace_object->path, workspace_object->file, transform);
             }
@@ -102,7 +103,7 @@ namespace moonshine {
 
             // handling wrapping
             counter++;
-            if (counter % buttonsPerRow != 0) {
+            if (counter % buttons_per_row != 0) {
                 ImGui::SameLine();
             }
         }
@@ -110,9 +111,9 @@ namespace moonshine {
         remove_workspace_object(to_delete);
     }
 
-    void WorkspaceManager::drawInitModal() {
-        if (m_workspacePath.empty() && !m_workspaceModalActive) {
-            m_workspaceModalActive = true;
+    void WorkspaceManager::draw_init_modal() {
+        if (m_workspacePath.empty() && !m_workspace_modal_active) {
+            m_workspace_modal_active = true;
             ImGui::OpenPopup("Select workspace");
             m_inputHandler->disable();
 
@@ -143,7 +144,7 @@ namespace moonshine {
 
             if (ImGui::Button("Ok")) {
                 if (!m_workspacePath.empty()) {
-                    m_workspaceModalActive = false;
+                    m_workspace_modal_active = false;
                     m_inputHandler->enable();
                     ImGui::CloseCurrentPopup();
                     MoonshineApp::APP_SETTINGS.LATEST_WORKSPACE = m_workspacePath;
@@ -184,7 +185,7 @@ namespace moonshine {
     }
 
     void WorkspaceManager::import_object(import_data &data) {
-        if (Scene::getCurrentScene().get_by_id(data.uuid) != nullptr ||
+        if (Scene::get_current_scene().get_by_id(data.uuid) != nullptr ||
             std::find(m_generated_ids.begin(), m_generated_ids.end(), data.uuid) != m_generated_ids.end()) {
             return;
         }
@@ -206,53 +207,53 @@ namespace moonshine {
             }
             m_generated_ids.push_back(data.uuid);
 
-            std::string pathInWorkspace = FileUtils::get_relative_path(data.path, m_workspacePath);
-            EngineSystems::getInstance().get_lobby_manager()->replicateAdd(pathInWorkspace, data.file,
-                                                                           to_string(data.uuid), data.transform);
+            std::string path_in_workspace = FileUtils::get_relative_path(data.path, m_workspacePath);
+            EngineSystems::get_instance().get_lobby_manager()->replicate_add(path_in_workspace, data.file,
+                                                                             to_string(data.uuid), data.transform);
 
-            std::vector<std::shared_ptr<SceneObject>> toLoad = GltfLoader::load_gltf(data.path, data.file,
-                                                                                     data.uuid);
+            std::vector<std::shared_ptr<SceneObject>> to_load = GltfLoader::load_gltf(data.path, data.file,
+                                                                                      data.uuid);
 
-            for (const auto &item: toLoad) {
+            for (const auto &item: to_load) {
                 {
-                    auto lock = Scene::getCurrentScene().getLock();
+                    auto lock = Scene::get_current_scene().get_lock();
                     item->init(m_device, m_materialManager);
                 }
 
-                if (!data.name.empty()) item->setName(data.name);
-                if (data.overwrite_pos) item->getTransform()->position = data.transform.position;
-                if (data.overwrite_rot) item->getTransform()->rotation = data.transform.rotation;
-                if (data.overwrite_scale) item->getTransform()->scale = data.transform.scale;
+                if (!data.name.empty()) item->set_name(data.name);
+                if (data.overwrite_pos) item->get_transform()->position = data.transform.position;
+                if (data.overwrite_rot) item->get_transform()->rotation = data.transform.rotation;
+                if (data.overwrite_scale) item->get_transform()->scale = data.transform.scale;
 
-                Scene::getCurrentScene().add_object(item);
+                Scene::get_current_scene().add_object(item);
             }
 
         } catch (const std::runtime_error &e) {
-            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Failed to import gltf ({})", e.what());
+            EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
+                                                              "Failed to import gltf ({})", e.what());
         } catch (const std::exception &e) {
-            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Failed to import gltf ({})", e.what());
+            EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
+                                                              "Failed to import gltf ({})", e.what());
         }
     }
 
     void WorkspaceManager::save_scene() {
-        auto &scene = Scene::getCurrentScene();
+        auto &scene = Scene::get_current_scene();
 
         std::ofstream output_file(m_workspacePath + "\\scene.json");
         if (output_file.is_open()) {
             output_file << scene.serialize();
             output_file.close();
-            EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
-                                                             "Saved scene.json");
+            EngineSystems::get_instance().get_logger()->debug(LoggerType::Editor,
+                                                              "Saved scene.json");
         } else {
-            EngineSystems::getInstance().get_logger()->error(LoggerType::Editor,
-                                                             "Unable to save scene.json!");
+            EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
+                                                              "Unable to save scene.json!");
         }
     }
 
     void WorkspaceManager::load_workspace_scene() {
-        auto logger = EngineSystems::getInstance().get_logger();
+        auto logger = EngineSystems::get_instance().get_logger();
         try {
             std::ifstream scene_file(m_workspacePath + "\\scene.json");
             if (scene_file.is_open()) {
@@ -292,19 +293,19 @@ namespace moonshine {
 
         for (const auto &item: objects) {
 
-            auto sceneObject = item.as_object();
+            auto scene_object = item.as_object();
 
             import_data data = {};
 
-            data.path = m_workspacePath + "\\" + sceneObject["path"].as_string().c_str();
-            data.file = sceneObject["filename"].as_string().c_str();
-            data.uuid = gen(sceneObject["objectId"].as_string().c_str());
-            data.name = sceneObject["name"].as_string().c_str();
+            data.path = m_workspacePath + "\\" + scene_object["path"].as_string().c_str();
+            data.file = scene_object["filename"].as_string().c_str();
+            data.uuid = gen(scene_object["objectId"].as_string().c_str());
+            data.name = scene_object["name"].as_string().c_str();
 
             data.overwrite_pos = true;
             data.overwrite_rot = true;
             data.overwrite_scale = true;
-            data.transform.deserialize(sceneObject["transform"].as_object());
+            data.transform.deserialize(scene_object["transform"].as_object());
 
             import_object(data);
         }
@@ -339,12 +340,12 @@ namespace moonshine {
         obj->name = std::move(name);
 
         if (std::filesystem::exists(m_workspacePath + "\\" + obj->path + "thumbnail.png")) {
-            auto lock = Scene::getCurrentScene().getLock();
+            auto lock = Scene::get_current_scene().get_lock();
             obj->m_thumbnail_image = std::make_unique<TextureImage>(
                     (m_workspacePath + "\\" + obj->path + std::string("thumbnail.png")).c_str(), &m_device,
-                    m_device.getCommandPool());
-            obj->m_imGui_thumbnail_DS = ImGui_ImplVulkan_AddTexture(m_previewSampler->getVkSampler(),
-                                                                    obj->m_thumbnail_image->getImageView(),
+                    m_device.get_command_pool());
+            obj->m_imGui_thumbnail_DS = ImGui_ImplVulkan_AddTexture(m_preview_sampler->get_vk_sampler(),
+                                                                    obj->m_thumbnail_image->get_image_view(),
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             obj->has_thumbnail = true;
         }
@@ -352,24 +353,24 @@ namespace moonshine {
         return obj;
     }
 
-    void WorkspaceManager::remove_workspace_object(std::shared_ptr<workspace_object> &toDelete) {
-        if(toDelete == nullptr) return;
+    void WorkspaceManager::remove_workspace_object(std::shared_ptr<workspace_object> &to_delete) {
+        if (to_delete == nullptr) return;
         {
             std::unique_lock<std::mutex> lock(m_available_imports_mtx);
-            m_available_imports.erase(std::remove(m_available_imports.begin(), m_available_imports.end(), toDelete),
+            m_available_imports.erase(std::remove(m_available_imports.begin(), m_available_imports.end(), to_delete),
                                       m_available_imports.end());
         }
-        
+
         // remove folder in workspace
-        for (auto &dir_entry: std::filesystem::directory_iterator(toDelete->path)) {
+        for (auto &dir_entry: std::filesystem::directory_iterator(to_delete->path)) {
             std::filesystem::remove(dir_entry);
         }
-        std::filesystem::remove(toDelete->path);
+        std::filesystem::remove(to_delete->path);
 
     }
 
     void WorkspaceManager::handle_workspace_import(std::string &path) {
-        auto logger = EngineSystems::getInstance().get_logger();
+        auto logger = EngineSystems::get_instance().get_logger();
 
         bool found_gltf = false;
         std::string name;
@@ -434,7 +435,8 @@ namespace moonshine {
                 const auto &path = dir_entry.path();
                 if (std::filesystem::is_regular_file(path)) {
                     std::filesystem::rename(path,
-                                            m_workspacePath + "\\" + (destination / path.filename()).string()); // Move files from temp to final destination
+                                            m_workspacePath + "\\" + (destination /
+                                                                      path.filename()).string()); // Move files from temp to final destination
                 }
             }
 
@@ -482,6 +484,6 @@ namespace moonshine {
     void WorkspaceManager::clean_up() {
         m_available_imports.clear();
         m_placeholder_image = nullptr;
-        m_previewSampler = nullptr;
+        m_preview_sampler = nullptr;
     }
 } // moonshine

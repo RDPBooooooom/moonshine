@@ -60,22 +60,22 @@ namespace moonshine {
     class StatisticsManager {
 
     private:
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> frame_start;
-        std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> frame_end;
-        std::chrono::high_resolution_clock::time_point last_update = std::chrono::high_resolution_clock::now();
+        std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> m_frame_start;
+        std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> m_frame_end;
+        std::chrono::high_resolution_clock::time_point m_last_update = std::chrono::high_resolution_clock::now();
 
-        frame_data current;
-        frame_data last;
+        frame_data m_current;
+        frame_data m_last;
 
-        std::mutex networking_mutex;
-        networking_data sent_data = {};
-        networking_data received_data = {};
+        std::mutex m_networking_mutex;
+        networking_data m_sent_data = {};
+        networking_data m_received_data = {};
 
 
     public:
-        void startFrame();
+        void start_frame();
 
-        void endFrame();
+        void end_frame();
 
         void draw();
 

@@ -29,11 +29,11 @@ namespace moonshine {
 
     private:
 
-        std::unordered_map<std::string, element_locker> uiElements;
-        std::mutex uiMap;
+        std::unordered_map<std::string, element_locker> m_ui_elements;
+        std::mutex m_ui_map;
 
-        float since_last_updated = 0;
-        int rate_limit = 150;
+        float m_since_last_updated = 0;
+        int m_rate_limit = 150;
 
     public:
 

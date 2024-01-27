@@ -12,13 +12,13 @@
 
 namespace moonshine {
 
-    inline uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, Device *device) {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(device->getVkPhysicalDevice(), &memProperties);
+    inline uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties, Device *device) {
+        VkPhysicalDeviceMemoryProperties mem_properties;
+        vkGetPhysicalDeviceMemoryProperties(device->get_vk_physical_device(), &mem_properties);
 
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((typeFilter & (1 << i)) &&
-                (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        for (uint32_t i = 0; i < mem_properties.memoryTypeCount; i++) {
+            if ((type_filter & (1 << i)) &&
+                (mem_properties.memoryTypes[i].propertyFlags & properties) == properties) {
                 return i;
             }
         }
@@ -27,25 +27,25 @@ namespace moonshine {
     }
 
     inline void
-    createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                 VkDeviceMemory &bufferMemory, Device *device) {
-        VkBufferCreateInfo bufferInfo{};
-        bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = size;
-        bufferInfo.usage = usage;
-        bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                  VkDeviceMemory &buffer_memory, Device *device) {
+        VkBufferCreateInfo buffer_info{};
+        buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+        buffer_info.size = size;
+        buffer_info.usage = usage;
+        buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        if (vkCreateBuffer(device->getVkDevice(), &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+        if (vkCreateBuffer(device->get_vk_device(), &buffer_info, nullptr, &buffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to create buffer!");
         }
 
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(device->getVkDevice(), buffer, &memRequirements);
+        VkMemoryRequirements mem_requirements;
+        vkGetBufferMemoryRequirements(device->get_vk_device(), buffer, &mem_requirements);
 
-        VkMemoryAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties, device);
+        VkMemoryAllocateInfo alloc_info{};
+        alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        alloc_info.allocationSize = mem_requirements.size;
+        alloc_info.memoryTypeIndex = find_memory_type(mem_requirements.memoryTypeBits, properties, device);
 
         /*
          * TODO: vkAllocate should not me called because of maxMemoryAllocationCount. 
@@ -53,30 +53,30 @@ namespace moonshine {
          * You need to handles this either by yourself or use something like
          * https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
         */
-        if (vkAllocateMemory(device->getVkDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+        if (vkAllocateMemory(device->get_vk_device(), &alloc_info, nullptr, &buffer_memory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate buffer memory!");
         }
 
-        vkBindBufferMemory(device->getVkDevice(), buffer, bufferMemory, 0);
+        vkBindBufferMemory(device->get_vk_device(), buffer, buffer_memory, 0);
     }
 
     inline void
-    copyBuffer(VkBuffer &srcBuffer, VkBuffer &dstBuffer, VkDeviceSize size, Device *device,
-               VkCommandPool vkCommandPool) {
-        VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, vkCommandPool);
+    copy_buffer(VkBuffer &src_buffer, VkBuffer &dst_buffer, VkDeviceSize size, Device *device,
+                VkCommandPool vk_command_pool) {
+        VkCommandBuffer commandBuffer = begin_single_time_commands(device, vk_command_pool);
 
-        VkBufferCopy copyRegion{};
-        copyRegion.srcOffset = 0; // Optional
-        copyRegion.dstOffset = 0; // Optional
-        copyRegion.size = size;
-        vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+        VkBufferCopy copy_region{};
+        copy_region.srcOffset = 0; // Optional
+        copy_region.dstOffset = 0; // Optional
+        copy_region.size = size;
+        vkCmdCopyBuffer(commandBuffer, src_buffer, dst_buffer, 1, &copy_region);
 
-        endSingleTimeCommands(device, commandBuffer, vkCommandPool);
+        end_single_time_commands(device, commandBuffer, vk_command_pool);
     }
 
-    inline void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, Device *device,
-                                  VkCommandPool vkCommandPool) {
-        VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, vkCommandPool);
+    inline void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, Device *device,
+                                     VkCommandPool vk_command_pool) {
+        VkCommandBuffer command_buffer = begin_single_time_commands(device, vk_command_pool);
 
         VkBufferImageCopy region{};
         region.bufferOffset = 0;
@@ -96,7 +96,7 @@ namespace moonshine {
         };
 
         vkCmdCopyBufferToImage(
-                commandBuffer,
+                command_buffer,
                 buffer,
                 image,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -104,7 +104,7 @@ namespace moonshine {
                 &region
         );
 
-        endSingleTimeCommands(device, commandBuffer, vkCommandPool);
+        end_single_time_commands(device, command_buffer, vk_command_pool);
     }
 }
 

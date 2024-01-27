@@ -5,8 +5,8 @@
 
 namespace moonshine {
     
-    double Time::currentFrame = 0.0;
-    double Time::lastFrame = 0.0;
-    float Time::deltaTime = 0.0;
+    double Time::s_current_frame = 0.0;
+    double Time::s_last_frame = 0.0;
+    float Time::s_delta_time = 0.0;
     
 }

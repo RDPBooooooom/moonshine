@@ -16,33 +16,36 @@ namespace moonshine {
     class SceneGraph : public UIWindow {
 
     private:
-        std::shared_ptr<SceneObject> m_selectedGameObject;
-        std::shared_ptr<InputHandler> m_inputHandler;
+        std::shared_ptr<SceneObject> m_selected_game_object;
+        std::shared_ptr<InputHandler> m_input_handler;
 
-        bool m_openPopup = false;
-        std::shared_ptr<SceneObject> m_popupItem = nullptr;
-        
-        std::shared_ptr<SceneObject> m_deleteItem = nullptr;
-        
+        bool m_open_popup = false;
+        std::shared_ptr<SceneObject> m_popup_item = nullptr;
+
+        std::shared_ptr<SceneObject> m_delete_item = nullptr;
+
         Camera &m_camera;
-        
-        int focus_selected_input_handle = -1;
+
+        int m_focus_selected_input_handle = -1;
 
     public:
-        SceneGraph(std::shared_ptr<InputHandler>& inputHandler, Camera &camera);
+        SceneGraph(std::shared_ptr<InputHandler> &inputHandler, Camera &camera);
+
         ~SceneGraph() override;
 
         void draw() override;
 
         void focus_selected(bool isReleased);
-        std::shared_ptr<SceneObject> getSelected(){
-            return m_selectedGameObject;
+
+        std::shared_ptr<SceneObject> getSelected() {
+            return m_selected_game_object;
         }
-        
+
 
     private:
-        void showPopup(std::shared_ptr<SceneObject> &item);
-        void handleDelete(Scene& scene, std::shared_ptr<SceneObject> item);
+        void show_popup(std::shared_ptr<SceneObject> &item);
+
+        void handle_delete(Scene &scene, std::shared_ptr<SceneObject> item);
 
     };
 

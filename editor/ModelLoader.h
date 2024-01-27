@@ -18,7 +18,7 @@ namespace moonshine {
 
     public:
         
-        static bool loadASCIIModel(tinygltf::Model &model, const char* filepath);
+        static bool load_ascii_model(tinygltf::Model &model, const char* filepath);
     };
 
 } // moonshine

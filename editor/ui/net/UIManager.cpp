@@ -50,20 +50,20 @@ namespace boost::json {
 namespace moonshine {
     void UIManager::update() {
 
-        since_last_updated += Time::deltaTime;
+        m_since_last_updated += Time::s_delta_time;
 
-        if (since_last_updated > 0.4f) {
-            since_last_updated = 0;
+        if (m_since_last_updated > 0.4f) {
+            m_since_last_updated = 0;
 
-            auto lock = std::scoped_lock<std::mutex>(uiMap);
+            auto lock = std::scoped_lock<std::mutex>(m_ui_map);
             auto end = std::chrono::system_clock::now();
 
-            for (std::pair<const std::basic_string<char>, element_locker> &item: uiElements) {
+            for (std::pair<const std::basic_string<char>, element_locker> &item: m_ui_elements) {
                 auto duration = end - item.second.last_update;
                 auto duration_since_update = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
                 if (item.second.lock && duration_since_update.count() > 1000) {
-                    EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor,
-                                                                     "{} was unlocked", item.first);
+                    EngineSystems::get_instance().get_logger()->debug(LoggerType::Editor,
+                                                                      "{} was unlocked", item.first);
                     item.second.lock = false;
                 }
             }
@@ -83,23 +83,23 @@ namespace moonshine {
     }
 
     void UIManager::register_field(std::string &label, element_locker locker, bool notify) {
-        auto lock = std::scoped_lock<std::mutex>(uiMap);
-        if (uiElements.find(label) != uiElements.end()) {
+        auto lock = std::scoped_lock<std::mutex>(m_ui_map);
+        if (m_ui_elements.find(label) != m_ui_elements.end()) {
             register_known_field(label, locker);
         } else {
-            uiElements[label] = locker;
+            m_ui_elements[label] = locker;
         }
 
-        if (notify && check_rate_limit(uiElements[label])) {
-            EngineSystems::getInstance().get_lobby_manager()->replicateUi(label, uiElements[label]);
+        if (notify && check_rate_limit(m_ui_elements[label])) {
+            EngineSystems::get_instance().get_lobby_manager()->replicate_ui(label, m_ui_elements[label]);
         }
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Locked {}", label);
+        EngineSystems::get_instance().get_logger()->debug(LoggerType::Editor, "Locked {}", label);
     }
 
     void UIManager::register_known_field(const std::string &label, element_locker locker) {
 
-        element_locker &current = uiElements.at(label);
+        element_locker &current = m_ui_elements.at(label);
 
         if (current.owner == self && current.lock) return;
 
@@ -108,14 +108,14 @@ namespace moonshine {
                 current.last_update = locker.last_update;
             }
         } else {
-            uiElements[label] = locker;
+            m_ui_elements[label] = locker;
         }
     }
 
     bool UIManager::is_locked(const std::string &label) {
-        if (uiElements.find(label) == uiElements.end()) return false;
+        if (m_ui_elements.find(label) == m_ui_elements.end()) return false;
 
-        element_locker locker = uiElements.at(label);
+        element_locker locker = m_ui_elements.at(label);
 
         return locker.lock && locker.owner != self;
     }
@@ -129,9 +129,9 @@ namespace moonshine {
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - locker.last_replication);
 
-        EngineSystems::getInstance().get_logger()->debug(LoggerType::Editor, "Replication duration {}", std::to_string(duration.count()));
+        EngineSystems::get_instance().get_logger()->debug(LoggerType::Editor, "Replication duration {}", std::to_string(duration.count()));
         
-        return duration.count() > rate_limit;
+        return duration.count() > m_rate_limit;
     }
 
 } // moonshine

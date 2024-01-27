@@ -12,8 +12,10 @@ namespace moonshine {
 
     struct PipelineConfigInfo {
         PipelineConfigInfo() = default;
-        PipelineConfigInfo(const PipelineConfigInfo&) = delete;
-        PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
+
+        PipelineConfigInfo(const PipelineConfigInfo &) = delete;
+
+        PipelineConfigInfo &operator=(const PipelineConfigInfo &) = delete;
 
         VkPipelineViewportStateCreateInfo viewportInfo;
         VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
@@ -33,33 +35,32 @@ namespace moonshine {
     class Pipeline {
 
     private:
-        
-        Window* m_window;
-        Device* m_device;
-        
-        VkShaderModule m_vertShaderModule;
-        VkShaderModule m_fragShaderModule;
+        Window *m_window;
+        Device *m_device;
 
-        VkPipeline m_vkGraphicsPipeline;
+        VkShaderModule m_vert_shader_module;
+        VkShaderModule m_frag_shader_module;
+
+        VkPipeline m_vk_graphics_pipeline;
         
     private:
-        
-        void createGraphicsPipeline(const std::string &vertFilepath, const std::string &fragFilepath,
-                                    const PipelineConfigInfo &configInfo);
 
-        VkShaderModule createShaderModule(const std::vector<char> &code);
-        
+        void create_graphics_pipeline(const std::string &vert_filepath, const std::string &frag_filepath,
+                                      const PipelineConfigInfo &config_info);
+
+        VkShaderModule create_shader_module(const std::vector<char> &code);
+
     public:
-        Pipeline(Device &device, std::string vertFilepath, std::string fragFilepath,
-                 const PipelineConfigInfo &configInfo);
+        Pipeline(Device &device, std::string vert_filepath, std::string frag_filepath,
+                 const PipelineConfigInfo &config_info);
 
         ~Pipeline();
 
-        VkPipeline getGraphicsPipeline() { return m_vkGraphicsPipeline; }
-        
-        static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
+        VkPipeline get_graphics_pipeline() { return m_vk_graphics_pipeline; }
 
-        void bind(VkCommandBuffer commandBuffer);
+        static void default_pipeline_config_info(PipelineConfigInfo &config_info);
+
+        void bind(VkCommandBuffer command_buffer);
     };
 
 } // moonshine

@@ -18,15 +18,15 @@ namespace moonshine {
     private:
         Window &m_window;
         Device &m_device;
-        std::unique_ptr<SwapChain> m_swapChain;
-        uint32_t m_currentImageIndex{0};
-        bool isFrameStarted = false;
+        std::unique_ptr<SwapChain> m_swap_chain;
+        uint32_t m_current_image_index{0};
+        bool m_is_frame_started = false;
 
-        std::vector<VkCommandBuffer> m_vkCommandBuffers;
+        std::vector<VkCommandBuffer> m_vk_command_buffers;
 
     private:
-        
-        void createCommandBuffers();
+
+        void create_command_buffers();
 
     public:
 
@@ -34,30 +34,30 @@ namespace moonshine {
 
         ~Renderer();
 
-        VkCommandBuffer beginFrame();
+        VkCommandBuffer begin_frame();
 
-        void endFrame();
+        void end_frame();
 
-        void beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        void begin_swap_chain_render_pass(VkCommandBuffer command_buffer);
 
-        void endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+        void end_swap_chain_render_pass(VkCommandBuffer command_buffer);
 
-        bool isFrameInProgress() const { return isFrameStarted; }
+        bool is_frame_in_progress() const { return m_is_frame_started; }
 
-        VkCommandBuffer getCurrentCommandBuffer() const {
-            assert(isFrameStarted && "Cannot get command buffer when frame is not in progress");
-            return m_vkCommandBuffers[m_currentImageIndex];
+        VkCommandBuffer get_current_command_buffer() const {
+            assert(m_is_frame_started && "Cannot get command buffer when frame is not in progress");
+            return m_vk_command_buffers[m_current_image_index];
         }
 
-        VkRenderPass getSwapChainRenderPass() const { return m_swapChain->getRenderPass(); }
+        VkRenderPass get_swap_chain_render_pass() const { return m_swap_chain->get_render_pass(); }
 
-        VkExtent2D getSwapChainExtent() { return m_swapChain->getSwapChainExtent();}
+        VkExtent2D get_swap_chain_extent() { return m_swap_chain->get_swap_chain_extent(); }
 
-        void recreateSwapChain();
+        void recreate_swap_chain();
 
-        void freeCommandBuffers();
-        
-        uint32_t getFrameIndex() { return m_currentImageIndex; }
+        void free_command_buffers();
+
+        uint32_t get_frame_index() { return m_current_image_index; }
     };
 
 } // moonshine

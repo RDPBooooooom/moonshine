@@ -68,54 +68,53 @@ namespace moonshine {
         Device m_device = Device(m_window);
         Renderer m_renderer = Renderer(m_window, m_device);
 
-        std::shared_ptr<DescriptorPool> globalPool{};
+        std::shared_ptr<DescriptorPool> m_global_pool{};
         std::shared_ptr<MaterialManager> m_materialManager;
         VkDescriptorPool m_imGuiPool;
 
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
         std::vector<std::unique_ptr<Buffer>> m_fragUBO;
 
-        Scene scene;
+        Scene m_scene;
         Camera m_camera;
 
         std::unique_ptr<moonshine::SceneGraph> m_sceneGraph;
-        
+
     public:
 
         MoonshineApp();
 
         void run();
 
-        static void loadSettings();
+        static void load_settings();
 
-        static void saveSettings();
+        static void save_settings();
 
     private:
 
-        void initVulkan();
+        void init_vulkan();
 
-        void mainLoop();
-
-
-        void updateUniformBuffer(uint32_t currentImage);
+        void main_loop();
+        
+        void update_uniform_buffer(uint32_t currentImage);
 
         void cleanup() {
             m_materialManager->clean_up();
-            EngineSystems::getInstance().clean_up();
+            EngineSystems::get_instance().clean_up();
 
-            vkDestroyDescriptorPool(m_device.getVkDevice(), m_imGuiPool, nullptr);
+            vkDestroyDescriptorPool(m_device.get_vk_device(), m_imGuiPool, nullptr);
             ImGui_ImplVulkan_Shutdown();
             ImGui_ImplGlfw_Shutdown();
             ImGui::DestroyContext();
 
-            saveSettings();
+            save_settings();
         }
 
-        void initImGui();
+        void init_im_gui();
 
-        void createDockSpace();
+        void create_dock_space();
 
-        void showInspector();
+        void show_inspector();
 
     };
 

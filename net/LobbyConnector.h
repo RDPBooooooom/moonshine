@@ -26,54 +26,54 @@ namespace moonshine {
 
     private:
 
-        boost::asio::io_context io_service;
-        tcp::resolver resolver;
-        TcpConnection::pointer connection;
+        boost::asio::io_context m_io_service;
+        tcp::resolver m_resolver;
+        TcpConnection::pointer m_connection;
         bool m_isConnected = false;
         SafeQueue<boost::json::value> m_messageQueue;
 
-        bool threadStop = false;
-        std::thread thread;
+        bool m_thread_stop = false;
+        std::thread m_thread;
 
-        std::thread ioContextThread;
+        std::thread m_io_context_thread;
 
-        std::mutex hostMutex;
-        std::vector<std::shared_ptr<Host>> currentHosts;
-        int item_current_idx = 0;
+        std::mutex m_host_mutex;
+        std::vector<std::shared_ptr<Host>> m_current_hosts;
+        int m_item_current_idx = 0;
 
     public:
 
-        LobbyConnector() : io_service(), resolver(io_service) {
-            connection =
-                    TcpConnection::create(io_service, m_messageQueue);
+        LobbyConnector() : m_io_service(), m_resolver(m_io_service) {
+            m_connection =
+                    TcpConnection::create(m_io_service, m_messageQueue);
         }
 
         ~LobbyConnector() {
-            if (thread.joinable()) {
-                thread.join();
+            if (m_thread.joinable()) {
+                m_thread.join();
             }
-            if (ioContextThread.joinable()) {
-                ioContextThread.join();
+            if (m_io_context_thread.joinable()) {
+                m_io_context_thread.join();
             }
         }
 
-        void handleRequests();
+        void handle_requests();
 
-        void drawHosts();
+        void draw_hosts();
 
-        bool isConnected() const {
+        bool is_connected() const {
             return m_isConnected;
         }
 
         void try_connect();
 
-        void registerAsHost(const std::string& name, int port);
+        void register_as_host(const std::string& name, int port);
 
-        void receiveHosts();
+        void receive_hosts();
 
         void disconnect();
 
-        std::shared_ptr<LobbyConnector::Host> getSelectedHost();
+        std::shared_ptr<LobbyConnector::Host> get_selected_host();
         
     private:
         void connect();

@@ -9,39 +9,54 @@
 #include "../graphics/Device.h"
 
 namespace moonshine {
-    
-    inline VkCommandBuffer beginSingleTimeCommands(Device *device, VkCommandPool commandPool) {
-        VkCommandBufferAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        allocInfo.commandPool = commandPool;
-        allocInfo.commandBufferCount = 1;
 
-        VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(device->getVkDevice(), &allocInfo, &commandBuffer);
+    inline VkCommandBuffer begin_single_time_commands(Device * device, VkCommandPool
+    command_pool) {
+    VkCommandBufferAllocateInfo alloc_info{};
+    alloc_info.
+    sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    alloc_info.
+    level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    alloc_info.
+    commandPool = command_pool;
+    alloc_info.
+    commandBufferCount = 1;
 
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    VkCommandBuffer command_buffer;
+    vkAllocateCommandBuffers(device
+    ->
 
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    get_vk_device(), &alloc_info, &command_buffer
 
-        return commandBuffer;
-    }
+    );
 
-    inline void endSingleTimeCommands(Device *device, VkCommandBuffer commandBuffer, VkCommandPool vkCommandPool) {
-        vkEndCommandBuffer(commandBuffer);
+    VkCommandBufferBeginInfo begin_info{};
+    begin_info.
+    sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.
+    flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
+    vkBeginCommandBuffer(command_buffer, &begin_info
+    );
 
-        vkQueueSubmit(device->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-        vkQueueWaitIdle(device->getGraphicsQueue());
+    return
+    command_buffer;
+}
 
-        vkFreeCommandBuffers(device->getVkDevice(), vkCommandPool, 1, &commandBuffer);
-    }
+inline void end_single_time_commands(Device *device, VkCommandBuffer command_buffer, VkCommandPool vk_command_pool) {
+    vkEndCommandBuffer(command_buffer);
+
+    VkSubmitInfo submit_info{};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &command_buffer;
+
+    vkQueueSubmit(device->get_graphics_queue(), 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(device->get_graphics_queue());
+
+    vkFreeCommandBuffers(device->get_vk_device(), vk_command_pool, 1, &command_buffer);
+}
+
 }
 
 #endif //MOONSHINE_COMMANDBUFFERUTILS_H

@@ -16,43 +16,43 @@ namespace moonshine {
     private:
         Window m_window;
 
-        VkInstance m_vkInstance;
-        VkSurfaceKHR m_vkSurface;
+        VkInstance m_vk_instance;
+        VkSurfaceKHR m_vk_surface;
 
-        VkDebugUtilsMessengerEXT m_debugMessenger;
+        VkDebugUtilsMessengerEXT m_debug_messenger;
 
-        VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-        VkDevice m_vkDevice;
+        VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
+        VkDevice m_vk_device;
 
-        VkQueue m_vkGraphicsQueue;
-        int32_t m_graphicsQueueFamily;
-        VkQueue m_vkPresentQueue;
-        int32_t m_presentQueueFamily;
+        VkQueue m_vk_graphics_queue;
+        int32_t m_graphics_queue_family;
+        VkQueue m_vk_present_queue;
+        int32_t m_present_queue_family;
 
-        VkCommandPool m_vkCommandPool;
+        VkCommandPool m_vk_command_pool;
 
     private:
 
-        void createInstance();
+        void create_instance();
 
-        std::vector<const char *> getRequiredExtensions();
+        std::vector<const char *> get_required_extensions();
 
-        bool checkGLFWCompatability(std::vector<const char *> glfwExtensions, uint32_t extensionCount,
-                                    std::vector<VkExtensionProperties> availableExtensions);
+        bool check_glfw_compatability(std::vector<const char *> glfw_extensions, uint32_t extension_count,
+                                      std::vector<VkExtensionProperties> available_extensions);
 
-        void pickPhysicalDevice();
+        void pick_physical_device();
 
-        int rateDeviceSuitability(VkPhysicalDevice device);
+        int rate_device_suitability(VkPhysicalDevice device);
 
-        bool checkDeviceExtensionSupport(VkPhysicalDevice device);
+        bool check_device_extension_support(VkPhysicalDevice device);
 
-        void createLogicalDevice();
+        void create_logical_device();
 
-        void createCommandPool();
+        void create_command_pool();
 
-        VkCommandBuffer beginSingleTimeCommands();
+        VkCommandBuffer begin_single_time_commands();
 
-        void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+        void end_single_time_commands(VkCommandBuffer command_buffer);
 
     public:
         Device(Window &window);
@@ -67,40 +67,41 @@ namespace moonshine {
 
         Device &operator=(Device &&) = delete;
 
-        VkInstance getVkInstance() { return m_vkInstance; }
+        VkInstance get_vk_instance() { return m_vk_instance; }
 
-        VkDevice getVkDevice() { return m_vkDevice; }
+        VkDevice get_vk_device() { return m_vk_device; }
 
-        VkPhysicalDevice getVkPhysicalDevice() { return m_physicalDevice; }
+        VkPhysicalDevice get_vk_physical_device() { return m_physical_device; }
 
-        VkSurfaceKHR getVkSurface() { return m_vkSurface; }
+        VkSurfaceKHR get_vk_surface() { return m_vk_surface; }
 
-        VkQueue getGraphicsQueue() { return m_vkGraphicsQueue; }
-        
-        int32_t getGraphicsQueueFamily() { return m_graphicsQueueFamily; }
+        VkQueue get_graphics_queue() { return m_vk_graphics_queue; }
 
-        VkQueue getPresentQueue() { return m_vkPresentQueue; }
+        int32_t get_graphics_queue_family() { return m_graphics_queue_family; }
 
-        int32_t getPresentQueueFamily() { return m_presentQueueFamily; }
+        VkQueue get_present_queue() { return m_vk_present_queue; }
 
-        VkCommandPool getCommandPool() { return m_vkCommandPool; }
+        int32_t get_present_queue_family() { return m_present_queue_family; }
 
-        uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+        VkCommandPool get_command_pool() { return m_vk_command_pool; }
+
+        uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties);
 
         VkPhysicalDeviceProperties properties;
 
         void
-        createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
-                     VkDeviceMemory &bufferMemory);
-        
-        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer &buffer,
+                      VkDeviceMemory &buffer_memory);
+
+        void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 
         VkFormat
-        findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
-                            VkFormatFeatureFlags features);
+        find_supported_format(const std::vector<VkFormat> &candidates, VkImageTiling tiling,
+                              VkFormatFeatureFlags features);
 
-        void createImageWithInfo(const VkImageCreateInfo &imageInfo, VkMemoryPropertyFlags properties, VkImage &image,
-                                 VkDeviceMemory &imageMemory);
+        void
+        create_image_with_info(const VkImageCreateInfo &image_info, VkMemoryPropertyFlags properties, VkImage &image,
+                               VkDeviceMemory &image_memory);
     };
 
 } // moonshine
