@@ -36,9 +36,13 @@ namespace moonshine {
                     path = "/";
                 }
             }
+            IGFD::FileDialogConfig config{};
+            config.path = path;
+            config.countSelectionMax = 1;
+            config.flags = ImGuiFileDialogFlags_Modal;
+
             ImGuiFileDialog::Instance()->OpenDialog("ChooseImport", "Choose a file to import", nullptr,
-                                                    path, 1,
-                                                    nullptr, ImGuiFileDialogFlags_Modal);
+                                                    config);
         }
 
         ImGui::SameLine();
@@ -85,7 +89,7 @@ namespace moonshine {
                                    ImVec2(button_size, button_size))) {
                 Transform transform = {};
                 transform.position = m_camera.get_transform()->position +
-                        m_camera.get_transform()->get_forward_vector() * -5.0f;
+                                     m_camera.get_transform()->get_forward_vector() * -5.0f;
 
                 import_object(m_workspacePath + "\\" + workspace_object->path, workspace_object->file, transform);
             }
@@ -127,9 +131,13 @@ namespace moonshine {
         if (ImGui::BeginPopupModal("Select workspace", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 
             if (ImGui::Button("Select folder")) {
+                IGFD::FileDialogConfig config{};
+                config.path = m_workspacePath;
+                config.countSelectionMax = 1;
+                config.flags = ImGuiFileDialogFlags_Modal;
+
                 ImGuiFileDialog::Instance()->OpenDialog("ChooseDirDlgKey", "Choose a workspace directory ", nullptr,
-                                                        m_workspacePath, 1,
-                                                        nullptr, ImGuiFileDialogFlags_Modal);
+                                                        config);
             }
             ImGui::SameLine();
             ImGui::LabelText("##workspacePath", m_workspacePath.c_str());
