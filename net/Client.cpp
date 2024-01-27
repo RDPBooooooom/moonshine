@@ -21,6 +21,7 @@ namespace moonshine::net {
             m_ioContext.restart();
         }
         m_ioContextThread = std::thread([ObjectPtr = &m_ioContext] { return ObjectPtr->run(); });
+        m_receiveThread = std::thread([this] { handle_requests(); });
     }
 
     void Client::disconnect() {

@@ -36,8 +36,6 @@ namespace moonshine::net {
 
             m_connection =
                     TcpConnection::create(m_ioContext, m_messageQueue);
-
-            m_receiveThread = std::thread([this] { handle_requests(); });
         }
 
         void connect(std::string ipv4, int64_t port);

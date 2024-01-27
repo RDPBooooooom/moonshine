@@ -68,6 +68,8 @@ namespace moonshine {
         void try_connect();
 
         void register_as_host(const std::string& name, int port);
+        
+        void unregister_as_host();
 
         void receive_hosts();
 

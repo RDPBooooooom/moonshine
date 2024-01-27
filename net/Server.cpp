@@ -25,7 +25,7 @@ namespace moonshine::net {
                                                              "[SERVER] New Connection by {}:{}",
                                                              new_connection->socket().remote_endpoint().address().to_string(),
                                                              std::to_string(
-                                                                    new_connection->socket().remote_endpoint().port()));
+                                                                     new_connection->socket().remote_endpoint().port()));
 
             new_connection->start();
 
@@ -39,6 +39,22 @@ namespace moonshine::net {
     }
 
     void Server::stop() {
+
+        m_thread_stop = true;
+        m_messageQueue.notify_to_stop();
+        
+        // Stop the IO context to allow the thread to finish
+        m_ioContext.stop();
+
+        // Join the thread if it's running
+        if (m_ioThread.joinable()) {
+            m_ioThread.join();
+        }
+        
+        if(m_receiveThread.joinable()){
+            m_receiveThread.join();
+        }
+        
         m_clients.lock();
 
         free_upnp();
@@ -47,16 +63,9 @@ namespace moonshine::net {
         for (const auto &item: m_connectedClients) {
             item->socket().close();
         }
+        m_connectedClients.clear();
+        EngineSystems::get_instance().get_logger()->info(LoggerType::Networking, "[SERVER] Closed all connections");
         m_clients.unlock();
-
-        // Stop the IO context to allow the thread to finish
-        m_ioContext.stop();
-
-        // Join the thread if it's running
-        if (m_ioThread.joinable()) {
-            m_ioThread.join();
-        }
-
     }
 
     void Server::handle_requests() {
@@ -121,6 +130,8 @@ namespace moonshine::net {
         freeUPNPDevlist(m_device_list);
 
         m_was_upnp_freed = true;
+        EngineSystems::get_instance().get_logger()->debug(LoggerType::Networking,
+                                                          "[SERVER] UPNP freed");
     }
 
     void Server::broadcast(Scene &scene) {

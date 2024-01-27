@@ -58,10 +58,7 @@ namespace moonshine::net {
         }
 
         ~Server() {
-            free_upnp();
-            if (m_ioThread.joinable()) {
-                m_ioThread.join();
-            }
+            stop();
         }
 
         int get_port() {

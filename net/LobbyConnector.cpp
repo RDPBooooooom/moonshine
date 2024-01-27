@@ -148,4 +148,11 @@ namespace moonshine {
         }
     }
 
+    void LobbyConnector::unregister_as_host() {
+        boost::json::object object;
+        object["action"] = "removeHost";
+
+        m_connection.get()->async_send_json(object);
+    }
+
 } // moonshine

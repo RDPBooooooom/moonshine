@@ -33,8 +33,10 @@ namespace moonshine {
             // Currently hosting a session 
             ImGui::SameLine();
             if (ImGui::Button("End Session", ImVec2(100, 20))) {
-                m_server->stop();
+                m_connector.unregister_as_host();
+                m_server = nullptr;
                 m_is_hosting = false;
+                m_connector.receive_hosts();
             };
         } else if (connected && !m_in_session && !m_is_hosting) {
             // Connected to the lobby server, but not hosting or in a session
