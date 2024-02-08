@@ -5,6 +5,7 @@
 #ifndef MOONSHINE_ENGINESYSTEMS_H
 #define MOONSHINE_ENGINESYSTEMS_H
 
+#include "winsock2.h"
 #include <memory>
 #include "ui/WorkspaceManager.h"
 #include "ui/LobbyManager.h"
