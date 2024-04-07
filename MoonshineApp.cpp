@@ -11,6 +11,7 @@
 #include "imgui_internal.h"
 #include "editor/EngineSystems.h"
 #include "editor/ui/net/InputFloat3.h"
+#include "easy/profiler.h"
 
 
 namespace moonshine {
@@ -29,6 +30,9 @@ namespace moonshine {
     }
 
     void MoonshineApp::run() {
+        EASY_MAIN_THREAD;
+        EASY_PROFILER_ENABLE;
+
         init_vulkan();
         init_im_gui();
         main_loop();
@@ -219,27 +223,38 @@ namespace moonshine {
                 std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler, m_camera));
 
         while (!m_window.should_close()) {
+            EASY_BLOCK("Main Loop");
             EngineSystems::get_instance().get_statistics()->start_frame();
             Time::calc_delta_time();
-            glfwPollEvents();
-
-            ImGui_ImplVulkan_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-            create_dock_space();
-
-            m_window.get_input_handler()->trigger_events();
-
-            EngineSystems::get_instance().get_workspace_manager()->draw();
-            EngineSystems::get_instance().get_lobby_manager()->draw();
-            EngineSystems::get_instance().get_logger()->draw();
-            EngineSystems::get_instance().get_statistics()->draw();
-
-            m_sceneGraph->draw();
-            m_camera.show_debug();
-            show_inspector();
 
             {
+                EASY_BLOCK("ImGUI New Frame")
+                ImGui_ImplVulkan_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
+                ImGui::NewFrame();
+                create_dock_space();
+            }
+
+            {
+                EASY_BLOCK("Process Input");
+                glfwPollEvents();
+                m_window.get_input_handler()->trigger_events();
+            }
+
+            {
+                EASY_BLOCK("Render UI");
+                EngineSystems::get_instance().get_workspace_manager()->draw();
+                EngineSystems::get_instance().get_lobby_manager()->draw();
+                EngineSystems::get_instance().get_logger()->draw();
+                EngineSystems::get_instance().get_statistics()->draw();
+
+                m_sceneGraph->draw();
+                m_camera.show_debug();
+                show_inspector();
+            }
+
+            {
+                EASY_BLOCK("Draw Scene");
                 std::unique_lock<std::mutex> sceneLock = Scene::get_current_scene().get_lock();
                 if (auto commandBuffer = m_renderer.begin_frame()) {
 
@@ -266,10 +281,19 @@ namespace moonshine {
                 }
             }
 
-            EngineSystems::get_instance().get_lobby_manager()->replicate();
-            EngineSystems::get_instance().get_ui_manager()->update();
-            EngineSystems::get_instance().get_statistics()->end_frame();
+            {
+                EASY_BLOCK("Replication")
+                EngineSystems::get_instance().get_lobby_manager()->replicate();
+                EngineSystems::get_instance().get_ui_manager()->update();
+            }
+
+            {
+                EASY_BLOCK("Statistics")
+                EngineSystems::get_instance().get_statistics()->end_frame();
+            }
+
         }
+        profiler::dumpBlocksToFile("main_loop_profiler_dump.prof");
 
         vkDeviceWaitIdle(m_device.get_vk_device());
     }
@@ -291,7 +315,8 @@ namespace moonshine {
             }
 
             glm::vec3 rotEulerAngles = glm::degrees(eulerAngles(selected->get_transform()->rotation));
-            if (net::ui::InputFloat3(("Rotation##" + std::string(selected->get_id_as_string())).c_str(), glm::value_ptr(rotEulerAngles))) {
+            if (net::ui::InputFloat3(("Rotation##" + std::string(selected->get_id_as_string())).c_str(),
+                                     glm::value_ptr(rotEulerAngles))) {
                 selected->get_transform()->rotation = glm::quat(glm::radians(rotEulerAngles));
                 isDirty = true;
             }

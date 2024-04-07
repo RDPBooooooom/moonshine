@@ -3,6 +3,9 @@ project(moonshine)
 
 set(CMAKE_CXX_STANDARD 17)
 
+SET(EASY_PROFILER_NO_GUI OFF CACHE BOOL "")
+SET(EASY_PROFILER_NO_SAMPLES ON CACHE BOOL "")
+
 set(BOOST_JSON_STATIC_LINK, ON)
 
 # Ignore New Boost version may have incorrect or missing dependencies and imported
@@ -16,7 +19,7 @@ include_directories(${IMGUI_FILE_DIR} ${IMGUI_FILE_DIR})
 
 set(spdlog_DIR "external/spdlog/cmake-build-release")
 
-add_executable(moonshine main.cpp editor/Settings.h utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/Buffer.cpp graphics/Buffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h graphics/Renderer.cpp graphics/Renderer.h graphics/SwapChain.cpp graphics/SwapChain.h graphics/SimpleRenderSystem.cpp graphics/SimpleRenderSystem.h graphics/Descriptors.cpp graphics/Descriptors.h graphics/FrameInfo.h "graphics/UniformBuffer.h" ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
+add_executable(${PROJECT_NAME} main.cpp editor/Settings.h utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/Window.cpp graphics/Window.h graphics/Device.cpp graphics/Device.h graphics/Pipeline.cpp graphics/Pipeline.h graphics/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/TextureImage.cpp graphics/TextureImage.h utils/CommandBufferUtils.h graphics/TextureSampler.cpp graphics/TextureSampler.h graphics/Buffer.cpp graphics/Buffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h graphics/Renderer.cpp graphics/Renderer.h graphics/SwapChain.cpp graphics/SwapChain.h graphics/SimpleRenderSystem.cpp graphics/SimpleRenderSystem.h graphics/Descriptors.cpp graphics/Descriptors.h graphics/FrameInfo.h "graphics/UniformBuffer.h" ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp
         graphics/Material.cpp
         graphics/Material.h
         graphics/MaterialManager.cpp
@@ -90,12 +93,12 @@ if(NOT TARGET spdlog)
     find_package(spdlog REQUIRED)
 endif()
 
-
 include_directories(external/stb/)
 
 # Add and link libraries
 add_subdirectory(external/glfw)
 add_subdirectory(external/glm)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/external/easy_profiler)
 
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
@@ -104,6 +107,8 @@ add_subdirectory(external/tinygltf)
 if (MINGW)
     target_link_libraries(${PROJECT_NAME} ws2_32 wsock32)
 endif ()
+
+target_link_libraries(${PROJECT_NAME} easy_profiler)  # STEP 2 ##########
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC external/glfw/include
