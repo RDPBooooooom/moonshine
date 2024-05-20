@@ -54,6 +54,7 @@
 #include "editor/Scene.h"
 #include "editor/ui/WorkspaceManager.h"
 #include "editor/EngineSystems.h"
+#include "graphics/Gui.h"
 
 
 namespace moonshine {
@@ -63,14 +64,17 @@ namespace moonshine {
         static Settings APP_SETTINGS;
     private:
 
+        
         // Members
+        //TODO: Check if it makes sense to only ever expose the renderer and have a getter for device and window
         Window m_window = Window(APP_NAME, WIDTH, HEIGHT);
         Device m_device = Device(m_window);
         Renderer m_renderer = Renderer(m_window, m_device);
+        Gui m_gui = Gui(m_device, m_window);
 
         std::shared_ptr<DescriptorPool> m_global_pool{};
         std::shared_ptr<MaterialManager> m_materialManager;
-        VkDescriptorPool m_imGuiPool;
+        
 
         std::vector<std::unique_ptr<Buffer>> m_matrixUBO;
         std::vector<std::unique_ptr<Buffer>> m_fragUBO;
@@ -102,15 +106,8 @@ namespace moonshine {
             m_materialManager->clean_up();
             EngineSystems::get_instance().clean_up();
 
-            vkDestroyDescriptorPool(m_device.get_vk_device(), m_imGuiPool, nullptr);
-            ImGui_ImplVulkan_Shutdown();
-            ImGui_ImplGlfw_Shutdown();
-            ImGui::DestroyContext();
-
             save_settings();
         }
-
-        void init_im_gui();
 
         void create_dock_space();
 

@@ -67,6 +67,10 @@ add_executable(${PROJECT_NAME} main.cpp editor/Settings.h utils/Constants.h Moon
         editor/ui/net/InputFloat3.h
         editor/ui/net/UIManager.cpp
         editor/ui/net/UIManager.h
+        graphics/Gui.cpp
+        graphics/Gui.h
+        graphics/Gui.h
+        graphics/Gui.cpp
 )
 
 # DOWNLOAD ALL THE SUBMODULES
