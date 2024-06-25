@@ -17,7 +17,7 @@
 #include <functional>
 #include <limits>
 #include <iostream>
-#include <GLFW/glfw3.h>
+#include <glfw3.h>
 #include <memory>
 #include <chrono>
 #include "utils/Constants.h"
