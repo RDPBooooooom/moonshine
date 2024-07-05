@@ -3,32 +3,27 @@
 //
 
 #include "MoonshineApp.h"
-#include "external/imgui/imgui.h"
-#include "editor/Settings.h"
-#include "glm/gtc/type_ptr.hpp"
-#include "editor/EngineSystems.h"
+#include "editor/InputHandler.h"
+#include "editor/Time.h"
 #include "editor/ui/net/InputFloat3.h"
-#include "easy/profiler.h"
-
 
 namespace moonshine {
 
-    Settings MoonshineApp::APP_SETTINGS;
+    //Settings MoonshineApp::APP_SETTINGS;
 
-    MoonshineApp::MoonshineApp() : m_camera{Camera(&m_window)} {
+    MoonshineApp::MoonshineApp() : m_camera{Camera(app.get_input_handler())} {
     }
 
     void MoonshineApp::run() {
-        EASY_MAIN_THREAD;
-        EASY_PROFILER_ENABLE;
+        //EASY_MAIN_THREAD;
+        //EASY_PROFILER_ENABLE;
 
-        init_vulkan();
-        m_gui.init_im_gui(m_renderer);
         main_loop();
         cleanup();
     }
 
-
+    // MoonshineTodo: Bring back settings
+    /***
     void MoonshineApp::load_settings() {
         try {
 
@@ -76,8 +71,9 @@ namespace moonshine {
             EngineSystems::get_instance().get_logger()->error(LoggerType::Editor,
                                                               "Unable to save settings.json. Settings will not persist!");
         }
-    }
+    }*/
 
+    /*** MoonshineTodo: Remove => Old Vulkan
     void MoonshineApp::init_vulkan() {
         m_global_pool = DescriptorPool::Builder(m_device).set_max_sets(MAX_FRAMES_IN_FLIGHT)
                 .add_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_IN_FLIGHT * 2)
@@ -115,18 +111,19 @@ namespace moonshine {
 
         EngineSystems::get_instance().get_logger()->debug(LoggerType::Rendering, "FRAG UBO created");
     }
-    
+    */
 
     void MoonshineApp::main_loop() {
 
         Time::init_time();
 
-        auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
+        /*** MoonshineTodo: Remove => Old Vulkan
+         * auto globalSetLayout = DescriptorSetLayout::Builder(m_device)
                 .add_binding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
                 .add_binding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT)
                 .build();
         std::vector<VkDescriptorSet> globalDescriptorSets(MAX_FRAMES_IN_FLIGHT);
-
+        
 
         for (int i = 0; i < globalDescriptorSets.size(); i++) {
 
@@ -139,34 +136,36 @@ namespace moonshine {
                     .write_buffer(1, &fragBufferInfo)
                     .build(globalDescriptorSets[i]);
         }
-
+        
         SimpleRenderSystem simpleRenderSystem{m_device, m_renderer.get_swap_chain_render_pass(),
                                               globalSetLayout->get_descriptor_set_layout(),
                                               m_materialManager->get_material_layout()};
+        */
 
         // Init UI
-        auto inputHandler = m_window.get_input_handler();
+        auto inputHandler = app.get_input_handler();
         m_sceneGraph = std::make_unique<SceneGraph>(inputHandler, m_camera);
         EngineSystems::get_instance().set_lobby_manager(std::make_shared<LobbyManager>(inputHandler));
+
 
         EngineSystems::get_instance().set_workspace_manager(
                 std::make_shared<WorkspaceManager>(m_device, m_materialManager, inputHandler, m_camera));
 
-        while (!m_window.should_close()) {
-            EASY_BLOCK("Main Loop");
+        while (!app.should_close()) {
+            //EASY_BLOCK("Main Loop");
             EngineSystems::get_instance().get_statistics()->start_frame();
             Time::calc_delta_time();
 
-            m_gui.new_frame();
+            m_gui_renderer.new_frame();
 
             {
-                EASY_BLOCK("Process Input");
+                //EASY_BLOCK("Process Input");
                 glfwPollEvents();
                 m_window.get_input_handler()->trigger_events();
             }
 
             {
-                EASY_BLOCK("Render UI");
+                //EASY_BLOCK("Render UI");
                 EngineSystems::get_instance().get_workspace_manager()->draw();
                 EngineSystems::get_instance().get_lobby_manager()->draw();
                 EngineSystems::get_instance().get_logger()->draw();
@@ -178,8 +177,9 @@ namespace moonshine {
             }
 
             {
-                EASY_BLOCK("Draw Scene");
+                //EASY_BLOCK("Draw Scene");
                 std::unique_lock<std::mutex> sceneLock = Scene::get_current_scene().get_lock();
+                /* MoonshineTodo: Remove => Old Vulkan
                 if (auto commandBuffer = m_renderer.begin_frame()) {
 
                     uint32_t frameIndex = m_renderer.get_frame_index();
@@ -202,23 +202,26 @@ namespace moonshine {
                     m_renderer.end_swap_chain_render_pass(commandBuffer);
                     m_renderer.end_frame();
                 }
+                 */
+                m_gui_renderer.render_frame();
             }
 
             {
-                EASY_BLOCK("Replication")
+                //EASY_BLOCK("Replication")
                 EngineSystems::get_instance().get_lobby_manager()->replicate();
                 EngineSystems::get_instance().get_ui_manager()->update();
             }
 
             {
-                EASY_BLOCK("Statistics")
+                //EASY_BLOCK("Statistics")
                 EngineSystems::get_instance().get_statistics()->end_frame();
             }
 
         }
-        profiler::dumpBlocksToFile("main_loop_profiler_dump.prof");
+        //profiler::dumpBlocksToFile("main_loop_profiler_dump.prof");
 
-        vkDeviceWaitIdle(m_device.get_vk_device());
+        // MoonshineTodo: Remove => Old Vulkan
+        // vkDeviceWaitIdle(m_device.get_vk_device());
     }
 
 
@@ -249,11 +252,12 @@ namespace moonshine {
                 isDirty = true;
             }
 
-            for (const auto &node: selected->get_nodes()) {
+            //MoonshineTodo: Reintroduce Material manager
+            /*for (const auto &node: selected->get_nodes()) {
                 for (const auto &mesh: node->get_sub_meshes()) {
                     m_materialManager->get_material(mesh.m_materialIdx)->draw_gui();
                 }
-            }
+            }*/
 
             if (isDirty) {
                 EngineSystems::get_instance().get_lobby_manager()->replicate(selected);
@@ -261,48 +265,4 @@ namespace moonshine {
         }
         ImGui::End();
     }
-
-
-    void MoonshineApp::update_uniform_buffer(uint32_t currentImage) {
-        static auto startTime = std::chrono::high_resolution_clock::now();
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                currentTime - startTime).count();
-
-        UniformBufferObject ubo{};
-
-        ubo.view = m_camera.get_view_mat();
-        ubo.proj = glm::perspective(glm::radians(45.0f), m_renderer.get_swap_chain_extent().width /
-                                                         (float) m_renderer.get_swap_chain_extent().height,
-                                    0.1f,
-                                    100.0f);
-
-        /*
-         * GLM was originally designed for OpenGL, where the Y coordinate of the clip coordinates is inverted.
-         * The easiest way to compensate for that is to flip the sign on the scaling factor of the Y axis 
-         * in the projection matrix. If you don't do this, then the image will be rendered upside down.
-         */
-        ubo.proj[1][1] *= -1;
-
-        MaterialData material{};
-        DirLight light{};
-        light.direction = glm::normalize(glm::vec3(0, 1, -1));
-        light.ambient = glm::vec3(1, 1, 1) * 0.2f;
-        light.diffuse = glm::vec3(1, 1, 1) * 0.8f;
-        light.specular = glm::vec3(1, 1, 1) * 1.0f;
-
-        FragmentUniformBufferObject fragUBO{};
-        fragUBO.dirLight = light;
-        fragUBO.material = material;
-        fragUBO.viewPos = glm::vec4(-m_camera.get_transform()->position, 0);
-
-
-        m_matrixUBO[currentImage]->write_to_buffer(&ubo);
-        m_matrixUBO[currentImage]->flush();
-
-        m_fragUBO[currentImage]->write_to_buffer(&fragUBO);
-        m_fragUBO[currentImage]->flush();
-    }
-
 } // moonshined

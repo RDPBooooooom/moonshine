@@ -7,10 +7,10 @@
 
 #include "winsock2.h"
 #include <memory>
-#include "ui/WorkspaceManager.h"
 #include "ui/LobbyManager.h"
 #include "logging/Logger.h"
 #include "ui/StatisticsManager.h"
+#include "ui/WorkspaceManager.h"
 
 namespace moonshine {
 
@@ -57,19 +57,19 @@ namespace moonshine {
         void set_lobby_manager(const std::shared_ptr<LobbyManager> &lobby_manager) {
             m_lobby_manager = lobby_manager;
         }
-        
-        const std::shared_ptr<Logger> &get_logger() const{
+
+        const std::shared_ptr<Logger> &get_logger() const {
             return m_logger;
         };
 
-        const std::shared_ptr<StatisticsManager> &get_statistics() const{
+        const std::shared_ptr<StatisticsManager> &get_statistics() const {
             return m_statistics;
         };
 
-        const std::shared_ptr<UIManager> &get_ui_manager() const{
+        const std::shared_ptr<UIManager> &get_ui_manager() const {
             return m_ui_manager;
         };
-        
+
         void clean_up() {
             m_workspace_manager->clean_up();
         };

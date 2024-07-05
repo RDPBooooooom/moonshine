@@ -12,9 +12,7 @@
 
 namespace moonshine {
 
-    Camera::Camera(Window *window) : m_window{window} {
-        std::shared_ptr<InputHandler> input_handler = window->get_input_handler();
-
+    Camera::Camera(std::weak_ptr<InputHandler> input_handler) : m_input_handler{input_handler}, {
         using std::placeholders::_1;
         std::function<void(bool)> handle_movement_mode_func = std::bind(&Camera::handle_movement_mode, this, _1);
         m_registered_functions.push_back(
@@ -40,7 +38,7 @@ namespace moonshine {
 
         // Unregister input events
         for (auto item: m_registered_functions) {
-            m_window->get_input_handler()->unregister_key_event(item);
+            m_input_handler->unregister_key_event(item);
         }
     }
 
@@ -54,10 +52,10 @@ namespace moonshine {
     void Camera::handle_movement_mode(bool is_released) {
         if (is_released) {
             m_movement_mode_active = false;
-            m_window->set_cursor_mode();
+            m_input_handler->set_cursor_mode();
         } else if (!m_movement_mode_active) {
             m_movement_mode_active = true;
-            m_window->set_no_cursor_mode();
+            m_input_handler->set_no_cursor_mode();
         }
     }
 

@@ -9,7 +9,7 @@
 #include <vulkan/vulkan_core.h>
 #include <memory>
 #include "GLFW/glfw3.h"
-#include "../editor/InputHandler.h"
+#include "../../editor/InputHandler.h"
 
 namespace moonshine {
 

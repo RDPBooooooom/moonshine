@@ -2,6 +2,22 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/accumulators" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/algorithm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/align" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/any" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/array" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/asio" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/assert" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/assign" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/atomic" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/beast" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/bimap" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/bind" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/callable_traits" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost/libs/charconv" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deps/src/boost_json" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deps/src/glfw" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deps/src/glm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deps/src/imgui" vcs="Git" />

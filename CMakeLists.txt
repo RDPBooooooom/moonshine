@@ -9,35 +9,62 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "")
 set(GLFW_INSTALL OFF CACHE BOOL "")
 
-add_subdirectory(deps/src/glfw)
+SET(CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "D:/boost_1_85_0")
+SET(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} "D:/boost_1_85_0/stage/lib")
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+set(Boost_COMPILER "vc143")
 
-add_executable(${PROJECT_NAME} main.cpp editor/Settings.h utils/Constants.h MoonshineApp.cpp MoonshineApp.h utils/VkValidationLayerUtils.h utils/FileUtils.h utils/VkUtils.h graphics/vk/Window.cpp graphics/vk/Window.h graphics/vk/Device.cpp graphics/vk/Device.h graphics/vk/Pipeline.cpp graphics/vk/Pipeline.h graphics/vk/GpuBuffer.h utils/BufferUtils.h editor/Camera.cpp editor/Camera.h editor/Transform.h editor/InputHandler.cpp editor/InputHandler.h editor/Time.h editor/Time.cpp utils/InputUtils.h graphics/vk/TextureImage.cpp graphics/vk/TextureImage.h utils/CommandBufferUtils.h graphics/vk/TextureSampler.cpp graphics/vk/TextureSampler.h graphics/vk/Buffer.cpp graphics/vk/Buffer.h editor/ModelLoader.h editor/SceneObject.cpp editor/SceneObject.h graphics/vk/Renderer.cpp graphics/vk/Renderer.h graphics/vk/SwapChain.cpp graphics/vk/SwapChain.h graphics/vk/SimpleRenderSystem.cpp graphics/vk/SimpleRenderSystem.h graphics/vk/Descriptors.cpp graphics/vk/Descriptors.h graphics/vk/FrameInfo.h "graphics/vk/UniformBuffer.h"
-        graphics/vk/Material.cpp
-        graphics/vk/Material.h
-        graphics/vk/MaterialManager.cpp
-        graphics/vk/MaterialManager.h
+add_subdirectory(deps/src/glfw)
+add_subdirectory(deps/src/spdlog)
+add_subdirectory(deps/src/boost EXCLUDE_FROM_ALL)
+add_subdirectory(deps/src/miniupnp/miniupnpc)
+add_subdirectory(deps/src/tinygltf)
+
+add_executable(${PROJECT_NAME} main.cpp
+        editor/Settings.h
+        utils/Constants.h
+        MoonshineApp.cpp
+        MoonshineApp.h
+        utils/VkValidationLayerUtils.h
+        utils/FileUtils.h
+        utils/VkUtils.h
+        utils/BufferUtils.h
+        editor/Camera.cpp
+        editor/Camera.h
+        editor/Transform.h
+        editor/InputHandler.cpp
+        editor/InputHandler.h
+        editor/Time.h
+        editor/Time.cpp
+        utils/InputUtils.h
+        utils/CommandBufferUtils.h
+        editor/ModelLoader.h
+        editor/SceneObject.cpp
+        editor/SceneObject.h
         editor/ui/SceneGraph.cpp
         editor/ui/SceneGraph.h
         editor/ui/UIWindow.cpp
         editor/ui/UIWindow.h
-        net/LobbyConnector.cpp
-        net/LobbyConnector.h
-        net/TcpConnection.cpp
-        net/TcpConnection.h
+        #net/LobbyConnector.cpp
+        #net/LobbyConnector.h
+        #net/TcpConnection.cpp
+        #net/TcpConnection.h
+        #net/Client.cpp
+        #net/Client.h
+        #net/Server.cpp
+        #net/Server.h
+        #editor/RequestResolver.cpp
+        #editor/RequestResolver.h
         editor/ui/LobbyManager.cpp
         editor/ui/LobbyManager.h
         utils/SafeQueue.h
-        net/Client.cpp
-        net/Client.h
-        net/Server.cpp
-        net/Server.h
         editor/Scene.cpp
         editor/Scene.h
-        editor/RequestResolver.cpp
-        editor/RequestResolver.h
         editor/ui/WorkspaceManager.cpp
         editor/ui/WorkspaceManager.h
-        # Add Im Gui File Dialog
+        # MoonshineTodo: Add Im Gui File Dialog
         #external/ImGuiFileDialog/ImGuiFileDialog.h
         #external/ImGuiFileDialog/ImGuiFileDialog.cpp
         editor/GltfLoader.cpp
@@ -59,12 +86,17 @@ add_executable(${PROJECT_NAME} main.cpp editor/Settings.h utils/Constants.h Moon
         editor/ui/net/InputFloat3.h
         editor/ui/net/UIManager.cpp
         editor/ui/net/UIManager.h
-        graphics/vk/Gui.cpp
-        graphics/vk/Gui.h
-        graphics/vk/Gui.h
-        graphics/vk/Gui.cpp
         graphics/gl/GLApp.cpp
         graphics/gl/GLApp.h
+        graphics/gl/GLGuiRenderer.h
+        graphics/gl/GLGuiRenderer.cpp
+        graphics/gl/GLShader.h
+        graphics/gl/GLProgram.cpp
+        graphics/gl/GLProgram.h
+        graphics/gl/GLBuffer.cpp
+        graphics/gl/GLBuffer.h
+        graphics/gl/GLShader.cpp
+        graphics/gl/GLUtils.h
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME_DEBUG ${PROJECT_NAME}_Debug)
@@ -78,13 +110,22 @@ if (WIN32)
 endif ()
 add_library(glad ${GLAD_SOURCES})
 
-target_link_libraries(${PROJECT_NAME} glad glfw)
+target_link_libraries(${PROJECT_NAME} 
+        glad 
+        glfw
+        Boost::asio
+        Boost::json
+        Boost::bind
+        Boost::thread
+        spdlog::spdlog 
+        miniupnpc::miniupnpc
+        tinygltf)
 
-target_include_directories(glad PRIVATE "${CMAKE_SOURCE_DIR}/deps/glad/include"
-        deps/src/glm
-        deps/src/stb
+target_include_directories(glad PRIVATE "${CMAKE_SOURCE_DIR}/deps/glad/include")
+include_directories(${CMAKE_SOURCE_DIR}/deps/src/glm
+        ${CMAKE_SOURCE_DIR}/deps/src/stb
         deps/src/imgui
-)
+        ${Boost_INCLUDE_DIR})
 
 
 # Compiling Shaders to spir-v

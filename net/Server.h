@@ -9,8 +9,8 @@
 #include "boost/asio/ip/tcp.hpp"
 #include "TcpConnection.h"
 #include "../editor/RequestResolver.h"
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
+#include <miniupnpc.h>
+#include <upnpcommands.h>
 #include "../editor/Scene.h"
 #include "../editor/ui/net/UIManager.h"
 

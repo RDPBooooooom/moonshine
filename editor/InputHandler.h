@@ -24,8 +24,6 @@ namespace moonshine {
 
     static int NEXT_FUNCTION_ID = 1;
 
-    class Window;
-
     class InputHandler {
 
     private:
@@ -49,6 +47,10 @@ namespace moonshine {
         void update_cursor_pos();
 
         void draw_mouse_debug() const;
+
+        void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
+
+        void mouse_btn_callback(int key, int action, int mods);
 
     public:
         explicit InputHandler(GLFWwindow *window);
@@ -81,6 +83,9 @@ namespace moonshine {
         void enable(){
             m_disabled = false;
         }
+
+        void set_no_cursor_mode();
+        void set_cursor_mode();
     };
 
 } // moonshine

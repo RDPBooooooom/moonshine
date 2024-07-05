@@ -31,6 +31,9 @@
 *.out
 *.app
 
+#ignore dependencies
+/deps/src/
+
 # Ignore IDEA
 cmake-build-debug
 
@@ -154,3 +157,4 @@ fabric.properties
 
 # Ignore compiled shaders
 *.spv
+

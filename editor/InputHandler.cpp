@@ -11,7 +11,9 @@
 namespace moonshine {
 
     InputHandler::InputHandler(GLFWwindow *window) : m_window{window} {
-
+        
+        glfwSetKeyCallback(m_window, key_callback);
+        glfwSetMouseButtonCallback(m_window, mouse_btn_callback);
     }
 
     void InputHandler::on_keypress(int key, int scancode, int action, int mods) {
@@ -191,6 +193,22 @@ namespace moonshine {
         ImGui::Text("Mouse: X: %f | Y: %f", m_cursor_position.x, m_cursor_position.y);
         ImGui::Text("Old Mouse: X: %f | Y: %f", m_cursor_position.oldX, m_cursor_position.oldY);
         ImGui::End();
+    }
+
+    void InputHandler::set_no_cursor_mode() {
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    void InputHandler::set_cursor_mode() {
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    void InputHandler::key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        on_keypress(key, scancode, action, mods);
+    }
+
+    void InputHandler::mouse_btn_callback(int key, int action, int mods) {
+        on_mouse_press(key, action, mods);
     }
 
 } // moonshine

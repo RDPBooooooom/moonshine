@@ -7,9 +7,7 @@
 
 #include <string>
 #include <iostream>
-#include "../external/stb/stb_image.h"
-#include "../external/stb/stb_image_write.h"
-#include "../external/tinygltf/tiny_gltf.h"
+#include "tiny_gltf.h"
 
 
 namespace moonshine {

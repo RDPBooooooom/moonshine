@@ -30,5 +30,45 @@
       "url": "https://github.com/ocornut/imgui.git",
       "revision" : "v1.90.8-docking"
     }
+  },
+  {
+    "name": "boost",
+    "source": {
+      "type": "git",
+      "url": "https://github.com/boostorg/boost.git",
+      "revision" : "boost-1.85.0"
+    }
+  },
+  {
+    "name": "boost_cmake",
+    "source": {
+      "type": "git",
+      "url": "https://github.com/boostorg/cmake.git",
+      "revision" : "boost-1.85.0"
+    }
+  },
+  {
+    "name": "spdlog",
+    "source": {
+      "type": "git",
+      "url": "https://github.com/gabime/spdlog.git",
+      "revision" : "v1.14.1"
+    }
+  },
+  {
+    "name": "miniupnp",
+    "source": {
+      "type": "git",
+      "url": "https://github.com/miniupnp/miniupnp.git",
+      "revision" : "miniupnpd_2_3_7"
+    }
+  },
+  {
+    "name": "tinygltf",
+    "source": {
+      "type": "git",
+      "url": "https://github.com/syoyo/tinygltf.git",
+      "revision" : "v2.9.1"
+    }
   }
 ]

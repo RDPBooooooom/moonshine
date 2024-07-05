@@ -3,7 +3,7 @@
 int main() {
 
     try {
-        moonshine::MoonshineApp::load_settings();
+        //moonshine::MoonshineApp::load_settings();
 
         moonshine::MoonshineApp app{};
         app.run();

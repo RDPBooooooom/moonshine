@@ -6,17 +6,18 @@
 #define MOONSHINE_CAMERA_H
 
 #include "Transform.h"
-#include "../graphics/Window.h"
+#include "InputHandler.h"
 #include<glm/glm.hpp>
 #include<glm/gtc/quaternion.hpp>
 #include<glm/common.hpp>
+#include <memory>
 
 namespace moonshine {
 
     class Camera {
 
     private:
-        Window *m_window;
+        std::weak_ptr<InputHandler> m_input_handler;
         Transform m_transform{};
 
         bool m_movement_mode_active = false;
@@ -27,7 +28,7 @@ namespace moonshine {
         std::vector<int> m_registered_functions;
 
     public:
-        explicit Camera(Window *window);
+        explicit Camera(std::weak_ptr<InputHandler> input_handler);
 
         ~Camera();
 
