@@ -70,7 +70,7 @@ namespace moonshine {
         private:
             Device &m_device;
             std::vector<VkDescriptorPoolSize> m_pool_sizes{};
-            uint32_t m_max_sets = 1000;
+            uint32_t m_max_sets = 100;
             VkDescriptorPoolCreateFlags m_pool_flags = 0;
         };
 

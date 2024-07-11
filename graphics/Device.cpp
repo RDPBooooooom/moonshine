@@ -169,6 +169,11 @@ namespace moonshine {
         // Check if the best candidate is suitable at all
         if (candidates.rbegin()->first > 0) {
             m_physical_device = candidates.rbegin()->second;
+
+            VkPhysicalDeviceProperties device_properties;
+            vkGetPhysicalDeviceProperties(m_physical_device, &device_properties);
+
+            EngineSystems::get_instance().get_logger()->debug(LoggerType::Rendering, "Picked {}", device_properties.deviceName);
         } else {
             throw std::runtime_error("failed to find a suitable GPU!");
         }
@@ -214,6 +219,14 @@ namespace moonshine {
         if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
             score += 1000;
         }
+
+        std::string deviceName(device_properties.deviceName);
+        if (deviceName.find("Direct3D") != std::string::npos) {
+            // This is a compatibility layer device, reduce score
+            score -= 500;
+        }
+
+        EngineSystems::get_instance().get_logger()->debug(LoggerType::Rendering, "Found device {} got score {}", device_properties.deviceName, std::to_string(score));
 
         return score;
     }
